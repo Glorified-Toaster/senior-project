@@ -18,10 +18,6 @@ func NewRouter() *Router {
 	// use gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	// use logger and recovery middleware
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
-
 	return &Router{router: router}
 }
 

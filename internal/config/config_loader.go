@@ -21,8 +21,11 @@ type Config struct {
 }
 
 type HTTPServerConf struct {
-	Addr string `yaml:"address" mapstructure:"address"`
-	Port string `yaml:"port" mapstructure:"port"`
+	Addr     string `yaml:"address" mapstructure:"address"`
+	Port     string `yaml:"port" mapstructure:"port"`
+	CertFile string `yaml:"cert_file" mapstructure:"cert_file"`
+	KeyFile  string `yaml:"key_file" mapstructure:"key_file"`
+	CertDir  string `yaml:"tls_cert_dir" mapstructure:"tls_cert_dir"`
 }
 
 // Init : to initialize the configuration loading process.
@@ -82,4 +85,5 @@ func setDefaultConfig(viperInst *viper.Viper) {
 	// setting important default values
 	viperInst.SetDefault("http_server.address", "localhost")
 	viperInst.SetDefault("http_server.port", "8080")
+	viperInst.SetDefault("http_server.tls_cert_dir", "certs")
 }

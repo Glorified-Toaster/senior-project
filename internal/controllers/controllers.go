@@ -8,7 +8,7 @@ import (
 )
 
 func Ping(c *gin.Context) {
-	time.Sleep(9 * time.Second) // Simulate a delay
+	time.Sleep(5 * time.Second)
 	c.JSON(200, gin.H{
 		"msg": "pong",
 	})
