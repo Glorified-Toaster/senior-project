@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
+	"github.com/Glorified-Toaster/senior-project/internal/config/db/mongodb"
 	"github.com/Glorified-Toaster/senior-project/internal/server"
 )
 
@@ -17,6 +18,26 @@ func main() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Fatalf("failed to get config: %v", err)
+	}
+
+	// connect to MongoDB
+	if cfg.MongoDB != nil {
+		uri := mongodb.MakeURI(
+			cfg.MongoDB.Host,
+			cfg.MongoDB.Port,
+			cfg.MongoDB.Username,
+			cfg.MongoDB.Password,
+			cfg.MongoDB.Database,
+		)
+
+		if err := mongodb.MongoConnect(uri, cfg.MongoDB.Database); err != nil {
+			log.Fatalf("failed to connect to MongoDB: %v", err)
+		}
+		defer func() {
+			if err := mongodb.MongoDisconnect(); err != nil {
+				log.Printf("error disconnecting from MongoDB: %v", err)
+			}
+		}()
 	}
 
 	// initialize the server

@@ -18,6 +18,7 @@ var (
 
 type Config struct {
 	HTTPServer *HTTPServerConf `yaml:"http_server" mapstructure:"http_server"`
+	MongoDB    *MongoDBConf    `yaml:"mongodb" mapstructure:"mongodb"`
 }
 
 type HTTPServerConf struct {
@@ -26,6 +27,14 @@ type HTTPServerConf struct {
 	CertFile string `yaml:"cert_file" mapstructure:"cert_file"`
 	KeyFile  string `yaml:"key_file" mapstructure:"key_file"`
 	CertDir  string `yaml:"tls_cert_dir" mapstructure:"tls_cert_dir"`
+}
+
+type MongoDBConf struct {
+	Database string `yaml:"database" mapstructure:"database"`
+	Username string `yaml:"username" mapstructure:"username"`
+	Password string `yaml:"password" mapstructure:"password"`
+	Host     string `yaml:"host" mapstructure:"host"`
+	Port     string `yaml:"port" mapstructure:"port"`
 }
 
 // Init : to initialize the configuration loading process.
@@ -86,4 +95,9 @@ func setDefaultConfig(viperInst *viper.Viper) {
 	viperInst.SetDefault("http_server.address", "localhost")
 	viperInst.SetDefault("http_server.port", "8080")
 	viperInst.SetDefault("http_server.tls_cert_dir", "certs")
+
+	// MongoDB default values
+	viperInst.SetDefault("mongodb.host", "localhost")
+	viperInst.SetDefault("mongodb.port", "27017")
+	viperInst.SetDefault("mongodb.database", "senior_project")
 }

@@ -4,3 +4,10 @@ http_server:
   tls_cert_dir: "certs"
   cert_file: "certs/cert.pem"
   key_file: "certs/key.pem"
+
+mongodb:
+  host: "localhost"
+  port: "27017"
+  database: "senior_project"
+  # username: ""  # Take it or leave it
+  # password: ""  # same here
