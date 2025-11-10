@@ -8,6 +8,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
@@ -17,8 +18,9 @@ var (
 )
 
 type Config struct {
-	HTTPServer *HTTPServerConf `yaml:"http_server" mapstructure:"http_server"`
-	MongoDB    *MongoDBConf    `yaml:"mongodb" mapstructure:"mongodb"`
+	HTTPServer  *HTTPServerConf  `yaml:"http_server" mapstructure:"http_server"`
+	MongoDB     *MongoDBConf     `yaml:"mongodb" mapstructure:"mongodb"`
+	DragonflyDB *DragonflyDBConf `yaml:"dragonflydb" mapstructure:"dragonflydb"`
 }
 
 type HTTPServerConf struct {
@@ -37,6 +39,13 @@ type MongoDBConf struct {
 	Port     string `yaml:"port" mapstructure:"port"`
 }
 
+type DragonflyDBConf struct {
+	Host     string `yaml:"host" mapstructure:"host"`
+	Port     string `yaml:"port" mapstructure:"port"`
+	Password string `yaml:"password" mapstructure:"password"`
+	DB       int    `yaml:"db" mapstructure:"db"`
+}
+
 // Init : to initialize the configuration loading process.
 func Init(path, file string) {
 	var err error
@@ -46,9 +55,18 @@ func Init(path, file string) {
 		// flag definitions
 		configPath := flag.String("config-path", path, "path to configuration path")
 		configFile := flag.String("config-file", file, "name of configuration file (without extension)")
+		isDebugMode := flag.Bool("debug", false, "enable gin debug mode")
 
 		if !flag.Parsed() {
 			flag.Parse()
+		}
+
+		if *isDebugMode {
+			gin.SetMode(gin.DebugMode)
+			log.Println("Server is running in debug mode.")
+		} else {
+			gin.SetMode(gin.ReleaseMode)
+			log.Println("Server is running in release mode.")
 		}
 
 		GlobalConfig, err = LoadConfig(*configPath, *configFile)
@@ -100,4 +118,9 @@ func setDefaultConfig(viperInst *viper.Viper) {
 	viperInst.SetDefault("mongodb.host", "localhost")
 	viperInst.SetDefault("mongodb.port", "27017")
 	viperInst.SetDefault("mongodb.database", "senior_project")
+
+	// DragonflyDB default values
+	viperInst.SetDefault("dragonflydb.host", "localhost")
+	viperInst.SetDefault("dragonflydb.port", "6379")
+	viperInst.SetDefault("dragonflydb.db", 0)
 }

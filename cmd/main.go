@@ -5,11 +5,22 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
+	"github.com/Glorified-Toaster/senior-project/internal/config/db/cache"
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/mongodb"
 	"github.com/Glorified-Toaster/senior-project/internal/server"
 )
+
+// --- AI GEN ---//
+type User struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+// --- AI GEN ---//
 
 func main() {
 	// loading the env variables
@@ -39,6 +50,41 @@ func main() {
 			}
 		}()
 	}
+
+	cache, err := cache.InitCache("myapp")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// --- AI GEN ---//
+	if err := cache.HealthCheck(); err != nil {
+		log.Printf("Cache health check failed: %v", err)
+	} else {
+		log.Println("Cache health check is : OK")
+	}
+
+	// Example usage
+	user := User{
+		ID:    "123",
+		Name:  "John Doe",
+		Email: "john@example.com",
+	}
+
+	// Set value
+	err = cache.Set("user:123", user, 10*time.Minute)
+	if err != nil {
+		log.Printf("Error setting cache: %v", err)
+	}
+
+	// Get value
+	var retrievedUser User
+	err = cache.Get("user:123", &retrievedUser)
+	if err != nil {
+		log.Printf("Error getting cache: %v", err)
+	} else {
+		log.Printf("Retrieved user: %+v", retrievedUser)
+	}
+	// --- AI GEN ---//
 
 	// initialize the server
 	srv := server.NewServer()
