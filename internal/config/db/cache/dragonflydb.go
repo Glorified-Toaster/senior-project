@@ -4,12 +4,13 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
+	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/go-redis/v9/maintnotifications"
 )
@@ -43,7 +44,7 @@ func InitCache(prefix string) (*Cache, error) {
 			return
 		}
 
-		log.Println("Connected to DragonflyDB successfully...")
+		utils.LogInfo(utils.DragonflyIsConnected.Type, utils.DragonflyIsConnected.Msg)
 
 		// return client
 		instance = &Cache{
@@ -58,7 +59,8 @@ func InitCache(prefix string) (*Cache, error) {
 // GetInstance returns the singleton cache instance
 func GetInstance() *Cache {
 	if instance == nil {
-		log.Fatal("Cache not initialized. Call InitCache() first.")
+		err := errors.New("Cache not initialized. Call InitCache() first")
+		utils.LogErrorWithLevel("fatal", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
 	}
 	return instance
 }
@@ -67,7 +69,7 @@ func GetInstance() *Cache {
 func getDragonFlyOptions() *redis.Options {
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatalf("unable to load config : %v", err)
+		utils.LogErrorWithLevel("fatal", utils.DragonflyFailedToLoadOptions.Type, utils.DragonflyFailedToLoadOptions.Code, utils.DragonflyFailedToLoadOptions.Msg, err)
 	}
 
 	address := fmt.Sprintf("%s:%s", cfg.DragonflyDB.Host, cfg.DragonflyDB.Port)

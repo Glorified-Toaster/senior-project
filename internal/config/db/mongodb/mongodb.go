@@ -3,13 +3,15 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 var (
@@ -48,7 +50,7 @@ func MongoConnect(uri string, dbName string) error {
 		// Get a handle for the database
 		Database = Client.Database(dbName)
 
-		log.Printf("Connected to MongoDB! Database : %s", dbName)
+		utils.LogInfo(utils.MongoIsConnected.Type, utils.MongoIsConnected.Msg, zap.String("database_name", dbName))
 	})
 	return err
 }
@@ -57,7 +59,12 @@ func MongoConnect(uri string, dbName string) error {
 func MongoDisconnect() error {
 	// check if client is initialized
 	if Client == nil {
-		log.Println("MongoDB client is not initialized.")
+		utils.LogErrorWithLevel("warn",
+			utils.MongoNotInitialized.Type,
+			utils.MongoNotInitialized.Code,
+			utils.MongoNotInitialized.Msg,
+			fmt.Errorf("no mongo client to be disconnected from"))
+
 		return nil // nil error since there's nothing to disconnect
 	}
 
@@ -72,14 +79,16 @@ func MongoDisconnect() error {
 	Client = nil
 	Database = nil
 
-	log.Println("Disconnected from MongoDB!")
+	utils.LogInfo(utils.MongoIsDisconnected.Type, utils.MongoIsDisconnected.Msg)
+
 	return nil
 }
 
 // GetCollection : retrieves a collection from the MongoDB database.
 func GetCollection(collectionName string) *mongo.Collection {
 	if Database == nil {
-		panic("Database is not initialized. Call MongoConnect() first.")
+		err := errors.New("database is not initialized. call MongoConnect() first")
+		utils.LogErrorWithLevel("panic", utils.MongoFailedToGetCollection.Type, utils.MongoFailedToGetCollection.Code, utils.MongoFailedToGetCollection.Msg, err)
 	}
 	return Database.Collection(collectionName)
 }

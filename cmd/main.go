@@ -106,10 +106,10 @@ func main() {
 	// initialize the server
 	srv := server.NewServer()
 
-	utils.LogInfo(utils.ServerStart.Type, utils.ServerStart.Msg, zap.String("server_address", net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port)))
+	utils.LogInfo(utils.ServerStartOK.Type, utils.ServerStartOK.Msg, zap.String("server_address", net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port)))
 
 	// start the server over TLS
-	srv.StartOverTLS(cfg.HTTPServer.CertFile, cfg.HTTPServer.KeyFile)
+	srv.StartOverTLS(cfg)
 }
 
 // getConfigPath : to get the path to the config file.

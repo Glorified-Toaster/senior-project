@@ -2,15 +2,7 @@
 package utils
 
 import (
-	"sync"
-
-	"github.com/Glorified-Toaster/senior-project/internal/config/logger"
 	"go.uber.org/zap"
-)
-
-var (
-	zlogger *zap.Logger
-	once    sync.Once
 )
 
 // error types
@@ -20,31 +12,11 @@ const (
 	InternalServerError string = "INTERNAL_ERROR" // for internal errors
 )
 
-// Info types
-const (
-	DatabaseInfo       string = "DATABASE_INFO"
-	CacheInfo          string = "CACHE_INFO"
-	InternalServerInfo string = "INTERNAL_INFO"
-)
-
 type Error struct {
 	Type string
 	Code string
 	Msg  string
 }
-
-type Info struct {
-	Type string
-	Msg  string
-}
-
-// info
-var (
-	ServerStart = Info{
-		InternalServerInfo,
-		"Starting the go server",
-	}
-)
 
 // errors
 var (
@@ -61,11 +33,29 @@ var (
 		"failed to disconnect from mongodb",
 	}
 
+	MongoNotInitialized = Error{
+		DatabaseError,
+		"MONGODB_NOT_INITIALIZED_ERROR",
+		"mongodb client is not initialized",
+	}
+
+	MongoFailedToGetCollection = Error{
+		DatabaseError,
+		"MONGODB_FAILED_TO_GET_COLLECTION_ERROR",
+		"failed to get collection",
+	}
+
 	// dragonfly errors
 	DragonflyFailedToInit = Error{
 		CacheError,
 		"DRAGONFLYDB_CONNECTION_ERROR",
 		"failed to init dragonflydb",
+	}
+
+	DragonflyFailedToLoadOptions = Error{
+		CacheError,
+		"DRAGONFLYDB_CONFIG_LOAD_ERROR",
+		"unable to load dragonfly config options",
 	}
 
 	// internal errors
@@ -92,14 +82,31 @@ var (
 		"PROGRAM_PATH_LOAD_ERROR",
 		"failed to get executable path",
 	}
-)
 
-// InitUtils : get logger (once)
-func InitUtils() {
-	once.Do(func() {
-		zlogger = logger.GetLogger()
-	})
-}
+	FailedToGenerateTLSCert = Error{
+		InternalServerError,
+		"FAILED_TO_GENERATE_TLS_ERROR",
+		"failed to generate self-signed TLS certificate",
+	}
+
+	FailedToStartWithTLS = Error{
+		InternalServerError,
+		"FAILED_TO_START_WITH_TLS_ERROR",
+		"unable to use TLS with HTTPS/2, using HTTP/1.1 instead",
+	}
+
+	FailedToStartServer = Error{
+		InternalServerError,
+		"FAILED_TO_START_SERVER_ERROR",
+		"unable to start http server",
+	}
+
+	FailedToShutdownServer = Error{
+		InternalServerError,
+		"FAILED_TO_SHUTDOWN_SERVER_ERROR",
+		"failed to shutdown the http server",
+	}
+)
 
 // LogErrorWithLevel : log error and select the level of that error
 func LogErrorWithLevel(level, errorType, errorCode, msg string, err error, fields ...zap.Field) {
@@ -114,21 +121,21 @@ func LogErrorWithLevel(level, errorType, errorCode, msg string, err error, field
 	allFields := append(mandatoryFields, fields...)
 
 	switch level {
+
 	case "fatal":
 		zlogger.Fatal(errorType, allFields...)
+
 	case "error":
 		zlogger.Error(errorType, allFields...)
+
 	case "warn":
 		zlogger.Warn(errorType, allFields...)
-	}
-}
 
-// LogInfo : log Info (very useful comment i guess...)
-func LogInfo(infoType, msg string, fields ...zap.Field) {
-	mandatoryFields := []zap.Field{
-		zap.String("info_msg", msg),
-	}
+	case "panic":
+		zlogger.Panic(errorType, allFields...)
 
-	allFields := append(mandatoryFields, fields...)
-	zlogger.Info(infoType, allFields...)
+	default:
+		zlogger.Error(errorType, allFields...)
+
+	}
 }

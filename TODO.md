@@ -13,7 +13,7 @@
 - [x] connect to DragonflyDB
 - [x] implement HTTP/2 pusher (push exists in gin)
 - [] implement storing and caching logic
-- [] use zap package to log as json and lamberjack to rotate logs
+- [x] use zap package to log as json and lamberjack to rotate logs
 - [] implement jwt auth system
 - [] auth middleware based on jwt
 - [] website routes
@@ -29,7 +29,7 @@
 - [] connect the frontend with the backend
 - [] strip the code using templ & compile
 - [] connect grafana to HTMX dashboard via HTMX WS extention
-- [] local storage 
+- [] local storage
 
 ## Deploy
 

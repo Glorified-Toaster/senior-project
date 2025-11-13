@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
@@ -41,7 +42,12 @@ func GetLogger() *zap.Logger {
 // Sync : calls the underlying Core's Sync method, flushing any buffered log entries.
 func Sync() error {
 	if ZapLogger != nil {
-		return ZapLogger.Sync()
+		err := ZapLogger.Sync()
+		// ignore stdout error because stdout doesn't support sync anyway.
+		if err != nil && strings.Contains(err.Error(), "invalid argument") {
+			return nil
+		}
+		return err
 	}
 	return nil
 }
