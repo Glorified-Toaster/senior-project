@@ -1,9 +1,0 @@
-{"L":"INFO","T":"2025-11-13T16:51:41.471+0300","C":"logger/logger.go:109","M":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
-{"L":"INFO","T":"2025-11-13T16:51:41.475+0300","C":"utils/infos.go:76","M":"DATABASE_INFO","info_msg":"Connected to mongodb successfully...","database_name":"senior_project"}
-{"L":"INFO","T":"2025-11-13T16:51:41.476+0300","C":"utils/infos.go:76","M":"CACHE_INFO","info_msg":"Connected to dragonflydb successfully..."}
-{"L":"INFO","T":"2025-11-13T16:51:41.476+0300","C":"utils/infos.go:76","M":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
-{"L":"INFO","T":"2025-11-13T16:51:41.477+0300","C":"utils/infos.go:76","M":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
-{"L":"INFO","T":"2025-11-13T16:52:00.867+0300","C":"utils/infos.go:76","M":"INTERNAL_INFO","info_msg":"Shutdown signal recived","signal_type":"interrupt"}
-{"L":"INFO","T":"2025-11-13T16:52:00.867+0300","C":"utils/infos.go:76","M":"INTERNAL_INFO","info_msg":"Shutting down the server..."}
-{"L":"INFO","T":"2025-11-13T16:52:00.868+0300","C":"utils/infos.go:76","M":"INTERNAL_INFO","info_msg":"HTTP server shutdown gracefully..."}
-{"L":"INFO","T":"2025-11-13T16:52:00.869+0300","C":"utils/infos.go:76","M":"DATABASE_INFO","info_msg":"Disconnected from mangodb successfully..."}
