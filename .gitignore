@@ -1,2 +1,4 @@
 certs/
 tmp/
+logs/*.log
+main

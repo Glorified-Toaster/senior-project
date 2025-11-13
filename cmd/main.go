@@ -10,7 +10,10 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/config"
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/cache"
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/mongodb"
+	"github.com/Glorified-Toaster/senior-project/internal/config/logger"
 	"github.com/Glorified-Toaster/senior-project/internal/server"
+	"github.com/Glorified-Toaster/senior-project/internal/utils"
+	"go.uber.org/zap"
 )
 
 // --- AI GEN ---//
@@ -23,13 +26,27 @@ type User struct {
 // --- AI GEN ---//
 
 func main() {
-	// loading the env variables
+	// loading the YAML config variables
 	config.Init(getConfigPath(), "config")
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatalf("failed to get config: %v", err)
+		log.Fatalf("[%s]-%s : %v", utils.ConfigFailedToLoad.Code, utils.ConfigFailedToLoad.Msg, err)
 	}
+
+	// init zap logger
+	err = logger.InitLogger(*cfg)
+	if err != nil {
+		log.Fatalf("[%s]-%s : %v", utils.LoggerFailedToInit.Code, utils.LoggerFailedToInit.Msg, err)
+	}
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Printf("[%s]-%s : %v", utils.LoggerFailedToSync.Code, utils.LoggerFailedToSync.Msg, err)
+		}
+	}()
+
+	// get logger for the utils package
+	utils.InitUtils()
 
 	// connect to MongoDB
 	if cfg.MongoDB != nil {
@@ -42,18 +59,18 @@ func main() {
 		)
 
 		if err := mongodb.MongoConnect(uri, cfg.MongoDB.Database); err != nil {
-			log.Fatalf("failed to connect to MongoDB: %v", err)
+			utils.LogErrorWithLevel("fatal", utils.MongoFailedToConnect.Type, utils.MongoFailedToConnect.Code, utils.MongoFailedToConnect.Msg, err)
 		}
 		defer func() {
 			if err := mongodb.MongoDisconnect(); err != nil {
-				log.Printf("error disconnecting from MongoDB: %v", err)
+				utils.LogErrorWithLevel("warn", utils.MongoFailedToDisconnect.Type, utils.MongoFailedToDisconnect.Code, utils.MongoFailedToDisconnect.Msg, err)
 			}
 		}()
 	}
 
 	cache, err := cache.InitCache("myapp")
 	if err != nil {
-		log.Fatal(err)
+		utils.LogErrorWithLevel("error", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
 	}
 
 	// --- AI GEN ---//
@@ -89,7 +106,8 @@ func main() {
 	// initialize the server
 	srv := server.NewServer()
 
-	log.Println("Starting server on " + net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port) + "...")
+	utils.LogInfo(utils.ServerStart.Type, utils.ServerStart.Msg, zap.String("server_address", net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port)))
+
 	// start the server over TLS
 	srv.StartOverTLS(cfg.HTTPServer.CertFile, cfg.HTTPServer.KeyFile)
 }
@@ -103,7 +121,7 @@ func getConfigPath() string {
 func getProgramPath() string {
 	exe, err := os.Executable()
 	if err != nil {
-		log.Fatalf("failed to get executable path: %v", err)
+		utils.LogErrorWithLevel("fatal", utils.FailedToGetProgramPath.Type, utils.FailedToGetProgramPath.Code, utils.FailedToGetProgramPath.Msg, err)
 	}
 	return filepath.Dir(exe)
 }

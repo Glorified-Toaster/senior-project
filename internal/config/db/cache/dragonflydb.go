@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
 	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9/maintnotifications"
 )
 
 var (
@@ -74,6 +75,12 @@ func getDragonFlyOptions() *redis.Options {
 		Addr:     address,
 		Password: cfg.DragonflyDB.Password,
 		DB:       cfg.DragonflyDB.DB,
+
+		// disable MAINT_NOTIFICATIONS which is a warning system designed to send a "heads-up" message
+		// to your application before the database has to restart for a maintenance event.
+		MaintNotificationsConfig: &maintnotifications.Config{
+			Mode: maintnotifications.ModeDisabled,
+		},
 	}
 }
 

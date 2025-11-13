@@ -21,6 +21,8 @@ type Config struct {
 	HTTPServer  *HTTPServerConf  `yaml:"http_server" mapstructure:"http_server"`
 	MongoDB     *MongoDBConf     `yaml:"mongodb" mapstructure:"mongodb"`
 	DragonflyDB *DragonflyDBConf `yaml:"dragonflydb" mapstructure:"dragonflydb"`
+	ZapLogger   *ZapLoggerConf   `yaml:"zap_logger" mapstructure:"zap_logger"`
+	Lumberjack  *LumberjackConf  `yaml:"lumberjack" mapstructure:"lumberjack"`
 }
 
 type HTTPServerConf struct {
@@ -44,6 +46,21 @@ type DragonflyDBConf struct {
 	Port     string `yaml:"port" mapstructure:"port"`
 	Password string `yaml:"password" mapstructure:"password"`
 	DB       int    `yaml:"db" mapstructure:"db"`
+}
+
+type ZapLoggerConf struct {
+	Development bool   `yaml:"development" mapstructure:"development"`
+	Level       string `yaml:"level" mapstructure:"level"`
+	Encoding    string `yaml:"encoding" mapstructure:"encoding"`
+	DirPath     string `yaml:"log_dir" mapstructure:"log_dir"`
+	FileName    string `yaml:"log_file" mapstructure:"log_file"`
+}
+
+type LumberjackConf struct {
+	MaxSize    int  `yaml:"max_size" mapstructure:"max_size"`
+	MaxAge     int  `yaml:"max_age" mapstructure:"max_age"`
+	MaxBackups int  `yaml:"max_backups" mapstructure:"max_backups"`
+	Compress   bool `yaml:"compress" mapstructure:"compress"`
 }
 
 // Init : to initialize the configuration loading process.
@@ -123,4 +140,11 @@ func setDefaultConfig(viperInst *viper.Viper) {
 	viperInst.SetDefault("dragonflydb.host", "localhost")
 	viperInst.SetDefault("dragonflydb.port", "6379")
 	viperInst.SetDefault("dragonflydb.db", 0)
+
+	// Zap default values
+	viperInst.SetDefault("zap_logger.log_dir", "./logs")
+	viperInst.SetDefault("zap_logger.development", false)
+	viperInst.SetDefault("zap_logger.level", "debug")
+	viperInst.SetDefault("zap_logger.encoding", "json")
+	viperInst.SetDefault("zap_logger.log_file", "app.log")
 }

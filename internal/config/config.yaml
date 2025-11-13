@@ -11,3 +11,18 @@ mongodb:
   database: "senior_project"
   # username: ""  # Take it or leave it
   # password: ""  # same here
+
+dragonflydb:
+
+zap_logger:
+  development: true # development : true , production : false
+  level: "debug"
+  encoding: "json"
+  log_dir: "./logs"
+  log_file: "app.log"
+
+lumberjack:
+  max_size: 100 #100MB
+  max_backups: 10
+  max_age: 30 #30 days
+  compress: true # useing Gzip
