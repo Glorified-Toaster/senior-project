@@ -58,6 +58,18 @@ var (
 		"unable to load dragonfly config options",
 	}
 
+	DragonflyFailedToWriteCache = Error{
+		CacheError,
+		"FAILED_TO_WRITE_CACHE_ERROR",
+		"unable to write cache",
+	}
+
+	DragonflyFailedToDeleteCache = Error{
+		CacheError,
+		"FAILED_TO_DELETE_CACHE_ERROR",
+		"failed to delete cache",
+	}
+
 	// internal errors
 	ConfigFailedToLoad = Error{
 		InternalServerError,

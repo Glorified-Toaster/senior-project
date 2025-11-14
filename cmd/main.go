@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
@@ -11,19 +12,13 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/cache"
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/mongodb"
 	"github.com/Glorified-Toaster/senior-project/internal/config/logger"
+	"github.com/Glorified-Toaster/senior-project/internal/models"
+	"github.com/Glorified-Toaster/senior-project/internal/repository"
 	"github.com/Glorified-Toaster/senior-project/internal/server"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
-
-// --- AI GEN ---//
-type User struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-// --- AI GEN ---//
 
 func main() {
 	// loading the YAML config variables
@@ -59,11 +54,21 @@ func main() {
 		)
 
 		if err := mongodb.MongoConnect(uri, cfg.MongoDB.Database); err != nil {
-			utils.LogErrorWithLevel("fatal", utils.MongoFailedToConnect.Type, utils.MongoFailedToConnect.Code, utils.MongoFailedToConnect.Msg, err)
+			utils.LogErrorWithLevel("fatal",
+				utils.MongoFailedToConnect.Type,
+				utils.MongoFailedToConnect.Code,
+				utils.MongoFailedToConnect.Msg,
+				err,
+			)
 		}
 		defer func() {
 			if err := mongodb.MongoDisconnect(); err != nil {
-				utils.LogErrorWithLevel("warn", utils.MongoFailedToDisconnect.Type, utils.MongoFailedToDisconnect.Code, utils.MongoFailedToDisconnect.Msg, err)
+				utils.LogErrorWithLevel("warn",
+					utils.MongoFailedToDisconnect.Type,
+					utils.MongoFailedToDisconnect.Code,
+					utils.MongoFailedToDisconnect.Msg,
+					err,
+				)
 			}
 		}()
 	}
@@ -73,35 +78,15 @@ func main() {
 		utils.LogErrorWithLevel("error", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
 	}
 
-	// --- AI GEN ---//
-	if err := cache.HealthCheck(); err != nil {
-		log.Printf("Cache health check failed: %v", err)
-	} else {
-		log.Println("Cache health check is : OK")
-	}
+	// ---- Test ----
 
-	// Example usage
-	user := User{
-		ID:    "123",
-		Name:  "John Doe",
-		Email: "john@example.com",
-	}
+	repo := repository.NewUserRepo(mongodb.Database, cache)
 
-	// Set value
-	err = cache.Set("user:123", user, 10*time.Minute)
-	if err != nil {
-		log.Printf("Error setting cache: %v", err)
-	}
+	user := createExampleUser()
+	repo.CreateUser(context.Background(), user)
+	repo.GetUserByID(context.Background(), "691745daf91a3e3357b035e2")
 
-	// Get value
-	var retrievedUser User
-	err = cache.Get("user:123", &retrievedUser)
-	if err != nil {
-		log.Printf("Error getting cache: %v", err)
-	} else {
-		log.Printf("Retrieved user: %+v", retrievedUser)
-	}
-	// --- AI GEN ---//
+	// ---- Test ----
 
 	// initialize the server
 	srv := server.NewServer()
@@ -125,3 +110,35 @@ func getProgramPath() string {
 	}
 	return filepath.Dir(exe)
 }
+
+// ---- Test ----
+
+func createExampleUser() *models.User {
+	id := primitive.NewObjectID()
+
+	firstName := "John"
+	lastName := "Doe"
+	password := "securePassword123"
+	email := "john.doe@example.com"
+	phone := "+1-555-0123"
+	token := "auth_token_abc123"
+	role := "USER"
+	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+	return &models.User{
+		ID:          id,
+		FirstName:   &firstName,
+		LastName:    &lastName,
+		Password:    &password,
+		Email:       &email,
+		Phone:       &phone,
+		Token:       &token,
+		Role:        &role,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		UserID:      id.Hex(),
+		AccessToken: accessToken,
+	}
+}
+
+// ---- Test ----

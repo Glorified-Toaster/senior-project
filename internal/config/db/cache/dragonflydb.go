@@ -92,7 +92,51 @@ func (c *Cache) HealthCheck() error {
 	return err
 }
 
-// --- AI GEN --- //
+// GetFromCacheOrFetchDB implements cache-aside pattern using provided ctx
+func (c *Cache) GetFromCacheOrFetchDB(ctx context.Context, key string, dest interface{}, fetchFromDB func() (interface{}, error), expDate time.Duration) error {
+	// try cache with provided ctx
+	if err := c.GetWithContext(ctx, key, dest); err == nil {
+		// cache hit
+		return nil
+	} else {
+		// If GetWithContext returned an error other than redis.Nil, log it and continue to fetch from DB
+		if err != redis.Nil {
+			utils.LogErrorWithLevel("warn",
+				utils.DragonflyFailedToWriteCache.Type,
+				utils.DragonflyFailedToWriteCache.Code,
+				"cache read failed, falling back to DB",
+				err,
+			)
+		}
+	}
+
+	// cache miss -> fetch from DB
+	data, err := fetchFromDB()
+	if err != nil {
+		return fmt.Errorf("failed to fetch data from DB: %w", err)
+	}
+
+	// attempt to write to cache (best-effort)
+	if err := c.Set(key, data, expDate); err != nil {
+		utils.LogErrorWithLevel("warn",
+			utils.DragonflyFailedToWriteCache.Type,
+			utils.DragonflyFailedToWriteCache.Code,
+			utils.DragonflyFailedToWriteCache.Msg,
+			err,
+		)
+	}
+
+	// marshal/unmarshal into dest
+	mData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal db result: %w", err)
+	}
+	if err := json.Unmarshal(mData, dest); err != nil {
+		return fmt.Errorf("failed to unmarshal into dest: %w", err)
+	}
+
+	return nil
+}
 
 // buildKey adds prefix to the key
 func (c *Cache) buildKey(key string) string {
@@ -102,7 +146,7 @@ func (c *Cache) buildKey(key string) string {
 	return fmt.Sprintf("%s:%s", c.prefix, key)
 }
 
-// Set stores a value with expiration
+// Set : stores a value with expiration
 func (c *Cache) Set(key string, value interface{}, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -112,7 +156,7 @@ func (c *Cache) Set(key string, value interface{}, expiration time.Duration) err
 	return c.client.Set(c.ctx, c.buildKey(key), data, expiration).Err()
 }
 
-// Get retrieves a value
+// Get : retrieves a value
 func (c *Cache) Get(key string, dest interface{}) error {
 	data, err := c.client.Get(c.ctx, c.buildKey(key)).Bytes()
 	if err != nil {
@@ -125,4 +169,48 @@ func (c *Cache) Get(key string, dest interface{}) error {
 	return json.Unmarshal(data, dest)
 }
 
-// --- AI GEN --- //
+// GetWithContext : retrieves a value with context
+func (c *Cache) GetWithContext(ctx context.Context, key string, dest interface{}) error {
+	data, err := c.client.Get(ctx, c.buildKey(key)).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return fmt.Errorf("key not found: %s", key)
+		}
+		return err
+	}
+
+	return json.Unmarshal(data, dest)
+}
+
+// Delete removes a single key from cache
+func (c *Cache) Delete(key string) error {
+	return c.client.Del(c.ctx, c.buildKey(key)).Err()
+}
+
+// Invalidate removes multiple keys at once
+func (c *Cache) Invalidate(keys ...string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	builtKeys := make([]string, len(keys))
+	for i, key := range keys {
+		builtKeys[i] = c.buildKey(key)
+	}
+	return c.client.Del(c.ctx, builtKeys...).Err()
+}
+
+// Flush : clears all keys
+func (c *Cache) Flush() error {
+	if c.prefix == "" {
+		return c.client.FlushDB(c.ctx).Err()
+	}
+	// atomic deletion using lua script
+	script := `
+        local keys = redis.call('KEYS', ARGV[1])
+        if #keys > 0 then
+            return redis.call('DEL', unpack(keys))
+        end
+        return 0
+    `
+	return c.client.Eval(c.ctx, script, []string{}, fmt.Sprintf("%s:*", c.prefix)).Err()
+}
