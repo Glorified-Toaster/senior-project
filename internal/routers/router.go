@@ -27,4 +27,5 @@ func (r *Router) GetHandler() http.Handler {
 
 func (r *Router) SetupRoutes() {
 	r.router.GET("/ping", controllers.Ping)
+	r.router.POST("/signup", controllers.Signup())
 }

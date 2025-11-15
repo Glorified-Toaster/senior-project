@@ -1,3 +1,4 @@
+// Package repository
 package repository
 
 import (
@@ -14,31 +15,33 @@ import (
 )
 
 type UserRepository struct {
+	ctx        context.Context
 	collection *mongo.Collection
 	cache      *cache.Cache
 }
 
 // NewUserRepo : constructor
-func NewUserRepo(database *mongo.Database, c *cache.Cache) *UserRepository {
+func NewUserRepo(ctx context.Context, database *mongo.Database, c *cache.Cache) *UserRepository {
 	return &UserRepository{
-		collection: database.Collection("users"),
+		ctx:        ctx,
+		collection: database.Collection("students"),
 		cache:      c,
 	}
 }
 
-// GetUserByID implements cache-aside pattern
-func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*models.User, error) {
+// GetUserByID : implements cache-aside pattern
+func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
 	var user models.User
 	cacheKey := fmt.Sprintf("user:%s", userID)
 
 	// If cache isn't configured, read directly from DB
 	if r.cache == nil {
-		data, err := r.fetchUserFromDB(ctx, userID)
+		data, err := r.fetchUserFromDB(r.ctx, userID)
 		if err != nil {
 			return nil, err
 		}
-		if u, ok := data.(models.User); ok {
-			return &u, nil
+		if user, ok := data.(models.User); ok {
+			return &user, nil
 		}
 		// defensive: try to convert if underlying type differs
 		return nil, fmt.Errorf("unexpected user type returned from DB")
@@ -46,12 +49,12 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*model
 
 	// Cache-aside: try cache, then DB
 	err := r.cache.GetFromCacheOrFetchDB(
-		ctx,
+		r.ctx,
 		cacheKey,
 		&user,
-		func() (interface{}, error) {
+		func() (any, error) {
 			// This function is called on cache miss
-			return r.fetchUserFromDB(ctx, userID)
+			return r.fetchUserFromDB(r.ctx, userID)
 		},
 		15*time.Minute, // Cache for 15 minutes
 	)
@@ -61,7 +64,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*model
 	return &user, nil
 }
 
-func (r *UserRepository) fetchUserFromDB(ctx context.Context, userID string) (interface{}, error) {
+func (r *UserRepository) fetchUserFromDB(ctx context.Context, userID string) (any, error) {
 	var user models.User
 
 	// if userID is a hex ObjectID string, you can query _id
@@ -138,35 +141,35 @@ func (r *UserRepository) DeleteUser(ctx context.Context, userID string) error {
 
 // CreateUser inserts a new user document and optionally writes it to cache.
 // It sets CreatedAt, UpdatedAt and a user_id if missing.
-func (r *UserRepository) CreateUser(ctx context.Context, u *models.User) (string, error) {
-	if u == nil {
+func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (string, error) {
+	if user == nil {
 		return "", fmt.Errorf("nil user provided")
 	}
 
 	now := time.Now()
-	u.UpdatedAt = now
-	u.CreatedAt = now
+	user.UpdatedAt = now
+	user.CreatedAt = now
 
 	// ensure an ObjectID
-	if u.ID.IsZero() {
-		u.ID = primitive.NewObjectID()
+	if user.ID.IsZero() {
+		user.ID = primitive.NewObjectID()
 	}
 
 	// ensure a user_id string (use hex of ObjectID if not set)
-	if u.UserID == "" {
-		u.UserID = u.ID.Hex()
+	if user.UserID == "" {
+		user.UserID = user.ID.Hex()
 	}
 
 	// insert into MongoDB
-	res, err := r.collection.InsertOne(ctx, u)
+	res, err := r.collection.InsertOne(ctx, user)
 	if err != nil {
 		return "", err
 	}
 
 	// attempt to write to cache (best-effort)
 	if r.cache != nil {
-		cacheKey := fmt.Sprintf("user:%s", u.UserID)
-		if serr := r.cache.Set(cacheKey, u, 15*time.Minute); serr != nil {
+		cacheKey := fmt.Sprintf("user:%s", user.UserID)
+		if serr := r.cache.Set(cacheKey, user, 15*time.Minute); serr != nil {
 			utils.LogErrorWithLevel("warn",
 				utils.DragonflyFailedToWriteCache.Type,
 				utils.DragonflyFailedToWriteCache.Code,
@@ -179,5 +182,5 @@ func (r *UserRepository) CreateUser(ctx context.Context, u *models.User) (string
 	if oid, ok := res.InsertedID.(primitive.ObjectID); ok {
 		return oid.Hex(), nil
 	}
-	return u.UserID, nil
+	return user.UserID, nil
 }

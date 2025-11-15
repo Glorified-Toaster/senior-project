@@ -22,7 +22,7 @@ zap_logger:
   log_file: "app.log"
 
 lumberjack:
-  max_size: 1 #100MB
+  max_size: 100 #100MB
   max_backups: 10
   max_age: 30 #30 days
   compress: true # useing Gzip
