@@ -75,7 +75,7 @@ func main() {
 	// init cache
 	cache, err := cache.InitCache("myapp")
 	if err != nil {
-		utils.LogErrorWithLevel("error", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
+		utils.LogErrorWithLevel("fatal", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
 	}
 	// init the user repo
 	repo := repository.NewUserRepo(context.Background(), mongodb.Database, cache)

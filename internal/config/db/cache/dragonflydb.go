@@ -49,11 +49,16 @@ func InitCache(prefix string) (*Cache, error) {
 		// return client
 		instance = &Cache{
 			client: client,
-			ctx:    ctx,
+			ctx:    context.Background(),
 			prefix: prefix,
 		}
 	})
-	return instance, initErr
+
+	if initErr != nil {
+		return nil, initErr
+	}
+
+	return instance, nil
 }
 
 // GetInstance returns the singleton cache instance
