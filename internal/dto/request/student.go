@@ -1,6 +1,6 @@
 package request
 
-type StudentRequest struct {
+type CreateStudentRequest struct {
 	FirstName  string `json:"first_name" validate:"required,min=2,max=32"`
 	LastName   string `json:"last_name" validate:"required,min=2,max=32"`
 	Department string `json:"department,omitempty"`

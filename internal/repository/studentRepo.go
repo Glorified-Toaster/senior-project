@@ -37,7 +37,7 @@ func (r *StudentRepository) CreateStudent(ctx context.Context, student *models.S
 
 	// validate password
 	if err := helpers.ValidatePassword(password); err != nil {
-		return "", fmt.Errorf("invalid password format : %w", err)
+		return "", fmt.Errorf("password validate error : %w", err)
 	}
 
 	// hash password
@@ -55,12 +55,21 @@ func (r *StudentRepository) CreateStudent(ctx context.Context, student *models.S
 	student.UpdatedAt = timeNow
 	student.IsActive = true
 	student.PasswordHash = hashedPassword
+	// init an empty slice
+	student.RequiredExams = []primitive.ObjectID{}
+	student.CompletedExams = []models.CompletedExam{}
 
 	// add to mongo
-	_, err = r.collection.InsertOne(ctx, student)
+	result, err := r.collection.InsertOne(ctx, student)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return "", fmt.Errorf("student with this ID is already exsists")
+		}
 		return "", err
 	}
+
+	//
+	studentID := result.InsertedID.(primitive.ObjectID).Hex()
 
 	// set to cache
 	if r.cache != nil {
@@ -75,7 +84,7 @@ func (r *StudentRepository) CreateStudent(ctx context.Context, student *models.S
 		}
 	}
 
-	return student.ID.Hex(), nil
+	return studentID, nil
 }
 
 func (r *StudentRepository) fetchStudentByEmailFromDB(ctx context.Context, email string) (*models.Student, error) {

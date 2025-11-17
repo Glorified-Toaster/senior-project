@@ -78,11 +78,11 @@ func main() {
 		utils.LogErrorWithLevel("fatal", utils.DragonflyFailedToInit.Type, utils.DragonflyFailedToInit.Code, utils.DragonflyFailedToInit.Msg, err)
 	}
 	// init the user repo
-	repo := repository.NewUserRepo(context.Background(), mongodb.Database, cache)
+	studentRepo := repository.NewStudentRepo(context.Background(), mongodb.Database, cache)
 	// init validator
 	validate := validator.New()
 	// pass cache, repo , validator to controllers
-	controllers.NewControllers(validate, *repo, *cache)
+	controllers.NewControllers(validate, *studentRepo, *cache)
 
 	// initialize the server
 	srv := server.NewServer()
