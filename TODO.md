@@ -12,12 +12,17 @@
 - [x] connect to MongoDB
 - [x] connect to DragonflyDB
 - [x] implement HTTP/2 pusher (push exists in gin)
-- [] implement storing and caching logic
+- [x] implement storing and caching logic
 - [x] use zap package to log as json and lamberjack to rotate logs
-- [] implement jwt auth system
-- [] auth middleware based on jwt
+- [x] implement jwt auth system
+- [x] auth middleware based on jwt
+- [] add admin only middleware
 - [] website routes
+- [] student route
+- [] teacher route
+- [] admin route
 - [] website handlers
+- [] toggle isActive
 
 ## Frontend
 

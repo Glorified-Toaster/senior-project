@@ -98,7 +98,7 @@ func (c *Cache) HealthCheck() error {
 }
 
 // GetFromCacheOrFetchDB implements cache-aside pattern using provided ctx
-func (c *Cache) GetFromCacheOrFetchDB(ctx context.Context, key string, dest interface{}, fetchFromDB func() (interface{}, error), expDate time.Duration) error {
+func (c *Cache) GetFromCacheOrFetchDB(ctx context.Context, key string, dest any, fetchFromDB func() (any, error), expDate time.Duration) error {
 	// try cache with provided ctx
 	if err := c.GetWithContext(ctx, key, dest); err == nil {
 		// cache hit
@@ -152,7 +152,7 @@ func (c *Cache) buildKey(key string) string {
 }
 
 // Set : stores a value with expiration
-func (c *Cache) Set(key string, value interface{}, expiration time.Duration) error {
+func (c *Cache) Set(key string, value any, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("failed to marshal value: %v", err)
@@ -162,7 +162,7 @@ func (c *Cache) Set(key string, value interface{}, expiration time.Duration) err
 }
 
 // Get : retrieves a value
-func (c *Cache) Get(key string, dest interface{}) error {
+func (c *Cache) Get(key string, dest any) error {
 	data, err := c.client.Get(c.ctx, c.buildKey(key)).Bytes()
 	if err != nil {
 		if err == redis.Nil {

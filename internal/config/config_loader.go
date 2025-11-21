@@ -23,6 +23,7 @@ type Config struct {
 	DragonflyDB *DragonflyDBConf `yaml:"dragonflydb" mapstructure:"dragonflydb"`
 	ZapLogger   *ZapLoggerConf   `yaml:"zap_logger" mapstructure:"zap_logger"`
 	Lumberjack  *LumberjackConf  `yaml:"lumberjack" mapstructure:"lumberjack"`
+	JWTAuth     *JWTAuthConf     `yaml:"jwt_auth" mapstructure:"jwt_auth"`
 }
 
 type HTTPServerConf struct {
@@ -61,6 +62,10 @@ type LumberjackConf struct {
 	MaxAge     int  `yaml:"max_age" mapstructure:"max_age"`
 	MaxBackups int  `yaml:"max_backups" mapstructure:"max_backups"`
 	Compress   bool `yaml:"compress" mapstructure:"compress"`
+}
+
+type JWTAuthConf struct {
+	Secret string `yaml:"secret" mapstructure:"secret"`
 }
 
 // Init : to initialize the configuration loading process.

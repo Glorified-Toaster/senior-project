@@ -11,7 +11,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func AuthenticationMiddleware() gin.HandlerFunc {
+type AuthMiddleware struct {
+	jwt *helpers.JWTAuth
+}
+
+func NewAuthMiddleware(jwt *helpers.JWTAuth) *AuthMiddleware {
+	return &AuthMiddleware{
+		jwt: jwt,
+	}
+}
+
+func (m *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// get client info for logging
 		clientIP := ctx.ClientIP()
@@ -66,7 +76,7 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := helpers.ValidateToken(tokenString)
+		claims, err := m.jwt.ValidateToken(tokenString)
 		if err != nil {
 			utils.LogErrorWithLevel("error", "HTTP_SERVER_ERROR", "TOKEN_VALIDATION_ERROR", "Token validation failed", err)
 

@@ -16,6 +16,7 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/config"
 	"github.com/Glorified-Toaster/senior-project/internal/controllers"
 	"github.com/Glorified-Toaster/senior-project/internal/helpers"
+	"github.com/Glorified-Toaster/senior-project/internal/middleware"
 	"github.com/Glorified-Toaster/senior-project/internal/routers"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"go.uber.org/zap"
@@ -29,9 +30,9 @@ type Server struct {
 }
 
 // NewServer creates and returns a new Server instance.
-func NewServer(ctrl *controllers.Controllers) *Server {
+func NewServer(ctrl *controllers.Controllers, authMiddleware *middleware.AuthMiddleware) *Server {
 	// initialize the router
-	router := routers.NewRouter(ctrl)
+	router := routers.NewRouter(ctrl, authMiddleware)
 	router.SetupRoutes()
 	return &Server{
 		router: router,

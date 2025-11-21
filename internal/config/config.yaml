@@ -26,3 +26,7 @@ lumberjack:
   max_backups: 10
   max_age: 30 #30 days
   compress: true # useing Gzip
+
+jwt_auth:
+  # 512 bit secret key
+  secret: "1e029cd5b07b984ef3afc2bea61a6730edd5cfdb5480d4016b386ea68b545dd54723ac7804aefc54958b4229fa78cb7f30eafe6e81bf2bf7719b9a1d37206911"

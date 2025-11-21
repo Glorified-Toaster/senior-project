@@ -1,15 +1,17 @@
 package helpers
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/Glorified-Toaster/senior-project/internal/config"
 	"github.com/golang-jwt/jwt"
 )
+
+type JWTAuth struct {
+	cfg *config.Config
+}
 
 type Claims struct {
 	FirstName  string `json:"first_name"`
@@ -25,38 +27,33 @@ type Claims struct {
 }
 
 var (
-	jwtKey []byte
 	// Define common errors
 	ErrInvalidToken = errors.New("invalid token")
 	ErrExpiredToken = errors.New("token has expired")
 	ErrMissingKey   = errors.New("JWT key not set")
 )
 
-// SetJWTKey sets the JWT secret key
-func SetJWTKey(key string) error {
-	if key == "" {
-		return errors.New("JWT key cannot be empty")
+func NewJWT(cfg *config.Config) *JWTAuth {
+	return &JWTAuth{
+		cfg: cfg,
 	}
-	jwtKey = []byte(key)
-	log.Printf("JWT Key set successfully (length: %d bytes)", len(jwtKey))
-	return nil
 }
 
-// GetJWTKey safely retrieves the JWT key
-func GetJWTKey() ([]byte, error) {
-	if len(jwtKey) == 0 {
-		return nil, ErrMissingKey
+func (j *JWTAuth) GetJWTSecret() (string, error) {
+	secret := j.cfg.JWTAuth.Secret
+	if secret == "" {
+		return "", fmt.Errorf("failed to get secret from config file, please add it to the yaml config")
 	}
-	return jwtKey, nil
+	return secret, nil
 }
 
 // ValidateToken validates and parses a JWT token
-func ValidateToken(tokenString string) (*Claims, error) {
+func (j *JWTAuth) ValidateToken(tokenString string) (*Claims, error) {
 	if tokenString == "" {
 		return nil, errors.New("token string is empty")
 	}
 
-	secretKey, err := GetJWTKey()
+	secretKey, err := j.GetJWTSecret()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +64,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return secretKey, nil
+		return []byte(secretKey), nil
 	})
 	if err != nil {
 		// Provide more specific error messages
@@ -96,8 +93,15 @@ func ValidateToken(tokenString string) (*Claims, error) {
 }
 
 // GenerateToken generates a new JWT token
-func GenerateToken(email, userID, role string, additionalClaims map[string]any) (string, error) {
-	secretKey, err := GetJWTKey()
+func (j *JWTAuth) GenerateToken(email, userID, role string, additionalClaims map[string]any) (string, error) {
+	if j == nil {
+		return "", fmt.Errorf("JWTAuth is nil - not properly initialized")
+	}
+	if j.cfg == nil {
+		return "", fmt.Errorf("config is nil in JWTAuth")
+	}
+
+	secretKey, err := j.GetJWTSecret()
 	if err != nil {
 		return "", err
 	}
@@ -139,7 +143,7 @@ func GenerateToken(email, userID, role string, additionalClaims map[string]any) 
 
 	// Create and sign the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString(secretKey)
+	signedToken, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -147,14 +151,9 @@ func GenerateToken(email, userID, role string, additionalClaims map[string]any) 
 	return signedToken, nil
 }
 
-// GenerateTokens generates both access and refresh tokens (if needed)
-func GenerateTokens(email, userID, role string, additionalClaims map[string]any) (accessToken string, err error) {
-	return GenerateToken(email, userID, role, additionalClaims)
-}
-
 // RefreshToken generates a new token with extended expiration
-func RefreshToken(oldToken string) (string, error) {
-	claims, err := ValidateToken(oldToken)
+func (j *JWTAuth) RefreshToken(oldToken string) (string, error) {
+	claims, err := j.ValidateToken(oldToken)
 	if err != nil {
 		return "", err
 	}
@@ -168,15 +167,5 @@ func RefreshToken(oldToken string) (string, error) {
 		"is_active":  claims.IsActive,
 	}
 
-	return GenerateToken(claims.Email, claims.UserID, claims.Role, additionalClaims)
-}
-
-func GenerateRandomKey() string {
-	bytes := make([]byte, 32)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		log.Fatal("Failed to generate key", err)
-	}
-
-	return base64.URLEncoding.EncodeToString(bytes)
+	return j.GenerateToken(claims.Email, claims.UserID, claims.Role, additionalClaims)
 }

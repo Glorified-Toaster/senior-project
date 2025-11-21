@@ -8,7 +8,6 @@ import (
 
 	"github.com/Glorified-Toaster/senior-project/internal/dto/request"
 	"github.com/Glorified-Toaster/senior-project/internal/dto/response"
-	"github.com/Glorified-Toaster/senior-project/internal/helpers"
 	"github.com/Glorified-Toaster/senior-project/internal/models"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -75,7 +74,7 @@ func (ctrl *Controllers) Signup() gin.HandlerFunc {
 			"is_active":  student.IsActive,
 		}
 
-		token, err := helpers.GenerateToken(student.Email, studentID, "student", additionalClaims)
+		token, err := ctrl.jwtAuth.GenerateToken(student.Email, studentID, "student", additionalClaims)
 		if err != nil {
 			utils.LogErrorWithLevel("error", "HTTP_SERVER", "JWT_GEN_FAILED_ERROR", "failed to generate JWT token after signup", err)
 
@@ -175,7 +174,7 @@ func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 			"is_active":  student.IsActive,
 		}
 
-		token, err := helpers.GenerateToken(student.Email, student.StudentID, "student", additionalClaims)
+		token, err := ctrl.jwtAuth.GenerateToken(student.Email, student.StudentID, "student", additionalClaims)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
 			return
