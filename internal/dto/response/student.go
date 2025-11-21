@@ -24,3 +24,14 @@ type PasswordResetResponse struct {
 	Message string `json:"message"`
 	Success bool   `json:"success"`
 }
+
+type StudentPasswordHashResponse struct {
+	PasswordHash string `bson:"password_hash" json:"-"`
+}
+
+type StudentAuthResponse struct {
+	StudentResponse *StudentResponse `json:"student"`
+	AccessToken     string           `json:"access_token"`
+	TokenType       string           `json:"token_type"`
+	ExpiresIn       int64            `json:"expires_in"`
+}

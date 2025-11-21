@@ -17,14 +17,12 @@ import (
 var cacheTTL int = 5 // mins
 
 type StudentRepository struct {
-	ctx        context.Context
 	collection *mongo.Collection
 	cache      *cache.Cache
 }
 
 func NewStudentRepo(ctx context.Context, database *mongo.Database, c *cache.Cache) *StudentRepository {
 	return &StudentRepository{
-		ctx:        ctx,
 		collection: database.Collection("students"),
 		cache:      c,
 	}
@@ -68,7 +66,6 @@ func (r *StudentRepository) CreateStudent(ctx context.Context, student *models.S
 		return "", err
 	}
 
-	//
 	studentID := result.InsertedID.(primitive.ObjectID).Hex()
 
 	// set to cache
@@ -87,29 +84,30 @@ func (r *StudentRepository) CreateStudent(ctx context.Context, student *models.S
 	return studentID, nil
 }
 
-func (r *StudentRepository) fetchStudentByEmailFromDB(ctx context.Context, email string) (*models.Student, error) {
+func (r *StudentRepository) fetchStudentFromDB(ctx context.Context, searchType, searchValue string) (*models.Student, error) {
 	var student models.Student
-	err := r.collection.FindOne(ctx, bson.M{"email": email}).Decode(&student)
+	err := r.collection.FindOne(ctx, bson.M{searchType: searchValue}).Decode(&student)
 	if err != nil {
 		return nil, err
 	}
 	return &student, nil
 }
 
-func (r *StudentRepository) GetStudentByEmail(email string) (*models.Student, error) {
+func (r *StudentRepository) GetStudentByEmail(ctx context.Context, email string) (*models.Student, error) {
 	var student models.Student
-	cacheKey := fmt.Sprintf("student:email:%s", email)
+
+	cacheKey := fmt.Sprintf("user:email:%s", email)
 
 	if r.cache == nil {
-		return r.fetchStudentByEmailFromDB(r.ctx, email)
+		return r.fetchStudentFromDB(ctx, "email", email)
 	}
 
 	err := r.cache.GetFromCacheOrFetchDB(
-		r.ctx,
+		ctx,
 		cacheKey,
 		&student,
 		func() (any, error) {
-			return r.fetchStudentByEmailFromDB(r.ctx, email)
+			return r.fetchStudentFromDB(ctx, "email", email)
 		},
 		time.Duration(cacheTTL)*time.Minute,
 	)
@@ -119,8 +117,44 @@ func (r *StudentRepository) GetStudentByEmail(email string) (*models.Student, er
 	return &student, nil
 }
 
-func (r *StudentRepository) VerifyPassword(ctx context.Context, email, plainPassword string) (*models.Student, error) {
-	student, err := r.GetStudentByEmail(email)
+func (r *StudentRepository) GetStudentByID(ctx context.Context, studentID string) (*models.Student, error) {
+	var student models.Student
+
+	cacheKey := fmt.Sprintf("user:%s", studentID)
+
+	if r.cache == nil {
+		return r.fetchStudentFromDB(ctx, "student_id", studentID)
+	}
+
+	err := r.cache.GetFromCacheOrFetchDB(
+		ctx,
+		cacheKey,
+		&student,
+		func() (any, error) {
+			return r.fetchStudentFromDB(ctx, "student_id", studentID)
+		},
+		time.Duration(cacheTTL)*time.Minute,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &student, nil
+}
+
+func (r *StudentRepository) GetStudentByIDFromBD(ctx context.Context, studentID string) (*models.Student, error) {
+	var student *models.Student
+	var err error
+
+	student, err = r.fetchStudentFromDB(ctx, "student_id", studentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get student by id from the database : %w", err)
+	}
+
+	return student, nil
+}
+
+func (r *StudentRepository) VerifyPassword(ctx context.Context, studentID, plainPassword string) (*models.Student, error) {
+	student, err := r.GetStudentByIDFromBD(ctx, studentID)
 	if err != nil {
 		return nil, fmt.Errorf("student not found: %w", err)
 	}
@@ -129,8 +163,14 @@ func (r *StudentRepository) VerifyPassword(ctx context.Context, email, plainPass
 		return nil, fmt.Errorf("account is deactivated")
 	}
 
+	hashedPassword := student.PasswordHash
+
+	if student.PasswordHash == "" {
+		return nil, fmt.Errorf("password not set for this account")
+	}
+
 	// Check the password
-	err = helpers.CheckWithHashedPassword(plainPassword, student.PasswordHash)
+	err = helpers.CheckWithHashedPassword(plainPassword, hashedPassword)
 	if err != nil {
 		return nil, fmt.Errorf("invalid password: %w", err)
 	}

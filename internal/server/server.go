@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Glorified-Toaster/senior-project/internal/config"
+	"github.com/Glorified-Toaster/senior-project/internal/controllers"
 	"github.com/Glorified-Toaster/senior-project/internal/helpers"
 	"github.com/Glorified-Toaster/senior-project/internal/routers"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
@@ -28,9 +29,9 @@ type Server struct {
 }
 
 // NewServer creates and returns a new Server instance.
-func NewServer() *Server {
+func NewServer(ctrl *controllers.Controllers) *Server {
 	// initialize the router
-	router := routers.NewRouter()
+	router := routers.NewRouter(ctrl)
 	router.SetupRoutes()
 	return &Server{
 		router: router,

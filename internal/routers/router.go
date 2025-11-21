@@ -5,20 +5,25 @@ import (
 	"net/http"
 
 	"github.com/Glorified-Toaster/senior-project/internal/controllers"
+	"github.com/Glorified-Toaster/senior-project/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
-	router *gin.Engine
+	router      *gin.Engine
+	controllers *controllers.Controllers
 }
 
-func NewRouter() *Router {
+func NewRouter(ctrl *controllers.Controllers) *Router {
 	// gin.SetMode(gin.ReleaseMode)
 
 	// use gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	return &Router{router: router}
+	return &Router{
+		router:      router,
+		controllers: ctrl,
+	}
 }
 
 func (r *Router) GetHandler() http.Handler {
@@ -26,6 +31,17 @@ func (r *Router) GetHandler() http.Handler {
 }
 
 func (r *Router) SetupRoutes() {
-	r.router.GET("/ping", controllers.Ping)
-	r.router.POST("/signup", controllers.Signup())
+	public := r.router.Group("/api/v1")
+
+	{
+		public.GET("/ping", controllers.Ping)
+		public.POST("/login", r.controllers.StudentLogin())
+		public.POST("/signup", r.controllers.Signup())
+	}
+
+	protected := r.router.Group("/api/v1")
+	protected.Use(middleware.AuthenticationMiddleware())
+	{
+		protected.GET("/student/:id", r.controllers.GetStudentByID())
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/mongodb"
 	"github.com/Glorified-Toaster/senior-project/internal/config/logger"
 	"github.com/Glorified-Toaster/senior-project/internal/controllers"
+	"github.com/Glorified-Toaster/senior-project/internal/helpers"
 	"github.com/Glorified-Toaster/senior-project/internal/repository"
 	"github.com/Glorified-Toaster/senior-project/internal/server"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
@@ -20,6 +21,11 @@ import (
 )
 
 func main() {
+	key := helpers.GenerateRandomKey()
+	err := helpers.SetJWTKey(key)
+	if err != nil {
+		utils.LogErrorWithLevel("error", "HTTP_SERVER", "JWT_KEY_SET_FAILED_ERROR", "unable to set the key for the JWT token", err)
+	}
 	// loading the YAML config variables
 	config.Init(getConfigPath(), "config")
 
@@ -82,10 +88,10 @@ func main() {
 	// init validator
 	validate := validator.New()
 	// pass cache, repo , validator to controllers
-	controllers.NewControllers(validate, *studentRepo, *cache)
+	ctrl := controllers.NewControllers(validate, *studentRepo, *cache)
 
 	// initialize the server
-	srv := server.NewServer()
+	srv := server.NewServer(ctrl)
 
 	utils.LogInfo(utils.ServerStartOK.Type, utils.ServerStartOK.Msg, zap.String("server_address", net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port)))
 

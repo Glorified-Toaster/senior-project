@@ -1,5 +1,5 @@
 http_server:
-  address: "localhost"
+  address: "192.168.0.163"
   port: "8443"
   tls_cert_dir: "certs"
   cert_file: "certs/cert.pem"
