@@ -4,3 +4,5 @@ tmp/
 /logs
 logs/**/*.log
 main
+node_modules/
+

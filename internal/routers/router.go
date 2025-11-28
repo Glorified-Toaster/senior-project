@@ -3,10 +3,13 @@ package routers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Glorified-Toaster/senior-project/internal/controllers"
 	"github.com/Glorified-Toaster/senior-project/internal/middleware"
+	"github.com/Glorified-Toaster/senior-project/internal/templates"
 	"github.com/gin-gonic/gin"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 type Router struct {
@@ -20,6 +23,12 @@ func NewRouter(ctrl *controllers.Controllers, authMiddleware *middleware.AuthMid
 
 	// use gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
+
+	router.Static("/web/static", "./web/static")
+
+	// using prometheus middleware
+	prometheus := ginprometheus.NewPrometheus("gin")
+	prometheus.Use(router)
 
 	return &Router{
 		router:         router,
@@ -36,9 +45,14 @@ func (r *Router) SetupRoutes() {
 	public := r.router.Group("/api/v1")
 
 	{
-		public.GET("/ping", controllers.Ping)
+		public.GET("/ping", controllers.Ping())
 		public.POST("/login", r.controllers.StudentLogin())
 		public.POST("/signup", r.controllers.Signup())
+		public.GET("/simple-content", func(c *gin.Context) {
+			currentTime := time.Now().Format("15:04:05")
+			templates.SimpleContent(currentTime).Render(c.Request.Context(), c.Writer)
+		})
+
 	}
 
 	protected := r.router.Group("/api/v1")

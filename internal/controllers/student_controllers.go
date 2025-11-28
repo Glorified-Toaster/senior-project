@@ -9,14 +9,17 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/dto/request"
 	"github.com/Glorified-Toaster/senior-project/internal/dto/response"
 	"github.com/Glorified-Toaster/senior-project/internal/models"
+	"github.com/Glorified-Toaster/senior-project/internal/templates"
+	templrenderer "github.com/Glorified-Toaster/senior-project/internal/templates/templ_renderer"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
-func Ping(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"msg": "pong",
-	})
+func Ping() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		render := templrenderer.New(ctx, http.StatusOK, templates.Test())
+		ctx.Render(http.StatusOK, render)
+	}
 }
 
 func (ctrl *Controllers) Signup() gin.HandlerFunc {

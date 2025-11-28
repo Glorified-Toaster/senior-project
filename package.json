@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.17",
+    "tailwindcss": "^4.1.17",
+    "tailwindcss-cli": "^0.1.2"
+  },
+  "scripts": {
+    "dev": "tailwindcss -i ./web/src/input.css -o ./web/static/css/output.css",
+    "build": "tailwindcss -i ./web/src/input.css -o ./web/static/css/output.css"
+  },
+  "devDependencies": {
+    "daisyui": "^5.5.5"
+  }
+}
