@@ -8,6 +8,7 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/controllers"
 	"github.com/Glorified-Toaster/senior-project/internal/middleware"
 	"github.com/Glorified-Toaster/senior-project/internal/templates"
+	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/gin-gonic/gin"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
@@ -52,7 +53,10 @@ func (r *Router) SetupRoutes() {
 			currentTime := time.Now().Format("15:04:05")
 			templates.SimpleContent(currentTime).Render(c.Request.Context(), c.Writer)
 		})
-
+		public.GET("/login", func(ctx *gin.Context) {
+			render := utils.NewRender(ctx, http.StatusOK, templates.LoginPage())
+			ctx.Render(http.StatusOK, render)
+		})
 	}
 
 	protected := r.router.Group("/api/v1")

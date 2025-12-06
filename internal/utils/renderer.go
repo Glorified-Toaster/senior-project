@@ -1,4 +1,4 @@
-package templrenderer
+package utils
 
 import (
 	"context"
@@ -29,7 +29,7 @@ func (r *HTMLTemplRenderer) Instance(s string, d any) render.Render {
 	}
 }
 
-func New(ctx context.Context, status int, component templ.Component) *Renderer {
+func NewRender(ctx context.Context, status int, component templ.Component) *Renderer {
 	return &Renderer{
 		Ctx:       ctx,
 		Status:    status,

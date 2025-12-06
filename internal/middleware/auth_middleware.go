@@ -35,9 +35,10 @@ func (m *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 			zap.String("path", path))
 
 		// getting the header from the context
-		authHeader := ctx.GetHeader("Authorization")
+		authHeader, err := ctx.Cookie("auth_token")
 
 		if authHeader == "" {
+			ctx.Redirect(http.StatusMovedPermanently, "/api/v1/login")
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"error":   "authorization header required",
 				"code":    "MISSING_AUTH_HEADER",

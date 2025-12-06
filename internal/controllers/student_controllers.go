@@ -3,21 +3,19 @@ package controllers
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Glorified-Toaster/senior-project/internal/dto/request"
 	"github.com/Glorified-Toaster/senior-project/internal/dto/response"
 	"github.com/Glorified-Toaster/senior-project/internal/models"
 	"github.com/Glorified-Toaster/senior-project/internal/templates"
-	templrenderer "github.com/Glorified-Toaster/senior-project/internal/templates/templ_renderer"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func Ping() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		render := templrenderer.New(ctx, http.StatusOK, templates.Test())
+		render := utils.NewRender(ctx, http.StatusOK, templates.Test())
 		ctx.Render(http.StatusOK, render)
 	}
 }
@@ -153,15 +151,18 @@ func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 		c, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
-		var loginRequest *request.StudentLoginRequest
+		// var loginRequest *request.StudentLoginRequest
+		//
+		// if err := ctx.BindJSON(&loginRequest); err != nil {
+		// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+		// 	return
+		// }
 
-		if err := ctx.BindJSON(&loginRequest); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
-			return
-		}
+		// studentID := loginRequest.StudentID
+		// password := strings.TrimSpace(loginRequest.Password)
 
-		studentID := loginRequest.StudentID
-		password := strings.TrimSpace(loginRequest.Password)
+		studentID := ctx.PostForm("student_id")
+		password := ctx.PostForm("password")
 
 		student, err := ctrl.StudentRepo.VerifyPassword(c, studentID, password)
 		if err != nil {
@@ -182,6 +183,8 @@ func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
 			return
 		}
+
+		ctx.SetCookie("auth_token", token, 86400, "/", "", true, true)
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"access_token": token,
