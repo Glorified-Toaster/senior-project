@@ -161,12 +161,14 @@ func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 		// studentID := loginRequest.StudentID
 		// password := strings.TrimSpace(loginRequest.Password)
 
-		studentID := ctx.PostForm("student_id")
+		studentID := ctx.PostForm("user_id")
 		password := ctx.PostForm("password")
 
 		student, err := ctrl.StudentRepo.VerifyPassword(c, studentID, password)
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials", "error_msg": err.Error()})
+			render := utils.NewRender(ctx, http.StatusOK, templates.ErrorToast("Login Failed! Try again."))
+			ctx.Render(http.StatusOK, render)
+			ctx.Abort()
 			return
 		}
 
@@ -200,5 +202,8 @@ func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 				"role":       "student",
 			},
 		})
+
+		render := utils.NewRender(ctx, http.StatusOK, templates.SuccessToast("Login successful! Redirecting..."))
+		ctx.Render(http.StatusOK, render)
 	}
 }

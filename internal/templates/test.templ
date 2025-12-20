@@ -1,9 +1,11 @@
 package templates
 
+import "github.com/Glorified-Toaster/senior-project/internal/templates/components"
+
 templ Test() {
 	<!DOCTYPE html>
 	<html lang="en">
-		@HTMLHead("Test Page")
+		@components.HTMLHead("Test Page")
 		<body>
 			<h1 class="text-4xl font-bold text-center p-10">This is a test page</h1>
 			<div class="flex justify-center p-5">

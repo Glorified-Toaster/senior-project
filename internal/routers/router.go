@@ -26,6 +26,7 @@ func NewRouter(ctrl *controllers.Controllers, authMiddleware *middleware.AuthMid
 	router := gin.Default()
 
 	router.Static("/web/static", "./web/static")
+	router.Static("/images", "./web/static/images")
 
 	// using prometheus middleware
 	prometheus := ginprometheus.NewPrometheus("gin")
@@ -43,19 +44,22 @@ func (r *Router) GetHandler() http.Handler {
 }
 
 func (r *Router) SetupRoutes() {
-	public := r.router.Group("/api/v1")
-
+	public := r.router.Group("/")
 	{
-		public.GET("/ping", controllers.Ping())
-		public.POST("/login", r.controllers.StudentLogin())
-		public.POST("/signup", r.controllers.Signup())
-		public.GET("/simple-content", func(c *gin.Context) {
+		public.GET("/login", func(ctx *gin.Context) {
+			render := utils.NewRender(ctx, http.StatusOK, templates.StudentLoginPage())
+			ctx.Render(http.StatusOK, render)
+		})
+	}
+
+	publicAPI := r.router.Group("/api/v1")
+	{
+		publicAPI.GET("/ping", controllers.Ping())
+		publicAPI.POST("/login", r.controllers.StudentLogin())
+		publicAPI.POST("/signup", r.controllers.Signup())
+		publicAPI.GET("/simple-content", func(c *gin.Context) {
 			currentTime := time.Now().Format("15:04:05")
 			templates.SimpleContent(currentTime).Render(c.Request.Context(), c.Writer)
-		})
-		public.GET("/login", func(ctx *gin.Context) {
-			render := utils.NewRender(ctx, http.StatusOK, templates.LoginPage())
-			ctx.Render(http.StatusOK, render)
 		})
 	}
 
