@@ -97,7 +97,7 @@ func GetCollection(collectionName string) *mongo.Collection {
 func MakeURI(host, port, uname, passwd, db string) string {
 	if uname != "" && passwd != "" {
 		// mongodb://user:pass@localhost:27017/database
-		return fmt.Sprintf("mongodb://%s:%s@%s:%s/%s", uname, passwd, host, port, db)
+		return fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin", uname, passwd, host, port, db)
 	}
 	// mongodb://localhost:27017/database
 	return fmt.Sprintf("mongodb://%s:%s/%s", host, port, db)

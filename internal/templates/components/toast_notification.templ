@@ -1,0 +1,37 @@
+package components
+
+// Error toast template - backend sends this on login failure
+templ ErrorToast(message string) {
+	<div class="toast toast-bottom toast-end" id="error-toast">
+		<div class="alert alert-error">
+			<span>{ message }</span>
+		</div>
+	</div>
+	<script>
+  // Auto-remove toast after 3 seconds
+  setTimeout(() => {
+    const toast = document.getElementById('error-toast');
+    if (toast) {
+      toast.remove();
+    }
+  }, 3000);
+</script>
+}
+
+// Success toast template - backend sends this on login success (optional)
+templ SuccessToast(message string) {
+	<div class="toast toast-bottom toast-end" id="success-toast">
+		<div class="alert alert-success">
+			<span>{ message }</span>
+		</div>
+	</div>
+	<script>
+  // Auto-remove toast after 2 seconds, then redirect
+  setTimeout(() => {
+    const toast = document.getElementById('success-toast');
+    if (toast) {
+      toast.remove();
+    }
+  }, 2000);
+</script>
+}

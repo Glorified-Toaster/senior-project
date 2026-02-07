@@ -9,8 +9,8 @@ mongodb:
   host: "localhost"
   port: "27017"
   database: "senior_project"
-  # username: ""  # Take it or leave it
-  # password: ""  # same here
+  username: "admin" # Take it or leave it
+  password: "admin" # same here
 
 dragonflydb:
 
@@ -30,3 +30,9 @@ lumberjack:
 jwt_auth:
   # 512 bit secret key
   secret: "1e029cd5b07b984ef3afc2bea61a6730edd5cfdb5480d4016b386ea68b545dd54723ac7804aefc54958b4229fa78cb7f30eafe6e81bf2bf7719b9a1d37206911"
+
+csrf:
+  secret: "8ceadc1baf8d10aee536cfd42a83137c"
+
+gin_session:
+  secret: "df6945b25aa3549bb991d14d5bc730ff"

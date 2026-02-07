@@ -81,6 +81,7 @@ func main() {
 	}
 	// init the user repo
 	studentRepo := repository.NewStudentRepo(context.Background(), mongodb.Database, cache)
+
 	// init validator
 	validate := validator.New()
 	// init jwt
@@ -88,7 +89,7 @@ func main() {
 	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwt)
 	// pass cache, repo, validator, jwt to controllers
-	ctrl := controllers.NewControllers(validate, *studentRepo, *cache, jwt)
+	ctrl := controllers.NewControllers(validate, *studentRepo, *cache, jwt, cfg)
 
 	// initialize the server
 	srv := server.NewServer(ctrl, authMiddleware)

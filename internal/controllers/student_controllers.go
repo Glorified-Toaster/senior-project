@@ -9,13 +9,19 @@ import (
 	"github.com/Glorified-Toaster/senior-project/internal/dto/response"
 	"github.com/Glorified-Toaster/senior-project/internal/models"
 	"github.com/Glorified-Toaster/senior-project/internal/templates"
+	"github.com/Glorified-Toaster/senior-project/internal/templates/components"
 	"github.com/Glorified-Toaster/senior-project/internal/utils"
 	"github.com/gin-gonic/gin"
+	csrf "github.com/utrack/gin-csrf"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
-func Ping() gin.HandlerFunc {
+func (ctrl *Controllers) StudentLoginPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		render := utils.NewRender(ctx, http.StatusOK, templates.Test())
+		csrfToken := csrf.GetToken(ctx)
+
+		render := utils.NewRender(ctx, http.StatusOK, templates.StudentLoginPage(csrfToken))
 		ctx.Render(http.StatusOK, render)
 	}
 }
@@ -29,25 +35,42 @@ func (ctrl *Controllers) Signup() gin.HandlerFunc {
 
 		// Get user input
 		if err := ctx.BindJSON(&createStudentRequest); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format", "error_details": err.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":         "invalid request format",
+				"error_details": err.Error(),
+			})
 			return
 		}
 
 		// Validate user input
 		if validationErr := ctrl.validator.Struct(createStudentRequest); validationErr != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "error_details": validationErr.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":         "validation failed",
+				"error_details": validationErr.Error(),
+			})
 			return
 		}
 
-		existingStudent, _ := ctrl.StudentRepo.GetStudentByID(c, createStudentRequest.StudentID)
-		if existingStudent != nil {
+		// Check if student ID already exists
+		existingStudent, err := ctrl.UserRepo.GetBy(c, "student_id", createStudentRequest.StudentID)
+		if err == nil && existingStudent != nil {
+			// User found - already exists
 			ctx.JSON(http.StatusConflict, gin.H{
 				"error": "Student with this ID already exists",
 			})
 			return
 		}
 
-		// create student struct
+		// Check if email already exists (important for login!)
+		existingEmail, err := ctrl.UserRepo.GetBy(c, "email", createStudentRequest.Email)
+		if err == nil && existingEmail != nil {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"error": "Email address is already registered",
+			})
+			return
+		}
+
+		// Create student struct
 		student := &models.Student{
 			FirstName:  createStudentRequest.FirstName,
 			LastName:   createStudentRequest.LastName,
@@ -57,14 +80,21 @@ func (ctrl *Controllers) Signup() gin.HandlerFunc {
 			IsActive:   true,
 		}
 
-		studentID, err := ctrl.StudentRepo.CreateStudent(c, student, createStudentRequest.Password)
+		studentID, err := ctrl.UserRepo.CreateUser(c, student, createStudentRequest.Password)
 		if err != nil {
+			// Check if it's a duplicate key error from MongoDB
+			if mongo.IsDuplicateKeyError(err) {
+				ctx.JSON(http.StatusConflict, gin.H{
+					"error": "Student ID or email already exists",
+				})
+				return
+			}
+
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"error":         "Failed to create user account",
 				"error_details": err.Error(),
 			})
 			return
-
 		}
 
 		additionalClaims := map[string]any{
@@ -77,8 +107,8 @@ func (ctrl *Controllers) Signup() gin.HandlerFunc {
 
 		token, err := ctrl.jwtAuth.GenerateToken(student.Email, studentID, "student", additionalClaims)
 		if err != nil {
-			utils.LogErrorWithLevel("error", "HTTP_SERVER", "JWT_GEN_FAILED_ERROR", "failed to generate JWT token after signup", err)
-
+			utils.LogErrorWithLevel("error", "HTTP_SERVER", "JWT_GEN_FAILED_ERROR",
+				"failed to generate JWT token after signup", err)
 			ctx.JSON(http.StatusOK, gin.H{
 				"msg":        "User created successfully. Please login to get access token.",
 				"student_id": studentID,
@@ -117,11 +147,17 @@ func (ctrl *Controllers) GetStudentByID() gin.HandlerFunc {
 			return
 		}
 
-		student, err := ctrl.StudentRepo.GetStudentByID(ctx.Request.Context(), studentID)
+		user, err := ctrl.UserRepo.GetBy(ctx.Request.Context(), "student_id", studentID)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": "student not found",
 			})
+			return
+		}
+
+		student, ok := user.(*models.Student)
+		if !ok {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID belongs to an instructor, not a student"})
 			return
 		}
 
@@ -148,62 +184,79 @@ func (ctrl *Controllers) GetStudentByID() gin.HandlerFunc {
 
 func (ctrl *Controllers) StudentLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		c, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		c, cancel := context.WithTimeout(ctx.Request.Context(), 10*time.Second)
 		defer cancel()
 
-		// var loginRequest *request.StudentLoginRequest
-		//
-		// if err := ctx.BindJSON(&loginRequest); err != nil {
-		// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
-		// 	return
-		// }
+		var loginReq request.LoginRequest
 
-		// studentID := loginRequest.StudentID
-		// password := strings.TrimSpace(loginRequest.Password)
-
-		studentID := ctx.PostForm("user_id")
-		password := ctx.PostForm("password")
-
-		student, err := ctrl.StudentRepo.VerifyPassword(c, studentID, password)
-		if err != nil {
-			render := utils.NewRender(ctx, http.StatusOK, templates.ErrorToast("Login Failed! Try again."))
-			ctx.Render(http.StatusOK, render)
-			ctx.Abort()
+		if err := ctx.ShouldBind(&loginReq); err != nil {
+			render := utils.NewRender(ctx, http.StatusBadRequest, components.ErrorToast("Invalid form data"))
+			ctx.Render(http.StatusBadRequest, render)
 			return
 		}
 
+		// Validate required fields
+		if loginReq.UserID == "" || loginReq.Password == "" {
+			render := utils.NewRender(ctx, http.StatusBadRequest, components.ErrorToast("User ID and password are required"))
+			ctx.Render(http.StatusBadRequest, render)
+			return
+		}
+
+		user, err := ctrl.UserRepo.VerifyPassword(c, loginReq.UserID, loginReq.Password, "student")
+		if err != nil {
+			utils.LogInfo("HTTP_SERVER", "Login Failed",
+				zap.String("user_id", loginReq.UserID),
+				zap.String("error", err.Error()))
+
+			render := utils.NewRender(ctx, http.StatusOK, components.ErrorToast("Login Failed! Check credentials."))
+			ctx.Render(http.StatusOK, render)
+			return
+		}
+
+		// Type assertion to get student
+		student, ok := user.(*models.Student)
+		if !ok {
+			render := utils.NewRender(ctx, http.StatusOK, components.ErrorToast("Invalid user type"))
+			ctx.Render(http.StatusOK, render)
+			return
+		}
+
+		// Check if the account is active
+		if !student.IsActive {
+			render := utils.NewRender(ctx, http.StatusOK, components.ErrorToast("Account is not active"))
+			ctx.Render(http.StatusOK, render)
+			return
+		}
+
+		now := time.Now()
+		student.LastLogin = &now
+
+		// Generate JWT token
 		additionalClaims := map[string]any{
 			"first_name": student.FirstName,
 			"last_name":  student.LastName,
 			"department": student.Department,
 			"student_id": student.StudentID,
 			"is_active":  student.IsActive,
+			"user_id":    student.ID.Hex(),
 		}
 
-		token, err := ctrl.jwtAuth.GenerateToken(student.Email, student.StudentID, "student", additionalClaims)
+		token, err := ctrl.jwtAuth.GenerateToken(student.Email, student.ID.Hex(), "student", additionalClaims)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+			utils.LogErrorWithLevel("error", "HTTP_SERVER", "JWT_GEN_FAILED_ERROR",
+				"failed to generate JWT token after login", err)
+
+			render := utils.NewRender(ctx, http.StatusOK, components.ErrorToast("Authentication failed"))
+			ctx.Render(http.StatusOK, render)
 			return
 		}
 
-		ctx.SetCookie("auth_token", token, 86400, "/", "", true, true)
+		// Set cookie for web requests
+		ctx.SetCookie("auth_token", token, 86400, "/", "", true, true) // Secure: true in production
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"access_token": token,
-			"token_type":   "Bearer",
-			"expires_in":   86400,
-			"user": gin.H{
-				"id":         student.ID,
-				"first_name": student.FirstName,
-				"last_name":  student.LastName,
-				"email":      student.Email,
-				"student_id": student.StudentID,
-				"department": student.Department,
-				"role":       "student",
-			},
-		})
-
-		render := utils.NewRender(ctx, http.StatusOK, templates.SuccessToast("Login successful! Redirecting..."))
+		// For HTML requests, redirect or show success
+		render := utils.NewRender(ctx, http.StatusOK,
+			components.SuccessToast("Login successful! Redirecting..."))
 		ctx.Render(http.StatusOK, render)
 	}
 }

@@ -18,12 +18,14 @@ var (
 )
 
 type Config struct {
-	HTTPServer  *HTTPServerConf  `yaml:"http_server" mapstructure:"http_server"`
-	MongoDB     *MongoDBConf     `yaml:"mongodb" mapstructure:"mongodb"`
-	DragonflyDB *DragonflyDBConf `yaml:"dragonflydb" mapstructure:"dragonflydb"`
-	ZapLogger   *ZapLoggerConf   `yaml:"zap_logger" mapstructure:"zap_logger"`
-	Lumberjack  *LumberjackConf  `yaml:"lumberjack" mapstructure:"lumberjack"`
-	JWTAuth     *JWTAuthConf     `yaml:"jwt_auth" mapstructure:"jwt_auth"`
+	HTTPServer  *HTTPServerConf   `yaml:"http_server" mapstructure:"http_server"`
+	MongoDB     *MongoDBConf      `yaml:"mongodb" mapstructure:"mongodb"`
+	DragonflyDB *DragonflyDBConf  `yaml:"dragonflydb" mapstructure:"dragonflydb"`
+	ZapLogger   *ZapLoggerConf    `yaml:"zap_logger" mapstructure:"zap_logger"`
+	Lumberjack  *LumberjackConf   `yaml:"lumberjack" mapstructure:"lumberjack"`
+	JWTAuth     *JWTAuthConf      `yaml:"jwt_auth" mapstructure:"jwt_auth"`
+	CSRF        *CSRFConfig       `yaml:"csrf" mapstructure:"csrf"`
+	GinSession  *GinSessionConfig `yaml:"gin_session" mapstructure:"gin_session"`
 }
 
 type HTTPServerConf struct {
@@ -65,6 +67,14 @@ type LumberjackConf struct {
 }
 
 type JWTAuthConf struct {
+	Secret string `yaml:"secret" mapstructure:"secret"`
+}
+
+type CSRFConfig struct {
+	Secret string `yaml:"secret" mapstructure:"secret"`
+}
+
+type GinSessionConfig struct {
 	Secret string `yaml:"secret" mapstructure:"secret"`
 }
 

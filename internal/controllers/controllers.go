@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"github.com/Glorified-Toaster/senior-project/internal/config"
 	"github.com/Glorified-Toaster/senior-project/internal/config/db/cache"
 	"github.com/Glorified-Toaster/senior-project/internal/helpers"
 	"github.com/Glorified-Toaster/senior-project/internal/repository"
@@ -10,16 +11,18 @@ import (
 
 type Controllers struct {
 	validator   *validator.Validate
-	StudentRepo repository.StudentRepository
+	UserRepo    repository.UserRepository
 	cache       cache.Cache
 	jwtAuth     *helpers.JWTAuth
+	ViperConfig *config.Config
 }
 
-func NewControllers(valid *validator.Validate, studentRepo repository.StudentRepository, cache cache.Cache, jwt *helpers.JWTAuth) *Controllers {
+func NewControllers(valid *validator.Validate, userRepo repository.UserRepository, cache cache.Cache, jwt *helpers.JWTAuth, viperConfig *config.Config) *Controllers {
 	return &Controllers{
 		valid,
-		studentRepo,
+		userRepo,
 		cache,
 		jwt,
+		viperConfig,
 	}
 }

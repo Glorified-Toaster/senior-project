@@ -9,13 +9,13 @@ type CreateStudentRequest struct {
 	Password   string `json:"password" validate:"required,min=8"`
 }
 
-type StudentLoginRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	StudentID string `json:"student_id" validate:"required"`
-	Password  string `json:"password" validate:"required"`
-}
-
 type AdminResetPasswordRequest struct {
 	StudentID   string `json:"student_id" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=8"`
+}
+
+type LoginRequest struct {
+	UserID   string `form:"user_id" json:"user_id" binding:"required"`
+	Password string `form:"password" json:"password" binding:"required"`
+	Role     string `form:"role" json:"role" binding:"required"`
 }

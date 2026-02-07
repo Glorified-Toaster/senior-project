@@ -1,12 +1,19 @@
 package components
 
-templ HTMLHead(Title string) {
+templ HTMLHead(Title, csrfToken string) {
 	<head>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta name="csrf-token" content={ csrfToken }/>
 		<title>{ Title }</title>
 		<link rel="stylesheet" href="/web/static/css/output.css"/>
 		<script src="/web/static/js/htmx.js"></script>
 		<script src="/web/static/js/alpine.js"></script>
+		<script>
+    document.addEventListener('htmx:configRequest', (event) => {
+      const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      event.detail.headers['X-CSRF-Token'] = token;
+    });
+  </script>
 	</head>
 }
