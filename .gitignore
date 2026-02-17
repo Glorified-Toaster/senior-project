@@ -1,0 +1,8 @@
+certs/
+tmp/
+/logs/
+/logs
+logs/**/*.log
+main
+node_modules/
+

@@ -1,0 +1,42 @@
+http_server:
+  address: "localhost"
+  port: "8443"
+  tls_cert_dir: "certs"
+  cert_file: "certs/cert.pem"
+  key_file: "certs/key.pem"
+
+database:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+  database_name: myapp
+  ssl_mode: disable
+
+  max_conns: 25
+  min_conns: 5
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+
+zap_logger:
+  development: true # development : true , production : false
+  level: "debug"
+  encoding: "json"
+  log_dir: "./logs"
+  log_file: "app.log"
+
+lumberjack:
+  max_size: 100 #100MB
+  max_backups: 10
+  max_age: 30 #30 days
+  compress: true # useing Gzip
+
+jwt_auth:
+  # 512 bit secret key
+  secret: "1e029cd5b07b984ef3afc2bea61a6730edd5cfdb5480d4016b386ea68b545dd54723ac7804aefc54958b4229fa78cb7f30eafe6e81bf2bf7719b9a1d37206911"
+
+csrf:
+  secret: "8ceadc1baf8d10aee536cfd42a83137c"
+
+gin_session:
+  secret: "df6945b25aa3549bb991d14d5bc730ff"
