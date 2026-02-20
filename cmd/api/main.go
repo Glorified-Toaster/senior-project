@@ -13,6 +13,7 @@ import (
 	"uot-exam/internal/adapters/inbound/http/middleware"
 	"uot-exam/internal/adapters/inbound/http/server"
 	"uot-exam/internal/adapters/outbound/config"
+	"uot-exam/internal/adapters/outbound/database"
 	"uot-exam/internal/adapters/outbound/logger"
 
 	"github.com/go-playground/validator"
@@ -45,6 +46,26 @@ func main() {
 
 	// Initialize Logger
 	zlog := logger.New(zapLogger)
+
+	DBConfig := &database.DBConfig{
+		Host:            cfg.Database.Host,
+		Port:            cfg.Database.Port,
+		Username:        cfg.Database.Username,
+		Password:        cfg.Database.Password,
+		DBName:          cfg.Database.DatabaseName,
+		SSLMode:         cfg.Database.SSLMode,
+		MaxConns:        cfg.Database.MaxConns,
+		MinConns:        cfg.Database.MinConns,
+		MaxConnLifetime: cfg.Database.MaxConnLifetime,
+		MaxConnIdleTime: cfg.Database.MaxConnIdleTime,
+	}
+
+	pool, err := database.NowConnection(*DBConfig)
+	if err != nil {
+		zlog.LogErrorWithLevel("fatal", logger.DatabaseError, logger.MongoFailedToConnect.Code, "Database failed to connect", err)
+		return
+	}
+	zlog.LogInfo(logger.MongoIsConnected.Type, logger.MongoIsConnected.Msg)
 
 	// init validator
 	validate := validator.New()

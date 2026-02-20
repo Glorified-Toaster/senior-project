@@ -8,24 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DBConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
-
-	MaxConns        int32
-	MinConns        int32
-	MaxConnLifetime time.Duration
-	MaxConnIdleTime time.Duration
+type PostgresAdapter struct {
+	pool *pgxpool.Pool
 }
 
-func NewConnection(cfg DBConfig) (*pgxpool.Pool, error) {
-	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		cfg.User,
+func NowConnection(cfg DBConfig) (*PostgresAdapter, error) {
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		cfg.Username,
 		cfg.Password,
 		cfg.Host,
 		cfg.Port,
@@ -35,29 +24,50 @@ func NewConnection(cfg DBConfig) (*pgxpool.Pool, error) {
 
 	poolCfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse connection string: %w", err)
+		return nil, fmt.Errorf("failed to parse postgres config : %w", err)
 	}
 
-	poolCfg.MaxConns = cfg.MaxConns
-	poolCfg.MinConns = cfg.MinConns
-	poolCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
-	poolCfg.MaxConnLifetime = cfg.MaxConnLifetime
+	configurePool(poolCfg, cfg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 	if err != nil {
-		return nil, fmt.Errorf("error creating pool : %w", err)
+		return nil, fmt.Errorf("failed to create postgres connection pool : %w", err)
 	}
 
-	pingCtx, pingCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer pingCancel()
-
-	if err := pool.Ping(pingCtx); err != nil {
+	if err := pool.Ping(ctx); err != nil {
 		pool.Close()
-		return nil, fmt.Errorf("ping db: %w", err)
+		return nil, fmt.Errorf("failed to ping postgres database")
 	}
 
-	return pool, nil
+	adapter := &PostgresAdapter{
+		pool: pool,
+	}
+
+	return adapter, nil
 }
+
+func configurePool(poolCfg *pgxpool.Config, cfg DBConfig) {
+	maxConns := cfg.MaxConns
+	if maxConns <= 0 {
+		maxConns = 25
+	}
+
+	minConns := cfg.MinConns
+	if minConns < 0 {
+		minConns = 5
+	}
+	if minConns > maxConns {
+		minConns = maxConns
+	}
+
+	poolCfg.MaxConns = int32(maxConns)
+	poolCfg.MinConns = int32(minConns)
+	poolCfg.MaxConnLifetime = cfg.MaxConnLifetime
+	poolCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
+	poolCfg.HealthCheckPeriod = 1 * time.Minute
+}
+
+func (a *PostgresAdapter) Stats() *pgxpool.Stat { return a.pool.Stat() }

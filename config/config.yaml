@@ -6,15 +6,14 @@ http_server:
   key_file: "certs/key.pem"
 
 database:
-  host: localhost
+  host: "localhost"
   port: 5432
-  username: postgres
-  password: postgres
-  database_name: myapp
-  ssl_mode: disable
-
-  max_conns: 25
-  min_conns: 5
+  username: "testuser"
+  password: "123456"
+  database_name: "testdb"
+  ssl_mode: "disable"
+  max_connections: 25
+  min_connections: 5
   max_conn_lifetime: 1h
   max_conn_idle_time: 30m
 

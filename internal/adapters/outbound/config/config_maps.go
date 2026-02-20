@@ -33,8 +33,8 @@ type DatabaseConf struct {
 	Host            string        `yaml:"host" mapstructure:"host"`
 	Port            int           `yaml:"port" mapstructure:"port"`
 	SSLMode         string        `yaml:"ssl_mode" mapstructure:"ssl_mode"`
-	MaxConns        int32         `yaml:"max_connections" mapstructure:"max_connections"`
-	MinConns        int32         `yaml:"min_connections" mapstructure:"min_connections"`
+	MaxConns        int           `yaml:"max_connections" mapstructure:"max_connections"`
+	MinConns        int           `yaml:"min_connections" mapstructure:"min_connections"`
 	MaxConnLifetime time.Duration `yaml:"max_conn_lifetime" mapstructure:"max_conn_lifetime"`
 	MaxConnIdleTime time.Duration `yaml:"max_conn_idle_time" mapstructure:"max_conn_idle_time"`
 }
