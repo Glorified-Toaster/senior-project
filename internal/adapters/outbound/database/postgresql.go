@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -71,3 +73,14 @@ func configurePool(poolCfg *pgxpool.Config, cfg DBConfig) {
 }
 
 func (a *PostgresAdapter) Stats() *pgxpool.Stat { return a.pool.Stat() }
+func (a *PostgresAdapter) Exec(ctx context.Context, expr string, intrfc ...interface{}) (pgconn.CommandTag, error) {
+	return a.Exec(ctx, expr, intrfc)
+}
+
+func (a *PostgresAdapter) Query(ctx context.Context, expr string, intrfc ...interface{}) (pgx.Rows, error) {
+	return a.Query(ctx, expr, intrfc)
+}
+
+func (a *PostgresAdapter) QueryROW(ctx context.Context, expr string, intrfc ...interface{}) pgx.Rows {
+	return a.QueryROW(ctx, expr, intrfc)
+}

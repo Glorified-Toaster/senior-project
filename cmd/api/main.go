@@ -67,6 +67,7 @@ func main() {
 	}
 	zlog.LogInfo(logger.MongoIsConnected.Type, logger.MongoIsConnected.Msg)
 
+	pool.Stats()
 	// init validator
 	validate := validator.New()
 	// init jwt

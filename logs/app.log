@@ -279,3 +279,50 @@
 {"level":"INFO","timestamp":"2026-02-20T16:42:34.873+0300","caller":"server/server.go:121","message":"INTERNAL_INFO","info_msg":"Shutdown signal recived","signal_type":"interrupt"}
 {"level":"INFO","timestamp":"2026-02-20T16:42:34.874+0300","caller":"server/server.go:131","message":"INTERNAL_INFO","info_msg":"Shutting down the server..."}
 {"level":"INFO","timestamp":"2026-02-20T16:42:34.874+0300","caller":"server/server.go:137","message":"INTERNAL_INFO","info_msg":"HTTP server shutdown gracefully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:51:51.577+0300","caller":"api/main.go:36","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:51:51.585+0300","caller":"api/main.go:71","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:51:51.587+0300","caller":"api/main.go:86","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T17:51:51.587+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T17:52:26.693+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:52:26.701+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:53:07.054+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:53:07.061+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:53:37.609+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:53:37.615+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:53:37.632+0300","caller":"api/main.go:90","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T17:53:37.632+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T17:57:06.560+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:57:06.566+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:57:06.572+0300","caller":"api/main.go:90","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T17:57:06.572+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T17:57:52.361+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:57:52.368+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:57:52.373+0300","caller":"api/main.go:90","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T17:57:52.374+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T17:58:16.384+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T17:58:16.391+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T17:58:16.397+0300","caller":"api/main.go:90","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T17:58:16.397+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T21:17:39.833+0300","caller":"api/main.go:36","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:17:39.842+0300","caller":"api/main.go:68","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:17:39.842+0300","caller":"api/main.go:84","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T21:17:39.842+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T21:29:29.049+0300","caller":"api/main.go:36","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:29:29.058+0300","caller":"api/main.go:68","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:29:29.059+0300","caller":"api/main.go:84","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T21:29:29.059+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T21:30:02.532+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:30:02.538+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:30:31.817+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:30:31.823+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:32:21.278+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:32:21.285+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:40:39.900+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:40:39.907+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:41:04.326+0300","caller":"api/main.go:36","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-20T21:41:04.334+0300","caller":"api/main.go:68","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-20T21:41:04.334+0300","caller":"api/main.go:83","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-20T21:41:04.335+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-20T21:41:08.379+0300","caller":"server/server.go:121","message":"INTERNAL_INFO","info_msg":"Shutdown signal recived","signal_type":"interrupt"}
+{"level":"INFO","timestamp":"2026-02-20T21:41:08.379+0300","caller":"server/server.go:131","message":"INTERNAL_INFO","info_msg":"Shutting down the server..."}
+{"level":"INFO","timestamp":"2026-02-20T21:41:08.380+0300","caller":"server/server.go:137","message":"INTERNAL_INFO","info_msg":"HTTP server shutdown gracefully..."}
