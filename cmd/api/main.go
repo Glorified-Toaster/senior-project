@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -14,6 +15,7 @@ import (
 	"uot-exam/internal/adapters/inbound/http/server"
 	"uot-exam/internal/adapters/outbound/config"
 	"uot-exam/internal/adapters/outbound/database"
+	"uot-exam/internal/adapters/outbound/database/sqlc"
 	"uot-exam/internal/adapters/outbound/logger"
 
 	"github.com/go-playground/validator"
@@ -66,6 +68,23 @@ func main() {
 		return
 	}
 	zlog.LogInfo(logger.MongoIsConnected.Type, logger.MongoIsConnected.Msg)
+
+	query := sqlc.New(pool)
+
+	user, err := query.CreateUser(
+		context.Background(),
+		sqlc.CreateUserParams{
+			Username:     "potato",
+			FullName:     "potatopotato",
+			PasswordHash: "aporiubng394h79tgh31r9-ghb",
+			IsActive:     true,
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%+v\n", user)
 
 	pool.Stats()
 	// init validator

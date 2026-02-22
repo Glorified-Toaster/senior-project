@@ -326,3 +326,31 @@
 {"level":"INFO","timestamp":"2026-02-20T21:41:08.379+0300","caller":"server/server.go:121","message":"INTERNAL_INFO","info_msg":"Shutdown signal recived","signal_type":"interrupt"}
 {"level":"INFO","timestamp":"2026-02-20T21:41:08.379+0300","caller":"server/server.go:131","message":"INTERNAL_INFO","info_msg":"Shutting down the server..."}
 {"level":"INFO","timestamp":"2026-02-20T21:41:08.380+0300","caller":"server/server.go:137","message":"INTERNAL_INFO","info_msg":"HTTP server shutdown gracefully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:31:36.382+0300","caller":"api/main.go:37","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:31:36.390+0300","caller":"api/main.go:69","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:32:33.167+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:32:33.176+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:33:47.121+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:33:47.127+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:33:54.741+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:33:54.748+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:34:02.198+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:34:02.206+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:35:19.093+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:35:19.101+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:36:37.519+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:36:37.526+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:40:55.449+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:40:55.458+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:41:38.530+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:41:38.538+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:42:53.252+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:42:53.258+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:46:09.425+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:46:09.433+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:54:14.155+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T17:54:14.162+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}
+{"level":"INFO","timestamp":"2026-02-21T17:54:14.165+0300","caller":"api/main.go:102","message":"INTERNAL_INFO","info_msg":"Starting the go server","server_address":"localhost:8443"}
+{"level":"INFO","timestamp":"2026-02-21T17:54:14.165+0300","caller":"server/server.go:74","message":"INTERNAL_INFO","info_msg":"Using an existing TLS certificate..."}
+{"level":"INFO","timestamp":"2026-02-21T19:46:51.364+0300","caller":"api/main.go:38","message":"Logger initialized successfully","level":"debug","log_file":"logs/app.log","development":true}
+{"level":"INFO","timestamp":"2026-02-21T19:46:51.370+0300","caller":"api/main.go:70","message":"DATABASE_INFO","info_msg":"Connected to mongodb successfully..."}

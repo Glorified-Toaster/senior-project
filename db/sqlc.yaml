@@ -1,13 +1,27 @@
 version: "2"
-
 sql:
   - engine: "postgresql"
     schema: "migrations"
     queries: "queries"
     gen:
       go:
-        package: "postgres"
-        out: "../internal/application/"
+        package: "sqlc"
+        out: "../internal/adapters/outbound/database/sqlc"
         sql_package: "pgx/v5"
         emit_json_tags: true
         emit_interface: true
+        overrides:
+          # --- UUIDs ---
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type: "github.com/google/uuid.NullUUID"
+          # --- Text (Fixes description) ---
+          - db_type: "text"
+            go_type: "string"
+          - db_type: "text"
+            nullable: true
+            go_type:
+              type: "string"
+              pointer: true
