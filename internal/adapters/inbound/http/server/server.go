@@ -31,9 +31,9 @@ type Server struct {
 }
 
 // NewServer creates and returns a new Server instance.
-func NewServer(ctrl *handler.Handler, authMiddleware *middleware.AuthMiddleware, logger *logger.Logger) *Server {
+func NewServer(userHandler *handler.UserHandler, authMiddleware *middleware.AuthMiddleware, logger *logger.Logger, viperConfig *config.Config) *Server {
 	// initialize the router
-	router := router.NewRouter(ctrl, authMiddleware)
+	router := router.NewRouter(userHandler, authMiddleware, viperConfig)
 	router.SetupRoutes()
 	return &Server{
 		router: router,

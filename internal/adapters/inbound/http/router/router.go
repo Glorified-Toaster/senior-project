@@ -7,6 +7,7 @@ import (
 
 	"uot-exam/internal/adapters/inbound/http/handler"
 	"uot-exam/internal/adapters/inbound/http/middleware"
+	"uot-exam/internal/adapters/outbound/config"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
@@ -17,20 +18,21 @@ import (
 
 type Router struct {
 	router         *gin.Engine
-	handler        *handler.Handler
+	userHandler    *handler.UserHandler
 	authMiddleware *middleware.AuthMiddleware
+	viperConfig    *config.Config
 }
 
-func NewRouter(ctrl *handler.Handler, authMiddleware *middleware.AuthMiddleware) *Router {
+func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.AuthMiddleware, viperConfig *config.Config) *Router {
 	// useing gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	store := cookie.NewStore([]byte(ctrl.ViperConfig.GinSession.Secret))
+	store := cookie.NewStore([]byte(viperConfig.GinSession.Secret))
 	router.Use(sessions.Sessions("session_token", store))
 
 	// config and enable CORS Middleware
-	enableCORS(router, *ctrl)
-	enableCSRF(router, *ctrl)
+	enableCORS(router, viperConfig)
+	//enableCSRF(router, viperConfig)
 
 	// setting security headers
 	setSecurityHeaders(router)
@@ -41,20 +43,28 @@ func NewRouter(ctrl *handler.Handler, authMiddleware *middleware.AuthMiddleware)
 
 	return &Router{
 		router:         router,
-		handler:        ctrl,
+		userHandler:    userHandler,
 		authMiddleware: authMiddleware,
 	}
 }
 
-func (router *Router) SetupRoutes() {}
+func (r *Router) SetupRoutes() {
+	// User routes
+	userRoutes := r.router.Group("/users")
+	{
+		userRoutes.POST("/create", r.userHandler.Create())
+		userRoutes.GET("/id/:id", r.userHandler.GetUserByID())
+		userRoutes.GET("/username/:username", r.userHandler.GetUserByUsername())
+	}
+}
 
 func (r *Router) GetHandler() http.Handler {
 	return r.router
 }
 
-func enableCORS(router *gin.Engine, ctrl handler.Handler) {
+func enableCORS(router *gin.Engine, viperConfig *config.Config) {
 	// config and enable CORS Middleware
-	location := fmt.Sprintf("https://%s:%s", ctrl.ViperConfig.HTTPServer.Addr, ctrl.ViperConfig.HTTPServer.Port)
+	location := fmt.Sprintf("https://%s:%s", viperConfig.HTTPServer.Addr, viperConfig.HTTPServer.Port)
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{location},
@@ -69,9 +79,9 @@ func enableCORS(router *gin.Engine, ctrl handler.Handler) {
 	}))
 }
 
-func enableCSRF(router *gin.Engine, ctrl handler.Handler) {
+func enableCSRF(router *gin.Engine, viperConfig *config.Config) {
 	router.Use(csrf.Middleware(csrf.Options{
-		Secret: ctrl.ViperConfig.CSRF.Secret,
+		Secret: viperConfig.CSRF.Secret,
 		ErrorFunc: func(c *gin.Context) {
 			c.String(400, "CSRF token mismatch")
 			c.Abort()

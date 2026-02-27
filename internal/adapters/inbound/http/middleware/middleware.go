@@ -36,11 +36,8 @@ func (auth *AuthMiddleware) collectFootPrintsAndLog(ctx *gin.Context) {
 func setClaimsInContext(ctx *gin.Context, claims *helpers.Claims) {
 	ctx.Set("claims", claims)
 	ctx.Set("userID", claims.UserID)
-	ctx.Set("email", claims.Email)
 	ctx.Set("role", claims.Role)
-	ctx.Set("firstName", claims.FirstName)
-	ctx.Set("lastName", claims.LastName)
-	ctx.Set("studentID", claims.StudentID)
-	ctx.Set("department", claims.Department)
+	ctx.Set("fullName", claims.FullName)
+	ctx.Set("userName", claims.UserName)
 	ctx.Set("isActive", claims.IsActive)
 }

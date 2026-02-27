@@ -19,11 +19,9 @@ import (
 	"uot-exam/internal/adapters/outbound/logger"
 	"uot-exam/internal/adapters/outbound/repository"
 	"uot-exam/internal/application"
-	"uot-exam/internal/domain"
-	"uot-exam/internal/ports"
 
-	"github.com/brianvoe/gofakeit"
 	"github.com/go-playground/validator"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -79,9 +77,7 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, txManager, pool, zlog)
 
-	for i := 0; i < 20; i++ {
-		mockExam(app)
-	}
+	mockExam(app)
 
 	pool.Stats()
 	// init validator
@@ -91,10 +87,10 @@ func main() {
 	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwt, zlog)
 	// pass cache, repo, validator, jwt to controllers
-	ctrl := handler.NewHandler(validate, jwt, cfg, zlog)
+	userCtrl := handler.NewUserHandler(app, validate, jwt, cfg, zlog)
 
 	// initialize the server
-	srv := server.NewServer(ctrl, authMiddleware, zlog)
+	srv := server.NewServer(userCtrl, authMiddleware, zlog, cfg)
 
 	zlog.LogInfo(logger.ServerStartOK.Type, logger.ServerStartOK.Msg, zap.String("server_address", net.JoinHostPort(cfg.HTTPServer.Addr, cfg.HTTPServer.Port)))
 
@@ -102,19 +98,16 @@ func main() {
 	srv.StartOverTLS(cfg)
 }
 
-func mockExam(repo *application.Application) {
-	passwordHash, err := helpers.HashPassword(gofakeit.Password(true, true, true, true, true, 14))
+func mockExam(app *application.Application) {
+	user, err := app.GetUserByID(context.Background(), uuid.MustParse("69744b6d-0101-411e-b617-bbea7ade4b74"))
 	if err != nil {
-		log.Println("error hashing password", err)
+		log.Println("error getting user by id", err)
 	}
-	_, err = repo.CreateUser(context.Background(), ports.CreateUserParams{
-		Username:     gofakeit.Username(),
-		FullName:     gofakeit.Name(),
-		PasswordHash: passwordHash,
-		Role:         domain.RoleStudent,
-		IsActive:     true,
-	})
+	log.Println("user", user)
+
+	user, err = app.GetUserByUsername(context.Background(), "Lind9348")
 	if err != nil {
-		log.Println("error creating user", err)
+		log.Println("error getting user by username", err)
 	}
+	log.Println("user", user)
 }

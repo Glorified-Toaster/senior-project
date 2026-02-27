@@ -14,9 +14,9 @@ type UserRepository interface {
 }
 
 type CreateUserParams struct {
-	Username     string
-	FullName     string
-	PasswordHash string
-	Role         domain.UserRole
-	IsActive     bool
+	Username     string          `json:"username" validate:"required,min=3,max=20"`
+	FullName     string          `json:"full_name" validate:"required,min=3,max=20"`
+	PasswordHash string          `json:"password_hash" validate:"required"`
+	Role         domain.UserRole `json:"role" validate:"required"`
+	IsActive     bool            `json:"is_active" validate:"required"`
 }
