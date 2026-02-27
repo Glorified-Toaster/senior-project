@@ -11,7 +11,6 @@ import (
 )
 
 type Querier interface {
-	AddUserRole(ctx context.Context, arg AddUserRoleParams) error
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
 	CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error)
 	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
@@ -25,7 +24,6 @@ type Querier interface {
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
-	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]UserRoleType, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
@@ -33,9 +31,11 @@ type Querier interface {
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListSubjectsByInstructor(ctx context.Context, instructorID uuid.NullUUID) ([]Subject, error)
+	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }
 
 var _ Querier = (*Queries)(nil)

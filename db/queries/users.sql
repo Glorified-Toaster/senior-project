@@ -3,11 +3,13 @@ INSERT INTO users (
     username,
     full_name,
     password_hash,
+    role,
     is_active
 ) VALUES (
     sqlc.arg(username),
     sqlc.arg(full_name),
     sqlc.arg(password_hash),
+    sqlc.arg(role),
     sqlc.arg(is_active)
 )
 RETURNING *;
@@ -21,10 +23,8 @@ SELECT * FROM users WHERE username = $1;
 -- name: ListActiveUsers :many
 SELECT * FROM users WHERE is_active = TRUE ORDER BY created_at DESC;
 
+-- name: ListUsersByRole :many
+SELECT * FROM users WHERE role = $1 ORDER BY created_at DESC;
 
--- name: AddUserRole :exec
-INSERT INTO user_roles (user_id, role)
-VALUES ($1, $2);
-
--- name: GetUserRoles :many
-SELECT role FROM user_roles WHERE user_id = $1;
+-- name: UpdateUserRole :exec
+UPDATE users SET role = $2 WHERE id = $1;

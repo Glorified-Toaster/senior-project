@@ -17,7 +17,12 @@ import (
 	"uot-exam/internal/adapters/outbound/database"
 	"uot-exam/internal/adapters/outbound/database/sqlc"
 	"uot-exam/internal/adapters/outbound/logger"
+	"uot-exam/internal/adapters/outbound/repository"
+	"uot-exam/internal/application"
+	"uot-exam/internal/domain"
+	"uot-exam/internal/ports"
 
+	"github.com/brianvoe/gofakeit"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
 )
@@ -70,21 +75,13 @@ func main() {
 	zlog.LogInfo(logger.MongoIsConnected.Type, logger.MongoIsConnected.Msg)
 
 	query := sqlc.New(pool)
+	userRepo := repository.NewUserRepository(query)
+	txManager := database.NewPostgresTxManager(pool.Pool)
+	app := application.NewApplication(userRepo, txManager, pool, zlog)
 
-	user, err := query.CreateUser(
-		context.Background(),
-		sqlc.CreateUserParams{
-			Username:     "potato",
-			FullName:     "potatopotato",
-			PasswordHash: "aporiubng394h79tgh31r9-ghb",
-			IsActive:     true,
-		},
-	)
-	if err != nil {
-		log.Fatal(err)
+	for i := 0; i < 20; i++ {
+		mockExam(app)
 	}
-
-	fmt.Printf("%+v\n", user)
 
 	pool.Stats()
 	// init validator
@@ -103,4 +100,21 @@ func main() {
 
 	// start the server over TLS
 	srv.StartOverTLS(cfg)
+}
+
+func mockExam(repo *application.Application) {
+	passwordHash, err := helpers.HashPassword(gofakeit.Password(true, true, true, true, true, 14))
+	if err != nil {
+		log.Println("error hashing password", err)
+	}
+	_, err = repo.CreateUser(context.Background(), ports.CreateUserParams{
+		Username:     gofakeit.Username(),
+		FullName:     gofakeit.Name(),
+		PasswordHash: passwordHash,
+		Role:         domain.RoleStudent,
+		IsActive:     true,
+	})
+	if err != nil {
+		log.Println("error creating user", err)
+	}
 }

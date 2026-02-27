@@ -150,79 +150,75 @@ type Choice struct {
 }
 
 type Enrollment struct {
-	ID         uuid.UUID        `json:"id"`
-	StudentID  uuid.NullUUID    `json:"student_id"`
-	SubjectID  uuid.NullUUID    `json:"subject_id"`
-	EnrolledAt pgtype.Timestamp `json:"enrolled_at"`
+	ID         uuid.UUID          `json:"id"`
+	StudentID  uuid.NullUUID      `json:"student_id"`
+	SubjectID  uuid.NullUUID      `json:"subject_id"`
+	EnrolledAt pgtype.Timestamptz `json:"enrolled_at"`
 }
 
 type Exam struct {
-	ID              uuid.UUID        `json:"id"`
-	SubjectID       uuid.NullUUID    `json:"subject_id"`
-	Title           string           `json:"title"`
-	Description     *string          `json:"description"`
-	DurationMinutes int32            `json:"duration_minutes"`
-	TotalMarks      int32            `json:"total_marks"`
-	StartTime       pgtype.Timestamp `json:"start_time"`
-	EndTime         pgtype.Timestamp `json:"end_time"`
-	Status          ExamStatusType   `json:"status"`
-	CreatedBy       uuid.NullUUID    `json:"created_by"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
-	DeletedAt       pgtype.Timestamp `json:"deleted_at"`
+	ID              uuid.UUID          `json:"id"`
+	SubjectID       uuid.NullUUID      `json:"subject_id"`
+	Title           string             `json:"title"`
+	Description     *string            `json:"description"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	TotalMarks      int32              `json:"total_marks"`
+	StartTime       pgtype.Timestamptz `json:"start_time"`
+	EndTime         pgtype.Timestamptz `json:"end_time"`
+	Status          ExamStatusType     `json:"status"`
+	CreatedBy       uuid.NullUUID      `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type ExamAttempt struct {
-	ID          uuid.UUID         `json:"id"`
-	ExamID      uuid.NullUUID     `json:"exam_id"`
-	StudentID   uuid.NullUUID     `json:"student_id"`
-	StartedAt   pgtype.Timestamp  `json:"started_at"`
-	SubmittedAt pgtype.Timestamp  `json:"submitted_at"`
-	Score       pgtype.Int4       `json:"score"`
-	Status      AttemptStatusType `json:"status"`
-	CreatedAt   pgtype.Timestamp  `json:"created_at"`
+	ID          uuid.UUID          `json:"id"`
+	ExamID      uuid.NullUUID      `json:"exam_id"`
+	StudentID   uuid.NullUUID      `json:"student_id"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	SubmittedAt pgtype.Timestamptz `json:"submitted_at"`
+	Score       pgtype.Int4        `json:"score"`
+	Status      AttemptStatusType  `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Question struct {
-	ID           uuid.UUID        `json:"id"`
-	ExamID       uuid.NullUUID    `json:"exam_id"`
-	QuestionText string           `json:"question_text"`
-	Marks        int32            `json:"marks"`
-	Position     int32            `json:"position"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	ID           uuid.UUID          `json:"id"`
+	ExamID       uuid.NullUUID      `json:"exam_id"`
+	QuestionText string             `json:"question_text"`
+	Marks        int32              `json:"marks"`
+	Position     int32              `json:"position"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type StudentAnswer struct {
-	ID               uuid.UUID        `json:"id"`
-	AttemptID        uuid.NullUUID    `json:"attempt_id"`
-	QuestionID       uuid.NullUUID    `json:"question_id"`
-	SelectedChoiceID uuid.NullUUID    `json:"selected_choice_id"`
-	IsCorrect        pgtype.Bool      `json:"is_correct"`
-	AnsweredAt       pgtype.Timestamp `json:"answered_at"`
+	ID               uuid.UUID          `json:"id"`
+	AttemptID        uuid.NullUUID      `json:"attempt_id"`
+	QuestionID       uuid.NullUUID      `json:"question_id"`
+	SelectedChoiceID uuid.NullUUID      `json:"selected_choice_id"`
+	IsCorrect        pgtype.Bool        `json:"is_correct"`
+	AnsweredAt       pgtype.Timestamptz `json:"answered_at"`
 }
 
 type Subject struct {
-	ID           uuid.UUID        `json:"id"`
-	Title        string           `json:"title"`
-	Description  *string          `json:"description"`
-	InstructorID uuid.NullUUID    `json:"instructor_id"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	DeletedAt    pgtype.Timestamp `json:"deleted_at"`
+	ID           uuid.UUID          `json:"id"`
+	Title        string             `json:"title"`
+	Description  *string            `json:"description"`
+	InstructorID uuid.NullUUID      `json:"instructor_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type User struct {
-	ID           uuid.UUID        `json:"id"`
-	Username     string           `json:"username"`
-	FullName     string           `json:"full_name"`
-	PasswordHash string           `json:"password_hash"`
-	IsActive     bool             `json:"is_active"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	DeletedAt    pgtype.Timestamp `json:"deleted_at"`
-}
-
-type UserRole struct {
-	UserID uuid.UUID    `json:"user_id"`
-	Role   UserRoleType `json:"role"`
+	ID           uuid.UUID          `json:"id"`
+	Username     string             `json:"username"`
+	FullName     string             `json:"full_name"`
+	PasswordHash string             `json:"password_hash"`
+	Role         UserRoleType       `json:"role"`
+	IsActive     bool               `json:"is_active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }

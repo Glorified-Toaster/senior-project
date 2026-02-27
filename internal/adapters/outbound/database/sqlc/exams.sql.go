@@ -43,15 +43,15 @@ RETURNING id, subject_id, title, description, duration_minutes, total_marks, sta
 `
 
 type CreateExamParams struct {
-	SubjectID       uuid.NullUUID    `json:"subject_id"`
-	Title           string           `json:"title"`
-	Description     *string          `json:"description"`
-	DurationMinutes int32            `json:"duration_minutes"`
-	TotalMarks      int32            `json:"total_marks"`
-	StartTime       pgtype.Timestamp `json:"start_time"`
-	EndTime         pgtype.Timestamp `json:"end_time"`
-	Status          ExamStatusType   `json:"status"`
-	CreatedBy       uuid.NullUUID    `json:"created_by"`
+	SubjectID       uuid.NullUUID      `json:"subject_id"`
+	Title           string             `json:"title"`
+	Description     *string            `json:"description"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	TotalMarks      int32              `json:"total_marks"`
+	StartTime       pgtype.Timestamptz `json:"start_time"`
+	EndTime         pgtype.Timestamptz `json:"end_time"`
+	Status          ExamStatusType     `json:"status"`
+	CreatedBy       uuid.NullUUID      `json:"created_by"`
 }
 
 func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error) {

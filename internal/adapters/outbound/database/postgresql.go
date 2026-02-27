@@ -11,7 +11,7 @@ import (
 )
 
 type PostgresAdapter struct {
-	pool *pgxpool.Pool
+	Pool *pgxpool.Pool
 }
 
 func NowConnection(cfg DBConfig) (*PostgresAdapter, error) {
@@ -45,7 +45,7 @@ func NowConnection(cfg DBConfig) (*PostgresAdapter, error) {
 	}
 
 	adapter := &PostgresAdapter{
-		pool: pool,
+		Pool: pool,
 	}
 
 	return adapter, nil
@@ -72,15 +72,19 @@ func configurePool(poolCfg *pgxpool.Config, cfg DBConfig) {
 	poolCfg.HealthCheckPeriod = 1 * time.Minute
 }
 
-func (a *PostgresAdapter) Stats() *pgxpool.Stat { return a.pool.Stat() }
+func (a *PostgresAdapter) Stats() *pgxpool.Stat { return a.Pool.Stat() }
 func (a *PostgresAdapter) Exec(ctx context.Context, expr string, args ...interface{}) (pgconn.CommandTag, error) {
-	return a.pool.Exec(ctx, expr, args...)
+	return a.Pool.Exec(ctx, expr, args...)
 }
 
 func (a *PostgresAdapter) Query(ctx context.Context, expr string, args ...interface{}) (pgx.Rows, error) {
-	return a.pool.Query(ctx, expr, args...)
+	return a.Pool.Query(ctx, expr, args...)
 }
 
 func (a *PostgresAdapter) QueryRow(ctx context.Context, expr string, args ...interface{}) pgx.Row {
-	return a.pool.QueryRow(ctx, expr, args...)
+	return a.Pool.QueryRow(ctx, expr, args...)
+}
+
+func (a *PostgresAdapter) Begin(ctx context.Context) (pgx.Tx, error) {
+	return a.Pool.Begin(ctx)
 }
