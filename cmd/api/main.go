@@ -19,7 +19,9 @@ import (
 	"uot-exam/internal/adapters/outbound/logger"
 	"uot-exam/internal/adapters/outbound/repository"
 	"uot-exam/internal/application"
+	"uot-exam/internal/ports"
 
+	"github.com/bxcodec/faker/v4"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -77,7 +79,8 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, txManager, pool, zlog)
 
-	mockExam(app)
+	//populateDB(app)
+	//mockExam(app)
 
 	pool.Stats()
 	// init validator
@@ -110,4 +113,21 @@ func mockExam(app *application.Application) {
 		log.Println("error getting user by username", err)
 	}
 	log.Println("user", user)
+
+}
+
+func populateDB(app *application.Application) {
+	for i := 0; i < 100; i++ {
+		user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
+			Username: faker.Username(),
+			FullName: faker.Name(),
+			Password: faker.Password(),
+			Role:     "STUDENT",
+			IsActive: true,
+		})
+		if err != nil {
+			log.Println("error creating user", err)
+		}
+		log.Println("user", user)
+	}
 }

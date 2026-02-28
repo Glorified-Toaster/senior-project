@@ -3,7 +3,7 @@ module uot-exam
 go 1.25.6
 
 require (
-	github.com/brianvoe/gofakeit v3.18.0+incompatible
+	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/sessions v1.0.4
 	github.com/gin-gonic/gin v1.11.0

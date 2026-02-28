@@ -218,6 +218,7 @@ type User struct {
 	PasswordHash string             `json:"password_hash"`
 	Role         UserRoleType       `json:"role"`
 	IsActive     bool               `json:"is_active"`
+	LastLogin    pgtype.Timestamptz `json:"last_login"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`

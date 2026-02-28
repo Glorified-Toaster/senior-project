@@ -16,6 +16,9 @@ type Querier interface {
 	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	DisableUser(ctx context.Context, id uuid.UUID) error
+	EnableUser(ctx context.Context, id uuid.UUID) error
 	EnrollStudent(ctx context.Context, arg EnrollStudentParams) (Enrollment, error)
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetEnrollmentsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]Enrollment, error)
@@ -25,16 +28,21 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
+	ListAllUsers(ctx context.Context) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
 	ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
+	ListDeletedUsers(ctx context.Context) ([]User, error)
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListSubjectsByInstructor(ctx context.Context, instructorID uuid.NullUUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
+	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
+	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error
+	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }
 

@@ -49,12 +49,22 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 }
 
 func (r *Router) SetupRoutes() {
+
+	// Public routes
+	publicRoutes := r.router.Group("/")
+	{
+		publicRoutes.POST("/login", r.userHandler.Login())
+	}
+
 	// User routes
 	userRoutes := r.router.Group("/users")
+	//userRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	//userRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
 	{
 		userRoutes.POST("/create", r.userHandler.Create())
 		userRoutes.GET("/id/:id", r.userHandler.GetUserByID())
 		userRoutes.GET("/username/:username", r.userHandler.GetUserByUsername())
+		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
 	}
 }
 

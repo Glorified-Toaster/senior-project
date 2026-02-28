@@ -26,6 +26,7 @@ type User struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time
+	LastLogin    *time.Time
 }
 
 // IsValidRole checks if the provided role is valid within the system.
@@ -36,4 +37,20 @@ func IsValidRole(role UserRole) bool {
 	default:
 		return false
 	}
+}
+
+func (u *User) IsAdmin() bool {
+	return u.Role == RoleAdmin
+}
+
+func (u *User) IsInstructor() bool {
+	return u.Role == RoleInstructor
+}
+
+func (u *User) IsStudent() bool {
+	return u.Role == RoleStudent
+}
+
+func (u *User) IsDeleted() bool {
+	return u.DeletedAt != nil
 }

@@ -25,7 +25,7 @@ INSERT INTO users (
     $4,
     $5
 )
-RETURNING id, username, full_name, password_hash, role, is_active, created_at, updated_at, deleted_at
+RETURNING id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -52,6 +52,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsActive,
+		&i.LastLogin,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -59,8 +60,41 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users 
+WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
+
+const disableUser = `-- name: DisableUser :exec
+UPDATE users 
+SET is_active = false
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) DisableUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, disableUser, id)
+	return err
+}
+
+const enableUser = `-- name: EnableUser :exec
+UPDATE users 
+SET is_active = true
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) EnableUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, enableUser, id)
+	return err
+}
+
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, full_name, password_hash, role, is_active, created_at, updated_at, deleted_at FROM users WHERE id = $1
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -73,6 +107,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsActive,
+		&i.LastLogin,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -81,7 +116,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, full_name, password_hash, role, is_active, created_at, updated_at, deleted_at FROM users WHERE username = $1
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE username = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -94,6 +130,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsActive,
+		&i.LastLogin,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -102,7 +139,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const listActiveUsers = `-- name: ListActiveUsers :many
-SELECT id, username, full_name, password_hash, role, is_active, created_at, updated_at, deleted_at FROM users WHERE is_active = TRUE ORDER BY created_at DESC
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE is_active = TRUE AND deleted_at IS NULL 
+ORDER BY created_at DESC
 `
 
 func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
@@ -121,6 +160,81 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 			&i.PasswordHash,
 			&i.Role,
 			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllUsers = `-- name: ListAllUsers :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE deleted_at IS NULL 
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeletedUsers = `-- name: ListDeletedUsers :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE deleted_at IS NOT NULL 
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListDeletedUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listDeletedUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -136,7 +250,9 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 }
 
 const listUsersByRole = `-- name: ListUsersByRole :many
-SELECT id, username, full_name, password_hash, role, is_active, created_at, updated_at, deleted_at FROM users WHERE role = $1 ORDER BY created_at DESC
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE role = $1 AND deleted_at IS NULL 
+ORDER BY created_at DESC
 `
 
 func (q *Queries) ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error) {
@@ -155,6 +271,7 @@ func (q *Queries) ListUsersByRole(ctx context.Context, role UserRoleType) ([]Use
 			&i.PasswordHash,
 			&i.Role,
 			&i.IsActive,
+			&i.LastLogin,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -169,8 +286,43 @@ func (q *Queries) ListUsersByRole(ctx context.Context, role UserRoleType) ([]Use
 	return items, nil
 }
 
+const restoreUser = `-- name: RestoreUser :exec
+UPDATE users 
+SET deleted_at = NULL, is_active = true
+WHERE id = $1
+`
+
+func (q *Queries) RestoreUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, restoreUser, id)
+	return err
+}
+
+const softDeleteUser = `-- name: SoftDeleteUser :exec
+UPDATE users 
+SET deleted_at = NOW(), is_active = false
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUser, id)
+	return err
+}
+
+const updateUserLastLogin = `-- name: UpdateUserLastLogin :exec
+UPDATE users 
+SET last_login = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateUserLastLogin, id)
+	return err
+}
+
 const updateUserRole = `-- name: UpdateUserRole :exec
-UPDATE users SET role = $2 WHERE id = $1
+UPDATE users 
+SET role = $2 
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 type UpdateUserRoleParams struct {
