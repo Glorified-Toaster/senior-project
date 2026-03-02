@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
 	CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error)
 	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
@@ -28,7 +29,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
-	ListAllUsers(ctx context.Context) ([]User, error)
+	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
 	ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
@@ -39,6 +40,7 @@ type Querier interface {
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
+	SearchUsers(ctx context.Context, search string) ([]User, error)
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error

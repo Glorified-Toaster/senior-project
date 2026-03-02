@@ -3,6 +3,8 @@ module uot-exam
 go 1.25.6
 
 require (
+	github.com/Oudwins/tailwind-merge-go v0.2.1
+	github.com/a-h/templ v0.3.1001
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/sessions v1.0.4

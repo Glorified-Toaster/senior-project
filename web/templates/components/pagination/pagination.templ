@@ -1,0 +1,114 @@
+package pagination
+
+import (
+	"uot-exam/web/templates/components/button"
+	"fmt"
+)
+
+type Props struct {
+	Total      int64
+	Limit      int32
+	Offset     int32
+	BaseURL    string // e.g., "/test"
+	HXTarget   string // for HTMX support
+	HXSwap     string
+}
+
+templ Pagination(props Props) {
+	{{
+		total := int(props.Total)
+		limit := int(props.Limit)
+		offset := int(props.Offset)
+		currentPage := (offset / limit) + 1
+		totalPages := (total + limit - 1) / limit
+	}}
+	if totalPages > 1 {
+		<nav class="flex items-center justify-center space-x-2 py-4" aria-label="Pagination">
+			// Previous Button
+			if currentPage > 1 {
+				@button.Button(button.Props{
+					Variant: button.VariantOutline,
+					Size:    button.SizeSm,
+					Attributes: templ.Attributes{
+						"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (currentPage-2)*limit),
+						"hx-target": props.HXTarget,
+						"hx-swap": props.HXSwap,
+					},
+				}) {
+					Previous
+				}
+			} else {
+				@button.Button(button.Props{
+					Variant:  button.VariantOutline,
+					Size:     button.SizeSm,
+					Disabled: true,
+				}) {
+					Previous
+				}
+			}
+
+			// Page Numbers (Simplified for now, showing all if reasonable, else just current/neighbors)
+			<div class="flex items-center gap-1">
+				for i := 1; i <= totalPages; i++ {
+					if i == 1 || i == totalPages || (i >= currentPage-1 && i <= currentPage+1) {
+						if i == currentPage {
+							@button.Button(button.Props{
+								Variant: button.VariantDefault,
+								Size:    button.SizeSm,
+								Class:   "w-10",
+							}) {
+								{ fmt.Sprint(i) }
+							}
+						} else {
+							@button.Button(button.Props{
+								Variant: button.VariantOutline,
+								Size:    button.SizeSm,
+								Class:   "w-10 text-slate-600",
+								Attributes: templ.Attributes{
+									"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (i-1)*limit),
+									"hx-target": props.HXTarget,
+									"hx-swap": props.HXSwap,
+								},
+							}) {
+								{ fmt.Sprint(i) }
+							}
+						}
+					} else if (i == 2 && currentPage > 3) || (i == totalPages-1 && currentPage < totalPages-2) {
+						<span class="px-2 text-slate-400">...</span>
+						{{
+							// Skip intermediate pages
+							if i == 2 {
+								i = currentPage - 2
+							} else {
+								i = totalPages - 1
+							}
+						}}
+					}
+				}
+			</div>
+
+			// Next Button
+			if currentPage < totalPages {
+				@button.Button(button.Props{
+					Variant: button.VariantOutline,
+					Size:    button.SizeSm,
+					Attributes: templ.Attributes{
+						"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, currentPage*limit),
+						"hx-target": props.HXTarget,
+						"hx-swap": props.HXSwap,
+					},
+				}) {
+					Next
+				}
+			} else {
+				@button.Button(button.Props{
+					Variant:  button.VariantOutline,
+					Size:     button.SizeSm,
+					Disabled: true,
+				}) {
+					Next
+				}
+			}
+		</nav>
+	}
+}

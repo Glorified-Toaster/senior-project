@@ -11,6 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT count(*) FROM users 
+WHERE deleted_at IS NULL
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     username,
@@ -179,10 +191,16 @@ const listAllUsers = `-- name: ListAllUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NULL 
 ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListAllUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listAllUsers)
+type ListAllUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listAllUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -295,6 +313,48 @@ WHERE id = $1
 func (q *Queries) RestoreUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreUser, id)
 	return err
+}
+
+const searchUsers = `-- name: SearchUsers :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND (
+        username ILIKE '%' || $1::text || '%'
+        OR full_name ILIKE '%' || $1::text || '%'
+    )
+ORDER BY created_at DESC
+`
+
+func (q *Queries) SearchUsers(ctx context.Context, search string) ([]User, error) {
+	rows, err := q.db.Query(ctx, searchUsers, search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const softDeleteUser = `-- name: SoftDeleteUser :exec

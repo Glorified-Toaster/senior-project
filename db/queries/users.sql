@@ -64,7 +64,8 @@ ORDER BY created_at DESC;
 -- name: ListAllUsers :many
 SELECT * FROM users 
 WHERE deleted_at IS NULL 
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: UpdateUserRole :exec
 UPDATE users 
@@ -76,3 +77,17 @@ UPDATE users
 SET last_login = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
+
+-- name: SearchUsers :many
+SELECT * FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND (
+        username ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
+    )
+ORDER BY created_at DESC;
+
+-- name: CountUsers :one
+SELECT count(*) FROM users 
+WHERE deleted_at IS NULL;

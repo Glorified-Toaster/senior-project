@@ -2,11 +2,15 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/adapters/outbound/config"
 	"uot-exam/internal/adapters/outbound/logger"
 	"uot-exam/internal/application"
+	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
+	"uot-exam/web/templates/pages"
+	"uot-exam/web/templates/render"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -34,7 +38,7 @@ func NewUserHandler(userApp *application.Application, validate *validator.Valida
 func (h *UserHandler) Create() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ports.CreateUserParams
-		if err := ctx.ShouldBindJSON(&req); err != nil {
+		if err := ctx.ShouldBind(&req); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body (json)"})
 			return
 		}
@@ -165,9 +169,29 @@ func (h *UserHandler) GetUserByUsername() gin.HandlerFunc {
 	}
 }
 
+func (h *UserHandler) SearchUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		search := ctx.PostForm("search")
+
+		users, err := h.userApp.SearchUsers(ctx, search)
+
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
+			render.Render(ctx, pages.UserTableRows([]domain.User{}))
+			return
+		}
+
+		if users == nil {
+			users = []domain.User{}
+		}
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, pages.UserTableRows(users))
+	}
+}
+
 func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		users, err := h.userApp.ListAllUsers(ctx)
+		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{Limit: 100, Offset: 0})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to list all users", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to list all users"})
@@ -177,5 +201,44 @@ func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, gin.H{
 			"users": users,
 		})
+	}
+}
+
+func (h *UserHandler) TestPage() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		limitStr := ctx.DefaultQuery("limit", "10")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil {
+			limit = 10
+		}
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			offset = 0
+		}
+
+		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to list all users", err)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to list all users"})
+			return
+		}
+
+		totalCount, err := h.userApp.CountUsers(ctx)
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to count users", err)
+			totalCount = 0
+		}
+
+		if ctx.GetHeader("HX-Request") == "true" {
+			render.Render(ctx, pages.UserTableContainer(users, totalCount, int32(limit), int32(offset)))
+			return
+		}
+
+		render.Render(ctx, pages.TestPage(users, totalCount, int32(limit), int32(offset)))
 	}
 }

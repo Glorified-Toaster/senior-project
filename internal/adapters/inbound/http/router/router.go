@@ -38,7 +38,8 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	setSecurityHeaders(router)
 
 	// static file handling
-	router.Static("/web/static", "./web/static")
+	router.Static("/src", "./web/static/src")
+	router.Static("/web/static/src", "./web/static/src")
 	router.Static("/images", "./web/static/images")
 
 	return &Router{
@@ -54,6 +55,8 @@ func (r *Router) SetupRoutes() {
 	publicRoutes := r.router.Group("/")
 	{
 		publicRoutes.POST("/login", r.userHandler.Login())
+		publicRoutes.GET("/test", r.userHandler.TestPage())
+		publicRoutes.POST("/users/search", r.userHandler.SearchUsers())
 	}
 
 	// User routes

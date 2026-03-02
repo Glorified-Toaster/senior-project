@@ -1,0 +1,7 @@
+{
+  "componentsDir": "web/templates/components",
+  "utilsDir": "web/templates/utils",
+  "moduleName": "uot-exam",
+  "jsDir": "web/static/src",
+  "jsPublicPath": "/web/static/src"
+}

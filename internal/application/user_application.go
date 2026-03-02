@@ -140,10 +140,26 @@ func (app *Application) ListDeletedUsers(ctx context.Context) ([]domain.User, er
 	return users, nil
 }
 
-func (app *Application) ListAllUsers(ctx context.Context) ([]domain.User, error) {
-	users, err := app.userRepo.ListAll(ctx)
+func (app *Application) ListAllUsers(ctx context.Context, arg ports.ListAllUsersParams) ([]domain.User, error) {
+	users, err := app.userRepo.ListAll(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (app *Application) SearchUsers(ctx context.Context, search string) ([]domain.User, error) {
+	users, err := app.userRepo.Search(ctx, search)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (app *Application) CountUsers(ctx context.Context) (int64, error) {
+	count, err := app.userRepo.Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

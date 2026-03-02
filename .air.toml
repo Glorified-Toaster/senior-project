@@ -5,8 +5,8 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "tmp/app"
-  ## && bun run build && ~/go/bin/templ generate .
-  cmd = "go build -o ./tmp/app ./cmd/api/main.go "
+  ## && bun run build
+  cmd = "~/go/bin/templ generate . && go build -o ./tmp/app ./cmd/api/main.go "
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata" , "node_modules"]
   exclude_file = []

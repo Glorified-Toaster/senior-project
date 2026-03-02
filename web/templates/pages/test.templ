@@ -1,0 +1,470 @@
+package pages
+
+import (
+	"uot-exam/web/templates/components/table"
+	"uot-exam/internal/domain"
+	"uot-exam/web/templates/components/badge"
+	"fmt"
+	"time"
+    "uot-exam/web/templates/components/sidebar"
+    "uot-exam/web/templates/components/icon"
+    "uot-exam/web/templates/components/collapsible"
+    "uot-exam/web/templates/components/dropdown"
+    "uot-exam/web/templates/components/popover"
+    "uot-exam/web/templates/components/dialog"
+    "uot-exam/web/templates/components/pagination"
+)
+
+// Helper for the Edit Icon
+templ editIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+}
+
+// Helper for the Delete Icon
+templ deleteIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+}
+
+templ TestPage(users []domain.User, totalCount int64, limit int32, offset int32) {
+	<!DOCTYPE html>
+	<html lang="en" class="h-full bg-slate-50">
+	<head>
+		<meta charset="UTF-8"/>
+		<script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                darkMode: 'class',
+            }
+        </script>
+		<script defer src="/src/htmx.min.js"></script>
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+        @dialog.Script()
+		<title>User Management</title>
+		<style>
+			.htmx-indicator { display: none; }
+			.htmx-request .htmx-indicator { display: inline; }
+			tr.htmx-swapping { opacity: 0; transition: opacity 300ms ease-out; }
+		</style>
+	</head>
+	<body class="h-full antialiased text-slate-900">
+		@SidebarDefault() {
+			<div class="max-w-6xl mx-auto">
+				<div class="flex justify-between items-center mb-6">
+					<h1 class="text-2xl font-bold">Users</h1>
+					<div class="relative w-72">
+						<input 
+							type="search" 
+							name="search" 
+							placeholder="Search..." 
+							class="w-full pl-4 pr-10 py-2 rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500"
+							hx-post="/users/search" 
+							hx-trigger="keyup changed delay:300ms, search" 
+							hx-target="#user-table-body" 
+							hx-indicator="#search-spinner"
+						/>
+						<div id="search-spinner" class="htmx-indicator absolute right-3 top-3 animate-spin text-blue-500">...</div>
+					</div>
+				</div>
+
+				@UserTableContainer(users, totalCount, limit, offset)
+			</div>
+		}
+	</body>
+	</html>
+}
+
+templ UserTableContainer(users []domain.User, totalCount int64, limit int32, offset int32) {
+	<div id="users-table-container" class="bg-white rounded-xl shadow border overflow-hidden">
+		<div class="overflow-x-auto">
+			@table.Table() {
+				@table.Header() {
+					<tr class="bg-slate-100">
+						@table.Head() { Name }
+						@table.Head() { Role }
+						@table.Head() { Username }
+						@table.Head() { Status }
+						@table.Head() { Created }
+						@table.Head() { Last Login }
+						@table.Head() { <div class="text-right">Actions</div> }
+					</tr>
+				}
+				<tbody id="user-table-body">
+					@UserTableRows(users)
+				</tbody>
+			}
+		</div>
+		<div id="pagination-container" class="border-t bg-slate-50/50">
+			@pagination.Pagination(pagination.Props{
+				Total:    totalCount,
+				Limit:    limit,
+				Offset:   offset,
+				BaseURL:  "/test",
+				HXTarget: "#users-table-container", 
+				HXSwap:   "outerHTML",
+			})
+		</div>
+	</div>
+}
+
+// Helper function to format time for display
+func displayTime(t *time.Time) string {
+    if t == nil || t.IsZero() {
+        return "Never"
+    }
+    return t.Format("Jan 02, 15:04")
+}
+
+// relativeTime returns a human-friendly relative time string
+func relativeTime(t *time.Time) string {
+    if t == nil || t.IsZero() {
+        return "Never"
+    }
+    now := time.Now()
+    diff := now.Sub(*t)
+    switch {
+    case diff < time.Minute:
+        return "Just now"
+    case diff < time.Hour:
+        m := int(diff.Minutes())
+        if m == 1 { return "1 min ago" }
+        return fmt.Sprintf("%d min ago", m)
+    case diff < 24*time.Hour:
+        h := int(diff.Hours())
+        if h == 1 { return "1 hour ago" }
+        return fmt.Sprintf("%d hours ago", h)
+    case diff < 7*24*time.Hour:
+        d := int(diff.Hours()/24)
+        if d == 1 { return "Yesterday" }
+        return fmt.Sprintf("%d days ago", d)
+    default:
+        return t.Format("Jan 02, 2006")
+    }
+}
+
+templ UserTableRows(users []domain.User) {
+    if len(users) == 0 {
+        <tr>
+            <td colspan="7" class="p-12 text-center text-slate-400 font-medium">No users found.</td>
+        </tr>
+    } else {
+        for _, user := range users {
+            @table.Row() {
+                @table.Cell() { <span class="font-semibold text-slate-800 flex items-center gap-2"> <span>@icon.User()</span> { user.FullName }</span> }
+                @table.Cell() { @badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { { string(user.Role) } } }
+                @table.Cell() { <span class="text-slate-500">{ user.Username }</span> }
+                @table.Cell() { 
+                    if user.IsActive {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700">Active</span>
+                    } else {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">Inactive</span>
+                    }
+                }
+                @table.Cell() { <span class="text-sm">{ user.CreatedAt.Format("Jan 02, 2006") }</span> }
+                
+                // LAST LOGIN
+                @table.Cell() {
+                    if user.LastLogin != nil {
+                        <span class="inline-flex items-center gap-1.5 text-sm text-slate-700" title={ user.LastLogin.Format("Jan 02, 2006 15:04:05") }>
+                            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                            { relativeTime(user.LastLogin) }
+                        </span>
+                    } else {
+                        <span class="inline-flex items-center gap-1.5 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                            <span class="text-slate-400 italic">Never</span>
+                        </span>
+                    }
+                }
+
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end items-center gap-3">
+                        <button class="text-slate-400 hover:text-blue-600 transition-colors" title="Edit User">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                        </button>
+                        
+                        if user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
+                            <button 
+                                class="text-slate-400 hover:text-red-600 transition-colors"
+                                hx-delete={ fmt.Sprintf("/users/%s", user.ID.String()) }
+                                hx-target="closest tr"
+                                hx-confirm={ fmt.Sprintf("Delete %s?", user.FullName) }
+                                hx-swap="outerHTML swap:300ms"
+                                title="Delete User"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                            </button>
+                        }
+                    </div>
+                </td>
+            }
+        }
+    }
+}
+
+
+templ SidebarDefault() {
+	@sidebar.Layout() {
+		@sidebar.Sidebar(sidebar.Props{
+			Collapsible: sidebar.CollapsibleIcon,
+			Variant:     sidebar.VariantFloating,
+		}) {
+			@sidebar.Header() {
+				@sidebar.Menu() {
+					@sidebar.MenuItem() {
+						@sidebar.MenuButton(sidebar.MenuButtonProps{
+							Href: "#",
+						}) {
+							@icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
+							<span class="font-semibold">Acme Inc</span>
+						}
+					}
+				}
+			}
+			@sidebar.Content() {
+				@sidebar.Group() {
+					@sidebar.GroupLabel() {
+						Platform
+					}
+					@sidebar.Menu() {
+						@sidebar.MenuItem() {
+							@sidebar.MenuButton(sidebar.MenuButtonProps{
+								Href:    "#",
+								Tooltip: "Home",
+							}) {
+								@icon.House(icon.Props{Class: "size-4"})
+								<span>Home</span>
+							}
+						}
+						@sidebar.MenuItem() {
+							@sidebar.MenuButton(sidebar.MenuButtonProps{
+								Href:    "#",
+								Tooltip: "Inbox",
+							}) {
+								@icon.Inbox(icon.Props{Class: "size-4"})
+								<span>Inbox</span>
+								@sidebar.MenuBadge() {
+									3
+								}
+							}
+						}
+						@sidebar.MenuItem() {
+							@collapsible.Collapsible(collapsible.Props{
+								Open:  true,
+								Class: "group/collapsible w-full",
+							}) {
+								@collapsible.Trigger() {
+									@sidebar.MenuButton(sidebar.MenuButtonProps{
+										Tooltip: "Documents",
+									}) {
+										@icon.FileText(icon.Props{Class: "size-4"})
+										<span>Documents</span>
+										@icon.ChevronRight(icon.Props{
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+										})
+									}
+								}
+								@collapsible.Content() {
+									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "#",
+											}) {
+												<span>Reports</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "#",
+											}) {
+												<span>Invoices</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href:     "#",
+												IsActive: true,
+											}) {
+												<span>Receipts</span>
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				@sidebar.Separator()
+				@sidebar.Group() {
+					@sidebar.GroupLabel() {
+						Projects
+					}
+					@sidebar.Menu() {
+						@sidebar.MenuItem() {
+							@sidebar.MenuButton(sidebar.MenuButtonProps{
+								Href:    "#",
+								Tooltip: "Project Alpha",
+							}) {
+								@icon.Folder(icon.Props{Class: "size-4"})
+								<span>Project Alpha</span>
+								@sidebar.MenuBadge() {
+									12
+								}
+							}
+						}
+						@sidebar.MenuItem() {
+							<div class="w-full">
+								@sidebar.MenuButton(sidebar.MenuButtonProps{
+									Tooltip: "Project Beta",
+								}) {
+									@icon.Folder(icon.Props{Class: "size-4"})
+									<span>Project Beta</span>
+								}
+								@sidebar.MenuSub() {
+									@sidebar.MenuSubItem() {
+										@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+											Href: "#",
+										}) {
+											<span>Overview</span>
+										}
+									}
+									@sidebar.MenuSubItem() {
+										@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+											Href: "#",
+										}) {
+											<span>Analytics</span>
+										}
+									}
+									@sidebar.MenuSubItem() {
+										@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+											Href: "#",
+										}) {
+											<span>Reports</span>
+										}
+									}
+								}
+							</div>
+						}
+					}
+				}
+				@sidebar.Separator()
+				@sidebar.Group() {
+					@sidebar.Menu() {
+						@sidebar.MenuItem() {
+							@sidebar.MenuButton(sidebar.MenuButtonProps{
+								Href:    "#",
+								Tooltip: "Team",
+							}) {
+								@icon.Users(icon.Props{Class: "size-4"})
+								<span>Team</span>
+							}
+						}
+						@sidebar.MenuItem() {
+							@collapsible.Collapsible(collapsible.Props{
+								Open:  false,
+								Class: "group/collapsible w-full",
+							}) {
+								@collapsible.Trigger() {
+									@sidebar.MenuButton(sidebar.MenuButtonProps{
+										Tooltip: "Settings",
+									}) {
+										@icon.Settings(icon.Props{Class: "size-4"})
+										<span>Settings</span>
+										@icon.ChevronRight(icon.Props{
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+										})
+									}
+								}
+								@collapsible.Content() {
+									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "#",
+											}) {
+												<span>General</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "#",
+											}) {
+												<span>Security</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "#",
+											}) {
+												<span>Notifications</span>
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			@sidebar.Footer() {
+				@sidebar.Menu() {
+					@sidebar.MenuItem() {
+						@dropdown.Dropdown() {
+							@dropdown.Trigger() {
+								@sidebar.MenuButton(sidebar.MenuButtonProps{
+									Size: sidebar.MenuButtonSizeLg,
+								}) {
+									<div class="grid flex-1 text-left text-sm leading-tight">
+										<span class="truncate font-medium">John Doe</span>
+										<span class="truncate text-xs">john@example.com</span>
+									</div>
+									@icon.ChevronsUpDown(icon.Props{Class: "ml-auto size-4"})
+								}
+							}
+							@dropdown.Content(dropdown.ContentProps{
+								Class:     "w-56",
+								Placement: dropdown.PlacementTopStart,
+							}) {
+								@dropdown.Label() {
+									John Doe
+								}
+								@dropdown.Separator()
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.User(icon.Props{Size: 16, Class: "mr-2"})
+										Profile
+									</span>
+								}
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.Settings(icon.Props{Size: 16, Class: "mr-2"})
+										Settings
+									</span>
+								}
+								@dropdown.Separator()
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.LogOut(icon.Props{Size: 16, Class: "mr-2"})
+										Log out
+									</span>
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		@sidebar.Inset() {
+			<div class="flex h-full flex-col">
+				<div class="flex h-14 items-center gap-4 px-6">
+					@sidebar.Trigger()
+					<span class="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Dashboard</span>
+				</div>
+                <div class="flex-1 p-6 overflow-auto">
+                    { children... }
+                </div>
+			</div>
+		}
+	}
+}
