@@ -41,6 +41,7 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	router.Static("/src", "./web/static/src")
 	router.Static("/web/static/src", "./web/static/src")
 	router.Static("/images", "./web/static/images")
+	router.Static("/static", "./web/static")
 
 	return &Router{
 		router:         router,
@@ -57,6 +58,14 @@ func (r *Router) SetupRoutes() {
 		publicRoutes.POST("/login", r.userHandler.Login())
 		publicRoutes.GET("/test", r.userHandler.TestPage())
 		publicRoutes.POST("/users/search", r.userHandler.SearchUsers())
+		publicRoutes.POST("/users/new", r.userHandler.Create())
+	}
+
+	adminRoutes := r.router.Group("/admin")
+	//adminRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	//adminRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
+	{
+		adminRoutes.GET("/dashboard", r.userHandler.AdminDashboardMain())
 	}
 
 	// User routes
@@ -68,6 +77,7 @@ func (r *Router) SetupRoutes() {
 		userRoutes.GET("/id/:id", r.userHandler.GetUserByID())
 		userRoutes.GET("/username/:username", r.userHandler.GetUserByUsername())
 		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
+		userRoutes.DELETE("/delete/:id", r.userHandler.SoftDeleteUser())
 	}
 }
 

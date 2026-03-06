@@ -1,0 +1,78 @@
+package navbar
+
+import (
+	"uot-exam/web/templates/components/sidebar"
+	"uot-exam/web/templates/components/icon"
+	"uot-exam/web/templates/components/breadcrumb"
+	"uot-exam/web/templates/utils"
+)
+
+type Props struct {
+	ID           string
+	Class        string
+	Attributes   templ.Attributes
+	UserFullname string
+	Username     string
+	UserInitials string
+}
+
+templ Navbar(props Props) {
+	<header
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ utils.TwMerge(
+			"sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6",
+			props.Class,
+		) }
+		{ props.Attributes... }
+	>
+		<div class="flex items-center gap-4">
+			@sidebar.Trigger(sidebar.TriggerProps{Class: "md:hidden"})
+			<div class="hidden md:flex items-center gap-2">
+				@sidebar.Trigger()
+				<div class="h-4 w-px bg-border mx-2"></div>
+				<nav class="flex items-center space-x-1 text-sm font-medium text-muted-foreground">
+					<span class="text-foreground">
+                        @BreadcrumbWithIcons()
+                    </span>
+				</nav>
+			</div>
+		</div>
+		<div class="flex items-center gap-2 sm:gap-4 ml-4">
+        <img src="/images/uotLogo.png" alt="Logo" class="h-14 w-auto" />
+		</div>
+	</header>
+}
+
+
+templ BreadcrumbWithIcons() {
+	@breadcrumb.Breadcrumb() {
+		@breadcrumb.List() {
+			@breadcrumb.Item() {
+				@breadcrumb.Link(breadcrumb.LinkProps{
+					Href: "/",
+				}) {
+					@icon.House(icon.Props{Size: 16})
+					<span class="ml-1">Home</span>
+				}
+			}
+			@breadcrumb.Item() {
+				@breadcrumb.Separator()
+				@breadcrumb.Link(breadcrumb.LinkProps{
+					Href: "/docs",
+				}) {
+					@icon.FileText(icon.Props{Size: 16})
+					<span class="ml-1">Documentation</span>
+				}
+			}
+			@breadcrumb.Item() {
+				@breadcrumb.Separator()
+				@breadcrumb.Page(breadcrumb.ItemProps{Current: true}) {
+					@icon.Component(icon.Props{Size: 16})
+					<span class="ml-1">Components</span>
+				}
+			}
+		}
+	}
+}

@@ -79,8 +79,8 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, txManager, pool, zlog)
 
-	//populateDB(app)
-	//mockExam(app)
+	// populateDB(app)
+	// mockExam(app)
 
 	pool.Stats()
 	// init validator
@@ -113,21 +113,22 @@ func mockExam(app *application.Application) {
 		log.Println("error getting user by username", err)
 	}
 	log.Println("user", user)
-
 }
 
 func populateDB(app *application.Application) {
-	for i := 0; i < 100; i++ {
-		user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
-			Username: faker.Username(),
-			FullName: faker.Name(),
-			Password: faker.Password(),
-			Role:     "STUDENT",
-			IsActive: true,
-		})
-		if err != nil {
-			log.Println("error creating user", err)
+	go func() {
+		for i := 0; i < 1000; i++ {
+			user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
+				Username: faker.Username(),
+				FullName: faker.Name(),
+				Password: "P123" + faker.Password(),
+				Role:     "STUDENT",
+				IsActive: true,
+			})
+			if err != nil {
+				log.Println("error creating user", err)
+			}
+			log.Println("user", user)
 		}
-		log.Println("user", user)
-	}
+	}()
 }

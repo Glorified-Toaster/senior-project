@@ -325,13 +325,17 @@ func (r *UserRepository) ListAll(ctx context.Context, arg ports.ListAllUsersPara
 	return domainUsers, nil
 }
 
-func (r *UserRepository) Search(ctx context.Context, search string) ([]domain.User, error) {
+func (r *UserRepository) Search(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	users, err := queries.SearchUsers(ctx, search)
+	users, err := queries.SearchUsers(ctx, sqlc.SearchUsersParams{
+		Search: arg.Search,
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
 
 	if err != nil {
 		return nil, err

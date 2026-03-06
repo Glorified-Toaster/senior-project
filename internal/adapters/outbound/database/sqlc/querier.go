@@ -40,7 +40,7 @@ type Querier interface {
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
-	SearchUsers(ctx context.Context, search string) ([]User, error)
+	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error

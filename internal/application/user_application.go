@@ -148,8 +148,8 @@ func (app *Application) ListAllUsers(ctx context.Context, arg ports.ListAllUsers
 	return users, nil
 }
 
-func (app *Application) SearchUsers(ctx context.Context, search string) ([]domain.User, error) {
-	users, err := app.userRepo.Search(ctx, search)
+func (app *Application) SearchUsers(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
+	users, err := app.userRepo.Search(ctx, arg)
 	if err != nil {
 		return nil, err
 	}

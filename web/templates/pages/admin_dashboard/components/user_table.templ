@@ -1,0 +1,150 @@
+package components
+
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/table"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/badge"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/internal/domain"
+import "fmt"
+import "time"
+
+templ MainUserTable(users []domain.User) {
+	@card.Card(card.Props{Class: "w-full"}) {
+		@card.Header(){	
+		<span class="text-2xl font-bold">Recent Users</span>
+		}
+		@card.Content(){
+		<div id="users-table-container">
+		<div class="overflow-x-auto">
+			@table.Table() {
+				@table.Header(table.HeaderProps{Class: "border-b border-slate-200"}) {
+					<tr>
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Username</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Joined</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Last Interaction</span> }
+						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</span> }
+					</tr>
+				}
+				<tbody id="user-table-body" class="divide-y divide-slate-100">
+					@UserTableRows(users)
+				</tbody>
+			}
+		</div>
+	</div>
+			<div class="grid">
+			@button.Button(button.Props{
+				Href: "/admin/all-users",
+			}){
+				All Users
+				}
+		</div>
+
+
+	}}
+}
+
+templ UserTableRows(users []domain.User) {
+    if len(users) == 0 {
+        <tr>
+            <td colspan="7" class="p-16 text-center">
+				<div class="max-w-sm mx-auto flex flex-col items-center justify-center">
+					<div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
+						@icon.Search()
+					</div>
+                	<h3 class="text-lg font-bold text-slate-700">No users found</h3>
+					<p class="text-slate-500 text-sm mt-1">We couldn't find anyone matching your search criteria. Try adjusting your search term.</p>
+				</div>
+            </td>
+        </tr>
+    } else {
+        for _, user := range users {
+            @table.Row(table.RowProps{Class: "hover:bg-slate-50/80 transition-colors group cursor-default"}) {
+                @table.Cell() { 
+					<span class="font-semibold text-slate-800 flex items-center gap-3">
+						<div class="w-8 h-8 rounded-full bg-blue-100 text-primary flex items-center justify-center text-xs font-bold uppercase tracking-wider">{ user.FullName[:2] }</div>
+						{ user.FullName }
+					</span> 
+				}
+                @table.Cell() { @badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "uppercase tracking-widest text-[10px] font-bold shadow-sm border border-slate-200/60"}) { { string(user.Role) } } }
+                @table.Cell() { <span class="text-slate-500 font-medium font-mono text-sm py-1 px-2 bg-slate-100 rounded-md border border-slate-200">{ user.Username }</span> }
+                @table.Cell() { 
+                    if user.IsActive {
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Active</span>
+                    } else {
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-500 border border-slate-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Inactive</span>
+                    }
+                }
+                @table.Cell() { <span class="text-sm font-medium text-slate-600">{ user.CreatedAt.Format("Jan 02, 2006") }</span> }
+                
+                // LAST LOGIN
+                @table.Cell() {
+                    if user.LastLogin != nil {
+                        <span class="inline-flex items-center gap-2 text-sm text-slate-700 font-medium bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100" title={ user.LastLogin.Format("Jan 02, 2006 15:04:05") }>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            { relativeTime(user.LastLogin) }
+                        </span>
+                    } else {
+                        <span class="inline-flex items-center gap-2 text-sm bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 opacity-60">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                            <span class="text-slate-500 font-medium">Never logged in</span>
+                        </span>
+                    }
+                }
+
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100" title="Edit User">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                        </button>
+                        
+                        if user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
+                            <button 
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100"
+                                hx-delete={ fmt.Sprintf("/users/delete/%s", user.ID.String()) }
+                                hx-target="closest tr"
+                                hx-confirm={ fmt.Sprintf("Delete %s permanently?", user.FullName) }
+                                hx-swap="outerHTML swap:300ms"
+                                title="Delete User"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                            </button>
+                        }
+                    </div>
+                </td>
+
+            }
+
+        }
+    }
+}
+
+// relativeTime returns a human-friendly relative time string
+func relativeTime(t *time.Time) string {
+    if t == nil || t.IsZero() {
+        return "Never"
+    }
+    now := time.Now()
+    diff := now.Sub(*t)
+    switch {
+    case diff < time.Minute:
+        return "Just now"
+    case diff < time.Hour:
+        m := int(diff.Minutes())
+        if m == 1 { return "1 min ago" }
+        return fmt.Sprintf("%d min ago", m)
+    case diff < 24*time.Hour:
+        h := int(diff.Hours())
+        if h == 1 { return "1 hour ago" }
+        return fmt.Sprintf("%d hours ago", h)
+    case diff < 7*24*time.Hour:
+        d := int(diff.Hours()/24)
+        if d == 1 { return "Yesterday" }
+        return fmt.Sprintf("%d days ago", d)
+    default:
+        return t.Format("Jan 02, 2006")
+    }
+}

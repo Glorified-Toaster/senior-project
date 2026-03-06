@@ -1,0 +1,187 @@
+package components
+
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/navbar"
+
+templ Sidebar(currentPath string) {
+	@sidebar.Layout() {
+		@sidebar.Sidebar(sidebar.Props{
+			Collapsible: sidebar.CollapsibleIcon,
+			Variant:     sidebar.VariantFloating,
+		}) {
+			@sidebar.Header() {
+				@sidebar.Menu() {
+					@sidebar.MenuItem() {
+						@sidebar.MenuButton(sidebar.MenuButtonProps{
+							Href: "/admin/dashboard",
+							Tooltip: "Dashboard",
+						}) {
+                            @icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
+                            <span>Dashboard</span>
+						}
+					}
+				}
+			}
+			@sidebar.Content() {
+				@sidebar.Group() {
+					@sidebar.GroupLabel() {
+						Platform
+					}
+					@sidebar.Menu() {
+						@sidebar.MenuItem() {
+							@collapsible.Collapsible(collapsible.Props{
+								Open:  true,
+								Class: "group/collapsible w-full",
+							}) {
+								@collapsible.Trigger() {
+									@sidebar.MenuButton(sidebar.MenuButtonProps{
+										Tooltip: "Users",
+									}) {
+										@icon.Users(icon.Props{Class: "size-4"})
+										<span>Users</span>
+										@icon.ChevronRight(icon.Props{
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+										})
+									}
+								}
+								@collapsible.Content() {
+									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "/admin/users/all-users",
+												Class: activeClass(currentPath, "/admin/users/all-users"),
+											}) {
+												<span>All Users</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "/admin/users/deleted-users",
+                                                Class: activeClass(currentPath, "/admin/users/deleted-users"),
+											}) {
+												<span>Deleted Users</span>
+											}
+										}
+
+									}
+								}
+							}
+						}
+					}
+				}
+				@sidebar.Separator()
+				@sidebar.Group() {
+					@sidebar.Menu() {
+						@sidebar.MenuItem() {
+							@collapsible.Collapsible(collapsible.Props{
+								Open:  false,
+								Class: "group/collapsible w-full",
+							}) {
+								@collapsible.Trigger() {
+									@sidebar.MenuButton(sidebar.MenuButtonProps{
+										Tooltip: "Settings",
+									}) {
+										@icon.Settings(icon.Props{Class: "size-4"})
+										<span>Settings</span>
+										@icon.ChevronRight(icon.Props{
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+										})
+									}
+								}
+								@collapsible.Content() {
+									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "/admin/settings",
+                                                Class: activeClass(currentPath, "/admin/settings"),
+											}) {
+												<span>General</span>
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			@sidebar.Footer() {
+				@sidebar.Menu() {
+					@sidebar.MenuItem() {
+						@dropdown.Dropdown() {
+							@dropdown.Trigger() {
+								@sidebar.MenuButton(sidebar.MenuButtonProps{
+									Size: sidebar.MenuButtonSizeLg,
+								}) {
+									<div class="flex items-center text-left text-sm leading-tight">
+										@icon.User(icon.Props{Class: "h-6 w-6 mr-2 group-data-[tui-sidebar-state=collapsed]:mr-0"})
+										<div class="flex flex-col group-data-[tui-sidebar-state=collapsed]:hidden">
+											<span class="truncate font-medium">
+											 John Doe
+											 </span>
+											 <span class="truncate text-xs">
+											 fhlDWCA
+											 </span>
+										</div>
+									</div>
+									@icon.ChevronsUpDown(icon.Props{Class: "ml-auto size-4 group-data-[tui-sidebar-state=collapsed]:hidden"})
+								}
+							}
+							@dropdown.Content(dropdown.ContentProps{
+								Class:     "w-56",
+								Placement: dropdown.PlacementTopStart,
+							}) {
+								@dropdown.Label() {
+									John Doe
+								}
+								@dropdown.Separator()
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.User(icon.Props{Size: 16, Class: "mr-2"})
+										Profile
+									</span>
+								}
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.Settings(icon.Props{Size: 16, Class: "mr-2"})
+										Settings
+									</span>
+								}
+								@dropdown.Separator()
+								@dropdown.Item() {
+									<span class="flex items-center">
+										@icon.LogOut(icon.Props{Size: 16, Class: "mr-2"})
+										Log out
+									</span>
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		@sidebar.Inset() {
+			<div class="flex h-full flex-col">
+					@navbar.Navbar(navbar.Props{
+						UserFullname: "John Doe",
+						Username:     "23h-u9hg",
+						UserInitials: "JD",
+					})
+                <div class="flex-1 p-6 overflow-auto">
+                    { children... }
+                </div>
+			</div>
+		}
+	}
+}
+
+
+func activeClass(currentPath, targetPath string) string {
+    if currentPath == targetPath {
+        return "bg-primary text-primary-foreground font-medium shadow-sm"
+    }
+    return "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+}

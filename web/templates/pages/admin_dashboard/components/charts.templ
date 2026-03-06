@@ -1,0 +1,78 @@
+package components
+
+import "uot-exam/web/templates/components/chart"
+import "uot-exam/web/templates/components/card"
+import "fmt"
+
+type ChartData struct {
+	Pass        float64
+	Fail        float64
+	ExamID      string
+	PassingRate float64
+	TotalStudent float64
+}
+
+templ ChartDefault() {
+	@card.Card(card.Props{Class: "max-w-sm"}) {
+		@card.Content() {
+			@chart.Chart(chart.Props{
+				Variant:     chart.VariantBar,
+				ShowYGrid:   true,
+				ShowXLabels: true,
+				Data: chart.Data{
+					Labels: []string{"Jan", "Feb", "March", "April", "May", "June"},
+					Datasets: []chart.Dataset{
+						{
+							Data: []float64{12, 19, 12, 5, 2, 3},
+						},
+					},
+				},
+			})
+		}
+	}
+}
+
+templ ChartPie(data ChartData) {
+	<div class="w-full">
+		@card.Card(card.Props{Class: "w-full"}) {
+		@card.Header(){
+			@card.Title(){
+				<span class="text-2xl font-bold">Last Exam Ratio</span>
+			}
+
+			@card.Description(){
+			<span class="text-sm text-muted-foreground">
+			ExamID : {data.ExamID}
+			</span>
+			}
+		}
+		@card.Content() {
+			@chart.Chart(chart.Props{
+				Variant:    chart.VariantDoughnut,
+				ShowLegend: false,
+				Data: chart.Data{
+					Labels: []string{"pass" , "fail"},
+					Datasets: []chart.Dataset{
+						{
+							Data: []float64{data.Pass , data.Fail},
+							BackgroundColor: []string{"#67b5e1" , "#e26f66"},
+						},
+					},
+				},
+			})
+		}
+		@card.Footer(){
+			<span class="text-md text-muted-foreground">
+				{fmt.Sprintf("Passing Rate : %.2f" , data.PassingRate)}
+			</span>
+		}
+	}
+		</div>
+}
+
+func PassRate(passed, total int) float64 {
+    if total == 0 {
+        return 0
+    }
+    return (float64(passed) / float64(total)) * 100
+}

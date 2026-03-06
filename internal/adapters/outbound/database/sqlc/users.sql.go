@@ -320,14 +320,21 @@ SELECT id, username, full_name, password_hash, role, is_active, last_login, crea
 WHERE 
     deleted_at IS NULL 
     AND (
-        username ILIKE '%' || $1::text || '%'
-        OR full_name ILIKE '%' || $1::text || '%'
+        username ILIKE '%' || $3::text || '%'
+        OR full_name ILIKE '%' || $3::text || '%'
     )
 ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) SearchUsers(ctx context.Context, search string) ([]User, error) {
-	rows, err := q.db.Query(ctx, searchUsers, search)
+type SearchUsersParams struct {
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, searchUsers, arg.Limit, arg.Offset, arg.Search)
 	if err != nil {
 		return nil, err
 	}
