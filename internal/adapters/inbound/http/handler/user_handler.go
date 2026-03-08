@@ -85,19 +85,57 @@ func (h *UserHandler) Create() gin.HandlerFunc {
 func (h *UserHandler) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ports.LoginParams
-		if err := ctx.ShouldBindJSON(&req); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body (json)"})
+		if err := ctx.ShouldBind(&req); err != nil {
+			toast.Toast(toast.Props{
+				Title:         "Login Failed",
+				Description:   "Invalid request body",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
 			return
 		}
 
 		if err := h.validate.Struct(req); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body (struct validation)"})
+			toast.Toast(toast.Props{
+				Title:         "Login Failed",
+				Description:   "Invalid request body validation",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
 			return
 		}
 
 		user, err := h.userApp.Login(ctx, req)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to login user : " + err.Error()})
+			toast.Toast(toast.Props{
+				Title:         "Login Failed",
+				Description:   "Invalid username or password",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+			return
+		}
+
+		if user.Role != domain.RoleAdmin {
+			toast.Toast(toast.Props{
+				Title:         "Login Failed",
+				Description:   "Unauthorized user to access admin portal",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+
 			return
 		}
 
@@ -111,18 +149,9 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"msg":          "User logged in successfully",
-			"access_token": token,
-			"token_type":   "Bearer",
-			"user": gin.H{
-				"id":        user.ID,
-				"full_name": user.FullName,
-				"user_name": user.Username,
-				"is_active": user.IsActive,
-				"role":      user.Role,
-			},
-		})
+		ctx.SetCookie("token", token, 60*60*24, "/", "localhost", true, true)
+		ctx.Header("Content-Type", "text/html; charset=utf-8")
+		ctx.Header("HX-Redirect", "/admin/dashboard")
 	}
 
 }

@@ -8,6 +8,7 @@ import (
 	"uot-exam/internal/adapters/inbound/http/handler"
 	"uot-exam/internal/adapters/inbound/http/middleware"
 	"uot-exam/internal/adapters/outbound/config"
+	"uot-exam/internal/domain"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
@@ -52,6 +53,12 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 
 func (r *Router) SetupRoutes() {
 
+	// Public API
+	publicAPI := r.router.Group("/admin/api/v1")
+	{
+		publicAPI.POST("/admin/login", r.userHandler.Login())
+	}
+
 	// Public routes
 	publicRoutes := r.router.Group("/")
 	{
@@ -59,13 +66,18 @@ func (r *Router) SetupRoutes() {
 		publicRoutes.GET("/test", r.userHandler.TestPage())
 		publicRoutes.POST("/users/search", r.userHandler.SearchUsers())
 		publicRoutes.POST("/users/new", r.userHandler.Create())
+		publicRoutes.GET("/admin/login", r.userHandler.AdminLogin())
 	}
 
 	adminRoutes := r.router.Group("/admin")
-	//adminRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
-	//adminRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
+	adminRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	adminRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
 	{
-		adminRoutes.GET("/dashboard", r.userHandler.AdminDashboardMain())
+		dashboardRoutes := adminRoutes.Group("/dashboard")
+		{
+			dashboardRoutes.GET("/", r.userHandler.AdminDashboardMainRender())
+			dashboardRoutes.GET("/users", r.userHandler.UserPageRender())
+		}
 	}
 
 	// User routes

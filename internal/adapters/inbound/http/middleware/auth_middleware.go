@@ -12,7 +12,7 @@ func (auth *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 		auth.collectFootPrintsAndLog(ctx)
 
 		// getting the header from the context
-		authHeader, err := ctx.Cookie("auth_token")
+		authHeader, err := ctx.Cookie("token")
 		if err != nil {
 			log.Printf("cannot get the auth header from the context")
 		}

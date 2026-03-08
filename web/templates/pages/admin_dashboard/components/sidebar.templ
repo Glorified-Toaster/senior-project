@@ -6,7 +6,7 @@ import "uot-exam/web/templates/components/dropdown"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/navbar"
 
-templ Sidebar(currentPath string) {
+templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string) {
 	@sidebar.Layout() {
 		@sidebar.Sidebar(sidebar.Props{
 			Collapsible: sidebar.CollapsibleIcon,
@@ -51,16 +51,16 @@ templ Sidebar(currentPath string) {
 									@sidebar.MenuSub() {
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/users/all-users",
-												Class: activeClass(currentPath, "/admin/users/all-users"),
+												Href: "/admin/dashboard/users",
+												Class: activeClass(currentPath, "/admin/dashboard/users"),
 											}) {
 												<span>All Users</span>
 											}
 										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/users/deleted-users",
-                                                Class: activeClass(currentPath, "/admin/users/deleted-users"),
+												Href: "/admin/dashboard/users/deleted-users",
+                                                Class: activeClass(currentPath, "/admin/dashboard/users/deleted-users"),
 											}) {
 												<span>Deleted Users</span>
 											}
@@ -120,10 +120,10 @@ templ Sidebar(currentPath string) {
 										@icon.User(icon.Props{Class: "h-6 w-6 mr-2 group-data-[tui-sidebar-state=collapsed]:mr-0"})
 										<div class="flex flex-col group-data-[tui-sidebar-state=collapsed]:hidden">
 											<span class="truncate font-medium">
-											 John Doe
+											 {fullname}
 											 </span>
 											 <span class="truncate text-xs">
-											 fhlDWCA
+											 {username}
 											 </span>
 										</div>
 									</div>
@@ -135,7 +135,7 @@ templ Sidebar(currentPath string) {
 								Placement: dropdown.PlacementTopStart,
 							}) {
 								@dropdown.Label() {
-									John Doe
+									{fullname}
 								}
 								@dropdown.Separator()
 								@dropdown.Item() {
@@ -165,11 +165,7 @@ templ Sidebar(currentPath string) {
 		}
 		@sidebar.Inset() {
 			<div class="flex h-full flex-col">
-					@navbar.Navbar(navbar.Props{
-						UserFullname: "John Doe",
-						Username:     "23h-u9hg",
-						UserInitials: "JD",
-					})
+					@navbar.Navbar(navbar.Props{BreadPath: breadPath})
                 <div class="flex-1 p-6 overflow-auto">
                     { children... }
                 </div>

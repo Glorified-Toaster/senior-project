@@ -9,10 +9,15 @@ import "uot-exam/internal/domain"
 import "fmt"
 import "time"
 
-templ MainUserTable(users []domain.User) {
+type UserTableProps struct {
+	Users []domain.User
+    Title string
+}
+
+templ UserTable(props UserTableProps) {
 	@card.Card(card.Props{Class: "w-full"}) {
 		@card.Header(){	
-		<span class="text-2xl font-bold">Recent Users</span>
+		<span class="text-2xl font-bold">{ props.Title }</span>
 		}
 		@card.Content(){
 		<div id="users-table-container">
@@ -30,14 +35,14 @@ templ MainUserTable(users []domain.User) {
 					</tr>
 				}
 				<tbody id="user-table-body" class="divide-y divide-slate-100">
-					@UserTableRows(users)
+					@UserTableRows(props.Users)
 				</tbody>
 			}
 		</div>
 	</div>
 			<div class="grid">
 			@button.Button(button.Props{
-				Href: "/admin/all-users",
+				Href: "/admin/dashboard/users",
 			}){
 				All Users
 				}

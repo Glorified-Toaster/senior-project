@@ -1,0 +1,79 @@
+package page
+
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/chart"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/internal/domain"
+
+templ AllUsers(params AdminDashboardParam) {
+    @sidebar.Script()
+	@collapsible.Script()
+	@dropdown.Script()
+	@popover.Script()
+    @dialog.Script()
+    @toast.Script()
+    @chart.Script()
+
+    @components.Sidebar("/admin/dashboard/users", []navbar.BreadPath{
+        {
+            Href: "/admin/dashboard",
+            Path: "Dashboard",
+        },
+        {
+            Href: "/admin/dashboard/users",
+            Path: "Users",
+        },
+    }, "admin", "Admin") {
+
+     			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.Users(icon.Props{Class: "h-8 w-8"})
+							All Users
+						</h1>
+						<p class="text-slate-500 mt-1">List of all users on the platform.</p>
+					</div>
+               </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+			   @components.TotalCard(components.TotalCardProps{
+					Title: "Total Users",
+					Description: "Total number of users on the platform.",
+					Value: params.TotalUsers,
+					Icon: icon.Users(icon.Props{Class: "h-10 w-10"}), 
+			   })   
+			   	@components.TotalCard(components.TotalCardProps{
+					Title: "Total Instructors",
+					Description: "Total number of instructors on the platform.",
+					Value: "20",
+					Icon: icon.UserRoundPen(icon.Props{Class: "h-10 w-10"}), 
+			   })
+			   	@components.TotalCard(components.TotalCardProps{
+					Title: "Total Students",
+					Description: "Total number of students on the platform.",
+					Value: "80",
+					Icon: icon.User(icon.Props{Class: "h-10 w-10"}), 
+			   })              
+			   </div>
+                @components.UserTable(components.UserTableProps{
+					Users: params.Users,
+					Title: "All Users",
+				})
+			</div>
+	}
+}
+
+templ UserTable(users []domain.User) {
+    @components.UserTable(components.UserTableProps{
+        Users: users,
+        Title: "All Users",
+    })
+}

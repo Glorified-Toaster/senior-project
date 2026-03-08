@@ -37,7 +37,8 @@ func setClaimsInContext(ctx *gin.Context, claims *helpers.Claims) {
 	ctx.Set("claims", claims)
 	ctx.Set("userID", claims.UserID)
 	ctx.Set("role", claims.Role)
-	ctx.Set("fullName", claims.FullName)
+	ctx.Set("fullname", claims.FullName)
 	ctx.Set("userName", claims.UserName)
+	ctx.Set("username", claims.UserName)
 	ctx.Set("isActive", claims.IsActive)
 }

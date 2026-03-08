@@ -31,7 +31,7 @@ templ ExamTable(exams []domain.Exam) {
 	</div>
 				<div class="grid">
 					@button.Button(button.Props{
-						Href: "/admin/all-exams",
+						Href: "/admin/dashboard/exams",
 					}){
 						All Exams
 						}
@@ -55,4 +55,6 @@ templ ExamTableRows(exams []domain.Exam) {
 			</td>
 		</tr>
 	}
+
+
 }

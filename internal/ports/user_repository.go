@@ -32,8 +32,8 @@ type CreateUserParams struct {
 }
 
 type LoginParams struct {
-	Username string `json:"username" validate:"required,min=3,max=20"`
-	Password string `json:"password" validate:"required,min=3,max=128"`
+	Username string `json:"username" form:"username" validate:"required,min=4,max=20"`
+	Password string `json:"password" form:"password" validate:"required,min=8,max=128"`
 }
 
 type ListAllUsersParams struct {

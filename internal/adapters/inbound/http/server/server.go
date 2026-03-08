@@ -116,6 +116,7 @@ func (s *Server) waitForShutdownSignal(errChan chan error) {
 	select {
 	case err := <-errChan:
 		s.logger.LogErrorWithLevel("fatal", logger.FailedToStartServer.Type, logger.FailedToStartServer.Code, logger.FailedToStartServer.Msg, err)
+		os.Exit(1)
 
 	case exitSignal := <-exitChan:
 		s.logger.LogInfo(logger.ServerShutdownSignalOK.Type, logger.ServerShutdownSignalOK.Msg, zap.String("signal_type", exitSignal.String()))

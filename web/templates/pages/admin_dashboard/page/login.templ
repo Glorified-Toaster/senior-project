@@ -1,0 +1,107 @@
+package page
+
+import (
+	"uot-exam/web/templates/components/card"
+	"uot-exam/web/templates/components/input"
+	"uot-exam/web/templates/components/particles"
+	"uot-exam/web/templates/components/label"
+	"uot-exam/web/templates/components/icon"
+	"uot-exam/web/templates/components/button"
+	"uot-exam/web/templates/components/toast"
+)
+
+templ LoginPage(errMsg string) {
+	@label.Script()
+	@input.Script()
+	@toast.Script()
+	@particles.ParticlesScript()
+	@particles.Particles()
+	<div class="fixed inset-0 flex items-center justify-center p-4 z-10 pointer-events-none">
+		<div class="w-full max-w-sm pointer-events-auto">
+			@CardDefault()
+		</div>
+	</div>
+	<div id="toast-container"></div>
+}
+
+
+
+templ CardDefault() {
+	<div class="w-full max-w-sm">
+		@card.Card() {
+			@card.Header(card.HeaderProps{
+				Class: "flex flex-col items-center gap-1 pb-6 text-center",
+			}) {
+				<div class="flex items-center justify-center w-12 h-12 mb-4">
+					@icon.Lock(icon.Props{
+						Class: "size-6",
+					})
+				</div>
+				@card.Title() {
+					Admin Portal
+				}
+				@card.Description() {
+					Login to the admin portal
+				}
+			}
+				@card.Content() {
+					<form id="login-form" hx-post="api/v1/admin/login" hx-swap="innerHTML" hx-target="#toast-container">
+						<div class="flex flex-col gap-4">
+						<div class="w-full max-w-sm grid gap-2">
+							@label.Label(label.Props{
+								For: "username",
+							}) {
+							Username
+						}
+						@input.Input(input.Props{
+							ID:          "username",
+							Name:        "username",
+							Placeholder: "Enter Username",
+							Required:    true,
+						})
+					</div>
+					<div class="w-full max-w-sm grid gap-2">
+						@label.Label(label.Props{
+							For: "password",
+						}) {
+							Password
+						}
+								@input.Input(input.Props{
+									ID:          "password",
+									Name:        "password",
+									Type:        input.TypePassword,
+									Placeholder: "Enter Password",
+									Required:    true,
+								})
+					</div>
+				</div>
+			</form>
+			}
+			@card.Footer(card.FooterProps{
+				Class: "flex justify-end",
+			}) {
+				@button.Button(button.Props{
+					Type: "submit",
+					Form: "login-form",
+				}) {
+					Login
+				}
+			}
+		}
+	</div>
+
+}
+
+
+templ Toast(errMsg string) {
+	@toast.Toast(toast.Props{
+		ID:          "login-toast",
+		Variant:     toast.VariantError,
+		Icon:        true,
+		Dismissible: true,
+		Duration:    5000,
+		ShowIndicator: true,
+		Title:       "Error",
+		Description: errMsg,
+	})
+}
