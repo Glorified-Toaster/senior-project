@@ -297,23 +297,73 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Invalid request body"})
 			return
 		}
-
-		err = h.userApp.SoftDeleteUser(ctx, id)
-		if err != nil {
+		if err = h.userApp.SoftDeleteUser(ctx, id); err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to delete user", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to delete user"})
 			return
 		}
+
+		// Keep the table showing the same number of users by re-rendering
+		// the current page of users after deletion.
+		limit := 10
+		offset := 0
+
+		// Try to get paging from query params first.
+		if limitStr := ctx.Query("limit"); limitStr != "" {
+			if parsed, err := strconv.Atoi(limitStr); err == nil {
+				limit = parsed
+			}
+		}
+		if offsetStr := ctx.Query("offset"); offsetStr != "" {
+			if parsed, err := strconv.Atoi(offsetStr); err == nil {
+				offset = parsed
+			}
+		}
+
+		// If HTMX sent the current URL, prefer its query params so we
+		// stay on the same page the user is looking at.
+		if currentURL := ctx.Request.Header.Get("HX-Current-URL"); currentURL != "" {
+			if u, parseErr := url.Parse(currentURL); parseErr == nil {
+				q := u.Query()
+				if limitStr := q.Get("limit"); limitStr != "" {
+					if parsed, err := strconv.Atoi(limitStr); err == nil {
+						limit = parsed
+					}
+				}
+				if offsetStr := q.Get("offset"); offsetStr != "" {
+					if parsed, err := strconv.Atoi(offsetStr); err == nil {
+						offset = parsed
+					}
+				}
+			}
+		}
+
+		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to list users after delete", err)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to list users"})
+			return
+		}
+
+		totalCount, err := h.userApp.CountUsers(ctx)
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to count users after delete", err)
+			totalCount = 0
+		}
+
+		props := components.UserTableProps{
+			Title:      "All Users",
+			Users:      users,
+			TotalCount: totalCount,
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+			BaseURL:    "/admin/dashboard/users",
+		}
+
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, toast.Toast(toast.Props{
-			Title:         "User deleted successfully",
-			Description:   "User has been deleted successfully",
-			Variant:       toast.VariantSuccess,
-			Position:      toast.PositionBottomRight,
-			Duration:      3000,
-			Dismissible:   true,
-			ShowIndicator: true,
-			Icon:          true,
-		}))
+		render.Render(ctx, components.UserTableContainer(props))
 	}
 }

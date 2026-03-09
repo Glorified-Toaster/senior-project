@@ -134,7 +134,7 @@ templ UserTableRows(users []domain.User) {
 							<button
 								class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100"
 								hx-delete={ fmt.Sprintf("/users/delete/%s", user.ID.String()) }
-								hx-target="closest tr"
+								hx-target="#users-table-container"
 								hx-confirm={ fmt.Sprintf("Delete %s permanently?", user.FullName) }
 								hx-swap="outerHTML swap:300ms"
 								title="Delete User"
