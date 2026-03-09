@@ -20,7 +20,7 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 							Tooltip: "Dashboard",
 						}) {
                             @icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
-                            <span>Dashboard</span>
+                            <span class="group-data-[tui-sidebar-state=collapsed]:hidden">Dashboard</span>
 						}
 					}
 				}
@@ -41,9 +41,9 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										Tooltip: "Users",
 									}) {
 										@icon.Users(icon.Props{Class: "size-4"})
-										<span>Users</span>
+										<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Users</span>
 										@icon.ChevronRight(icon.Props{
-											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90 group-data-[tui-sidebar-state=collapsed]:hidden",
 										})
 									}
 								}
@@ -70,6 +70,46 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 								}
 							}
 						}
+						@sidebar.MenuItem() {
+							@collapsible.Collapsible(collapsible.Props{
+								Open:  true,
+								Class: "group/collapsible w-full",
+							}) {
+								@collapsible.Trigger() {
+									@sidebar.MenuButton(sidebar.MenuButtonProps{
+										Tooltip: "Exams",
+									}) {
+										@icon.Book(icon.Props{Class: "size-4"})
+										<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Exams</span>
+										@icon.ChevronRight(icon.Props{
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90 group-data-[tui-sidebar-state=collapsed]:hidden",
+										})
+									}
+								}
+								@collapsible.Content() {
+									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "/admin/dashboard/exams",
+												Class: activeClass(currentPath, "/admin/dashboard/exams"),
+											}) {
+												<span>All Exams</span>
+											}
+										}
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href: "/admin/dashboard/exams/active-exams",
+                                                Class: activeClass(currentPath, "/admin/dashboard/exams/active-exams"),
+											}) {
+												<span>Active Exams</span>
+											}
+										}
+
+									}
+								}
+
+							}
+						}
 					}
 				}
 				@sidebar.Separator()
@@ -85,9 +125,9 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										Tooltip: "Settings",
 									}) {
 										@icon.Settings(icon.Props{Class: "size-4"})
-										<span>Settings</span>
+										<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Settings</span>
 										@icon.ChevronRight(icon.Props{
-											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90",
+											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90 group-data-[tui-sidebar-state=collapsed]:hidden",
 										})
 									}
 								}

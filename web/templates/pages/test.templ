@@ -13,7 +13,6 @@ import (
     "uot-exam/web/templates/components/dialog"
     "uot-exam/web/templates/components/pagination"
     "uot-exam/web/templates/components/toast"
-	"uot-exam/web/templates/pages/admin_dashboard/components"
 )
 
 // Helper for the Edit Icon
@@ -248,7 +247,6 @@ templ UserTableContainer(users []domain.User, totalCount int64, limit int32, off
 					</tr>
 				}
 				<tbody id="user-table-body" class="divide-y divide-slate-100 bg-white">
-					@components.UserTableRows(users)
 				</tbody>
 			}
 		</div>

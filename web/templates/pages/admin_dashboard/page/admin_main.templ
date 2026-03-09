@@ -70,8 +70,13 @@ templ AdminMainPage(params AdminDashboardParam) {
 				</div>
 			   </div>
 			   	@components.UserTable(components.UserTableProps{
-					Users: params.Users,
-					Title: "Recent Users",
+					Users:         params.Users,
+					Title:         "Recent Users",
+					TotalCount:    0,
+					Limit:         4,
+					Offset:        0,
+					BaseURL:       "/admin/dashboard/users",
+					ShowAllButton: true,
 				})
 			</div>
     }

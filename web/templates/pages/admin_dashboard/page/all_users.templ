@@ -10,7 +10,6 @@ import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/icon"
-import "uot-exam/internal/domain"
 
 templ AllUsers(params AdminDashboardParam) {
     @sidebar.Script()
@@ -63,17 +62,14 @@ templ AllUsers(params AdminDashboardParam) {
 					Icon: icon.User(icon.Props{Class: "h-10 w-10"}), 
 			   })              
 			   </div>
-                @components.UserTable(components.UserTableProps{
-					Users: params.Users,
-					Title: "All Users",
-				})
+			   @components.UserTable(components.UserTableProps{
+					Title:      "All Users",
+					Users:      params.Users,
+					TotalCount: 100, // TODO: Get from params if available
+					Limit:      10,
+					Offset:     0,
+					BaseURL:    "/admin/dashboard/users",
+			   })
 			</div>
 	}
-}
-
-templ UserTable(users []domain.User) {
-    @components.UserTable(components.UserTableProps{
-        Users: users,
-        Title: "All Users",
-    })
 }
