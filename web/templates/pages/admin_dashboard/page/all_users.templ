@@ -65,7 +65,7 @@ templ AllUsers(params AdminDashboardParam) {
 			   @components.UserTable(components.UserTableProps{
 					Title:      "All Users",
 					Users:      params.Users,
-					TotalCount: 100, // TODO: Get from params if available
+					TotalCount: params.TotalUsersCount,
 					Limit:      10,
 					Offset:     0,
 					BaseURL:    "/admin/dashboard/users",

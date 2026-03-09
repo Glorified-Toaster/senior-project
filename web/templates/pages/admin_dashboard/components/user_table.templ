@@ -10,6 +10,7 @@ import "time"
 
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/pagination"
+import "uot-exam/web/templates/components/toast"
 
 type UserTableProps struct {
 	Users         []domain.User
@@ -78,6 +79,20 @@ templ UserTableContainer(props UserTableProps) {
 			</div>
 		}
 	</div>
+}
+
+templ UserTableContainerWithDeleteToast(props UserTableProps) {
+	@toast.Toast(toast.Props{
+		Title:         "User deleted",
+		Description:   "The user has been removed successfully.",
+		Variant:       toast.VariantSuccess,
+		Position:      toast.PositionBottomRight,
+		Duration:      3000,
+		Dismissible:   true,
+		ShowIndicator: true,
+		Icon:          true,
+	})
+	@UserTableContainer(props)
 }
 
 templ UserTableRows(users []domain.User) {

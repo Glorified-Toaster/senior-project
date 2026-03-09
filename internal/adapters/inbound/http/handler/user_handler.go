@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/adapters/outbound/config"
@@ -364,6 +365,6 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 		}
 
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, components.UserTableContainer(props))
+		render.Render(ctx, components.UserTableContainerWithDeleteToast(props))
 	}
 }

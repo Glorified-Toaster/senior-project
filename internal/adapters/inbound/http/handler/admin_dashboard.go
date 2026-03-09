@@ -43,11 +43,12 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 		}
 
 		params := page.AdminDashboardParam{
-			Users:      users,
-			Username:   username,
-			FullName:   fullname,
-			Exams:      exams,
-			TotalUsers: fmt.Sprintf("%d", userCount),
+			Users:           users,
+			Username:        username,
+			FullName:        fullname,
+			Exams:           exams,
+			TotalUsers:      fmt.Sprintf("%d", userCount),
+			TotalUsersCount: userCount,
 		}
 		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AdminMainPage(params)))
 	}
@@ -97,8 +98,9 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 		}
 
 		params := page.AdminDashboardParam{
-			Users:      users,
-			TotalUsers: fmt.Sprintf("%d", userCount),
+			Users:           users,
+			TotalUsers:      fmt.Sprintf("%d", userCount),
+			TotalUsersCount: userCount,
 		}
 		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AllUsers(params)))
 	}
