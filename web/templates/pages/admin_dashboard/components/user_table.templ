@@ -1,25 +1,28 @@
 package components
 
 import "uot-exam/web/templates/components/card"
-import "uot-exam/web/templates/components/table"
 import "uot-exam/web/templates/components/icon"
-import "uot-exam/web/templates/components/badge"
 import "uot-exam/internal/domain"
-import "fmt"
-import "time"
-
 import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/table"
 import "uot-exam/web/templates/components/pagination"
 import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/badge"
+import "fmt"
+import "time"
+import "uot-exam/web/templates/components/input"
 
 type UserTableProps struct {
 	Users         []domain.User
 	Title         string
+	ID            string
 	TotalCount    int64
 	Limit         int32
 	Offset        int32
 	BaseURL       string
 	ShowAllButton bool
+	Search bool
+	AddUser bool
 }
 
 templ UserTable(props UserTableProps) {
@@ -28,7 +31,32 @@ templ UserTable(props UserTableProps) {
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-2">
 					@icon.Users(icon.Props{Class: "h-7 w-7"})
-					<span class="text-2xl font-bold">{ props.Title }</span>
+					<span class="text-2xl font-bold">
+					{ props.Title }
+					if props.Search {
+						<div>
+								@input.Input(input.Props{
+									Type: input.TypeSearch,
+									Name: "search",
+									Placeholder: "Search users...",
+									Attributes: templ.Attributes{
+										"hx-post": "/users/search",
+										"hx-trigger": "keyup changed delay:300ms, search",
+										"hx-target": "#users-table-container",
+										"hx-swap": "outerHTML",
+									},			
+								})
+							</div>
+						}
+
+					if props.AddUser {
+						@button.Button(button.Props{
+							Href: "/admin/dashboard/users/add",
+						}) {
+							Add User
+						}
+					}			
+					</span>
 				</div>
 			</div>
 		}
@@ -36,15 +64,15 @@ templ UserTable(props UserTableProps) {
 			@UserTableContainer(props)
 			if props.ShowAllButton {
 				@button.Button(button.Props{
-						Href: "/admin/dashboard/users",
-						Class: "w-full",
-					}) {
-						All Users
+					Href:  "/admin/dashboard/users",
+					Class: "w-full",
+				}) {
+					All Users
 					}
+				}
 			}
 		}
 	}
-}
 
 templ UserTableContainer(props UserTableProps) {
 	<div id="users-table-container">
@@ -52,13 +80,27 @@ templ UserTableContainer(props UserTableProps) {
 			@table.Table() {
 				@table.Header(table.HeaderProps{Class: "border-b border-slate-200 bg-slate-50/50"}) {
 					<tr>
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Name</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Role</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Username</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Joined</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Last Interaction</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap text-right"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Actions</span> }
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Name</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Role</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Username</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Joined</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Last Interaction</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap text-right"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Actions</span>
+						}
 					</tr>
 				}
 				@table.Body(table.BodyProps{ID: "user-table-body", Class: "divide-y divide-slate-100"}) {
@@ -104,7 +146,7 @@ templ UserTableRows(users []domain.User) {
 						@icon.Search()
 					</div>
 					<h3 class="text-lg font-bold text-slate-700">No users found</h3>
-					<p class="text-slate-500 text-sm mt-1">We couldn't find anyone matching your search criteria. Try adjusting your search term.</p>
+					<p class="text-slate-500 text-sm mt-1">We couldn&apos;t find anyone matching your search criteria. Try adjusting your search term.</p>
 				</div>
 			</td>
 		</tr>
@@ -117,25 +159,33 @@ templ UserTableRows(users []domain.User) {
 						{ user.FullName }
 					</span>
 				}
-				@table.Cell() { @badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "uppercase tracking-widest text-[10px] font-bold shadow-sm border border-slate-200/60"}) { { string(user.Role) } } }
-				@table.Cell() { <span class="text-slate-500 font-medium font-mono text-sm py-1 px-2 bg-slate-100 rounded-md border border-slate-200">{ user.Username }</span> }
 				@table.Cell() {
-					if user.IsActive {
-						<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Active</span>
-					} else {
-						<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-500 border border-slate-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Inactive</span>
+					@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "uppercase tracking-widest text-[10px] font-bold shadow-sm border border-slate-200/60"}) {
+						{ string(user.Role) }
 					}
 				}
-				@table.Cell() { <span class="text-sm font-medium text-slate-600">{ user.CreatedAt.Format("Jan 02, 2006") }</span> }
+				@table.Cell() {
+					<span class="text-slate-500 font-medium font-mono text-sm py-1 px-2 bg-slate-100 rounded-md border border-slate-200">{ user.Username }</span>
+				}
+				@table.Cell() {
+					if user.IsActive {
+						<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Enabled</span>
+					} else {
+						<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-500 border border-slate-200 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Disabled</span>
+					}
+				}
+				@table.Cell() {
+					<span class="text-sm font-medium text-slate-600">{ user.CreatedAt.Format("Jan 02, 2006") }</span>
+				}
 				@table.Cell() {
 					if user.LastLogin != nil {
 						<span class="inline-flex items-center gap-2 text-sm text-slate-700 font-medium bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100" title={ user.LastLogin.Format("Jan 02, 2006 15:04:05") }>
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
 							{ relativeTime(user.LastLogin) }
 						</span>
 					} else {
 						<span class="inline-flex items-center gap-2 text-sm bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 opacity-60">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path></svg>
 							<span class="text-slate-500 font-medium">Never logged in</span>
 						</span>
 					}

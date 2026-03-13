@@ -8,37 +8,44 @@ import "uot-exam/internal/domain"
 
 templ ExamTable(exams []domain.Exam) {
 	@card.Card(card.Props{Class: "w-full"}) {
-		@card.Header(){	
-		<span class="text-2xl font-bold">Recent Exams</span>
+		@card.Header() {
+			<span class="text-2xl font-bold">Recent Exams</span>
 		}
-		@card.Content(){
-		<div id="exams-table-container">
-		<div class="overflow-x-auto">
-			@table.Table() {
-				@table.Header(table.HeaderProps{Class: "border-b border-slate-200"}) {
-					<tr>
-						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Exam Name</span> }
-						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">ExamID</span> }
-						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Passing Rate</span> }
-						@table.Head(table.HeadProps{Class: "px-4 py-2"}) { <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</span> }
-					</tr>
-				}
-				<tbody id="exam-table-body" class="divide-y divide-slate-100">
-					@ExamTableRows(exams)
-				</tbody>
-			}
-		</div>
-	</div>
-				<div class="grid">
-					@button.Button(button.Props{
-						Href: "/admin/dashboard/exams",
-					}){
-						All Exams
+		@card.Content() {
+			<div id="exams-table-container">
+				<div class="overflow-x-auto">
+					@table.Table() {
+						@table.Header(table.HeaderProps{Class: "border-b border-slate-200"}) {
+							<tr>
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Exam Name</span>
+								}
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">ExamID</span>
+								}
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Passing Rate</span>
+								}
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</span>
+								}
+							</tr>
 						}
+						<tbody id="exam-table-body" class="divide-y divide-slate-100">
+							@ExamTableRows(exams)
+						</tbody>
+					}
 				</div>
-
-			}
+			</div>
+			<div class="grid">
+				@button.Button(button.Props{
+					Href: "/admin/dashboard/exams",
+				}) {
+					All Exams
+				}
+			</div>
 		}
+	}
 }
 
 templ ExamTableRows(exams []domain.Exam) {

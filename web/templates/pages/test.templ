@@ -1,18 +1,18 @@
 package pages
 
 import (
-	"uot-exam/web/templates/components/table"
-	"uot-exam/internal/domain"
 	"fmt"
 	"time"
-    "uot-exam/web/templates/components/sidebar"
-    "uot-exam/web/templates/components/icon"
-    "uot-exam/web/templates/components/collapsible"
-    "uot-exam/web/templates/components/dropdown"
-    "uot-exam/web/templates/components/popover"
-    "uot-exam/web/templates/components/dialog"
-    "uot-exam/web/templates/components/pagination"
-    "uot-exam/web/templates/components/toast"
+	"uot-exam/internal/domain"
+	"uot-exam/web/templates/components/collapsible"
+	"uot-exam/web/templates/components/dialog"
+	"uot-exam/web/templates/components/dropdown"
+	"uot-exam/web/templates/components/icon"
+	"uot-exam/web/templates/components/pagination"
+	"uot-exam/web/templates/components/popover"
+	"uot-exam/web/templates/components/sidebar"
+	"uot-exam/web/templates/components/table"
+	"uot-exam/web/templates/components/toast"
 )
 
 // Helper for the Edit Icon
@@ -28,122 +28,117 @@ templ deleteIcon() {
 templ TestPage(users []domain.User, totalCount int64, limit int32, offset int32) {
 	<!DOCTYPE html>
 	<html lang="en" class="h-full bg-slate-50">
-	<head>
-		<meta charset="UTF-8"/>
-		<link rel="stylesheet" href="/static/css/output.css">
-		<script defer src="/src/htmx.min.js"></script>
-		@sidebar.Script()
-		@collapsible.Script()
-		@dropdown.Script()
-		@popover.Script()
-        @dialog.Script()
-        @toast.Script()
-		<title>Admin Dashboard</title>
-		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	</head>
-	<body class="h-full antialiased text-[#0B4E6C]">
-		@SidebarDefault() {
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-				
-				<!-- Header Section -->
-				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-					<div>
-						<h1 class="text-3xl font-extrabold text-[#0B4E6C] tracking-tight flex items-center gap-3">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#0B4E6C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-							Admin Dashboard
-						</h1>
-						<p class="text-slate-500 mt-1">Overview of system metrics, active users, and platform activity.</p>
-					</div>
-					<div class="flex items-center gap-3">
-						<button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-							Export Report
-						</button>
-						<button class="px-4 py-2 bg-[#7AB6D9] text-white font-medium 
+		<head>
+			<meta charset="UTF-8"/>
+			<link rel="stylesheet" href="/static/css/output.css"/>
+			<script defer src="/src/htmx.min.js"></script>
+			@sidebar.Script()
+			@collapsible.Script()
+			@dropdown.Script()
+			@popover.Script()
+			@dialog.Script()
+			@toast.Script()
+			<title>Admin Dashboard</title>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		</head>
+		<body class="h-full antialiased text-[#0B4E6C]">
+			@SidebarDefault() {
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+					<!-- Header Section -->
+					<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+						<div>
+							<h1 class="text-3xl font-extrabold text-[#0B4E6C] tracking-tight flex items-center gap-3">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#0B4E6C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+								Admin Dashboard
+							</h1>
+							<p class="text-slate-500 mt-1">Overview of system metrics, active users, and platform activity.</p>
+						</div>
+						<div class="flex items-center gap-3">
+							<button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+								Export Report
+							</button>
+							<button
+								class="px-4 py-2 bg-[#7AB6D9] text-white font-medium 
 						rounded-xl shadow-sm hover:bg-[#4682B4] transition-all flex items-center gap-2"
-						hx-post="/admin/users/new"
-						hx-target="#user-table-body"
-						hx-swap="beforeend">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-							New Registration
-						</button>
+								hx-post="/admin/users/new"
+								hx-target="#user-table-body"
+								hx-swap="beforeend"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+								New Registration
+							</button>
+						</div>
+					</div>
+					<!-- Metrics & Graphs Grid -->
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+						<!-- Metric Card 1 -->
+						<div id="totalCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+							<div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+							</div>
+							<div class="flex justify-between items-start z-10">
+								<div>
+									<p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Registered</p>
+									<p class="text-4xl font-extrabold text-slate-900 mt-2">{ fmt.Sprint(totalCount) } <span class="text-lg font-bold text-slate-400">users</span></p>
+								</div>
+								<div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+								</div>
+							</div>
+							<div class="mt-4 flex items-center gap-2 text-sm z-10">
+								<span class="text-green-600 font-bold flex items-center bg-green-50 px-2 py-0.5 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg> 12.5%</span>
+								<span class="text-slate-400 font-medium">from last month</span>
+							</div>
+						</div>
+						<!-- Chart Card -->
+						<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 col-span-1 md:col-span-2 relative h-56 flex flex-col justify-between hover:shadow-md transition-shadow">
+							<div class="flex justify-between items-center mb-2">
+								<h3 class="font-bold text-slate-800">Growth Over Time</h3>
+								<select class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-600 font-medium cursor-pointer">
+									<option>Last 6 Months</option>
+									<option>This Year</option>
+								</select>
+							</div>
+							<div class="flex-1 w-full relative">
+								<canvas id="growthChart" data-total={ fmt.Sprint(totalCount) }></canvas>
+							</div>
+						</div>
+					</div>
+					<!-- Table Container Wrapper -->
+					<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+						<!-- Search Header -->
+						<div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-5 border-b border-slate-100">
+							<h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+								User Directory
+							</h2>
+							<div class="relative w-full sm:w-80 group">
+								<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+								</div>
+								<input
+									type="search"
+									name="search"
+									placeholder="Search users by name or username..."
+									class="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-medium placeholder:font-normal"
+									hx-post="/users/search"
+									hx-trigger="keyup changed delay:300ms, search"
+									hx-target="#user-table-body"
+									hx-indicator="#search-spinner"
+								/>
+								<div id="search-spinner" class="htmx-indicator absolute right-3.5 top-2.5 animate-spin text-blue-500">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+								</div>
+							</div>
+						</div>
+						<div class="p-0">
+							@UserTableContainer(users, totalCount, limit, offset)
+						</div>
 					</div>
 				</div>
-
-				<!-- Metrics & Graphs Grid -->
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-					
-					<!-- Metric Card 1 -->
-					<div id="totalCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
-						<div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-						</div>
-						<div class="flex justify-between items-start z-10">
-							<div>
-								<p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Registered</p>
-								<p class="text-4xl font-extrabold text-slate-900 mt-2">{ fmt.Sprint(totalCount) } <span class="text-lg font-bold text-slate-400">users</span></p>
-							</div>
-							<div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-								<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-							</div>
-						</div>
-						<div class="mt-4 flex items-center gap-2 text-sm z-10">
-							<span class="text-green-600 font-bold flex items-center bg-green-50 px-2 py-0.5 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> 12.5%</span>
-							<span class="text-slate-400 font-medium">from last month</span>
-						</div>
-					</div>
-
-					<!-- Chart Card -->
-					<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 col-span-1 md:col-span-2 relative h-56 flex flex-col justify-between hover:shadow-md transition-shadow">
-						<div class="flex justify-between items-center mb-2">
-							<h3 class="font-bold text-slate-800">Growth Over Time</h3>
-							<select class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-600 font-medium cursor-pointer">
-								<option>Last 6 Months</option>
-								<option>This Year</option>
-							</select>
-						</div>
-						<div class="flex-1 w-full relative">
-							<canvas id="growthChart" data-total={ fmt.Sprint(totalCount) }></canvas>
-						</div>
-					</div>
-				</div>
-
-				<!-- Table Container Wrapper -->
-				<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-					<!-- Search Header -->
-					<div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-5 border-b border-slate-100">
-						<h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-							User Directory
-						</h2>
-						<div class="relative w-full sm:w-80 group">
-							<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-							</div>
-							<input 
-								type="search" 
-								name="search" 
-								placeholder="Search users by name or username..." 
-								class="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-medium placeholder:font-normal"
-								hx-post="/users/search" 
-								hx-trigger="keyup changed delay:300ms, search" 
-								hx-target="#user-table-body" 
-								hx-indicator="#search-spinner"
-							/>
-							<div id="search-spinner" class="htmx-indicator absolute right-3.5 top-2.5 animate-spin text-blue-500">
-								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-							</div>
-						</div>
-					</div>
-					
-					<div class="p-0">
-						@UserTableContainer(users, totalCount, limit, offset)
-					</div>
-				</div>
-			</div>
-
-			<!-- Scripts for Dashboard -->
-			<script>
+				<!-- Scripts for Dashboard -->
+				<script>
 				document.addEventListener("DOMContentLoaded", () => {
 					// Initialize Chart.js Growth Chart
 					const chartCanvas = document.getElementById('growthChart');
@@ -225,9 +220,9 @@ templ TestPage(users []domain.User, totalCount int64, limit int32, offset int32)
 					});
 				});
 			</script>
-		}
-		<div id="toast"></div>
-	</body>
+			}
+			<div id="toast"></div>
+		</body>
 	</html>
 }
 
@@ -237,17 +232,30 @@ templ UserTableContainer(users []domain.User, totalCount int64, limit int32, off
 			@table.Table() {
 				@table.Header(table.HeaderProps{Class: "bg-slate-50/80 border-b border-slate-200"}) {
 					<tr>
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Name</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Role</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Username</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Joined</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Last Interaction</span> }
-						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap text-right"}) { <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Actions</span> }
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Name</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Role</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Username</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Joined</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Last Interaction</span>
+						}
+						@table.Head(table.HeadProps{Class: "px-6 py-3.5 whitespace-nowrap text-right"}) {
+							<span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Actions</span>
+						}
 					</tr>
 				}
-				<tbody id="user-table-body" class="divide-y divide-slate-100 bg-white">
-				</tbody>
+				<tbody id="user-table-body" class="divide-y divide-slate-100 bg-white"></tbody>
 			}
 		</div>
 		<div id="pagination-container" class="border-t border-slate-200 bg-slate-50/50 p-1">
@@ -256,7 +264,7 @@ templ UserTableContainer(users []domain.User, totalCount int64, limit int32, off
 				Limit:    limit,
 				Offset:   offset,
 				BaseURL:  "/test",
-				HXTarget: "#users-table-container", 
+				HXTarget: "#users-table-container",
 				HXSwap:   "outerHTML",
 			})
 		</div>
@@ -265,37 +273,43 @@ templ UserTableContainer(users []domain.User, totalCount int64, limit int32, off
 
 // Helper function to format time for display
 func displayTime(t *time.Time) string {
-    if t == nil || t.IsZero() {
-        return "Never"
-    }
-    return t.Format("Jan 02, 15:04")
+	if t == nil || t.IsZero() {
+		return "Never"
+	}
+	return t.Format("Jan 02, 15:04")
 }
 
 // relativeTime returns a human-friendly relative time string
 func relativeTime(t *time.Time) string {
-    if t == nil || t.IsZero() {
-        return "Never"
-    }
-    now := time.Now()
-    diff := now.Sub(*t)
-    switch {
-    case diff < time.Minute:
-        return "Just now"
-    case diff < time.Hour:
-        m := int(diff.Minutes())
-        if m == 1 { return "1 min ago" }
-        return fmt.Sprintf("%d min ago", m)
-    case diff < 24*time.Hour:
-        h := int(diff.Hours())
-        if h == 1 { return "1 hour ago" }
-        return fmt.Sprintf("%d hours ago", h)
-    case diff < 7*24*time.Hour:
-        d := int(diff.Hours()/24)
-        if d == 1 { return "Yesterday" }
-        return fmt.Sprintf("%d days ago", d)
-    default:
-        return t.Format("Jan 02, 2006")
-    }
+	if t == nil || t.IsZero() {
+		return "Never"
+	}
+	now := time.Now()
+	diff := now.Sub(*t)
+	switch {
+	case diff < time.Minute:
+		return "Just now"
+	case diff < time.Hour:
+		m := int(diff.Minutes())
+		if m == 1 {
+			return "1 min ago"
+		}
+		return fmt.Sprintf("%d min ago", m)
+	case diff < 24*time.Hour:
+		h := int(diff.Hours())
+		if h == 1 {
+			return "1 hour ago"
+		}
+		return fmt.Sprintf("%d hours ago", h)
+	case diff < 7*24*time.Hour:
+		d := int(diff.Hours() / 24)
+		if d == 1 {
+			return "Yesterday"
+		}
+		return fmt.Sprintf("%d days ago", d)
+	default:
+		return t.Format("Jan 02, 2006")
+	}
 }
 
 templ SidebarDefault() {
@@ -422,7 +436,8 @@ templ SidebarDefault() {
 										}) {
 											<span>Overview</span>
 										}
-					dd				}
+										dd				
+									}
 									@sidebar.MenuSubItem() {
 										@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
 											Href: "#",
@@ -554,9 +569,9 @@ templ SidebarDefault() {
 					@sidebar.Trigger()
 					<span class="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Dashboard</span>
 				</div>
-                <div class="flex-1 p-6 overflow-auto">
-                    { children... }
-                </div>
+				<div class="flex-1 p-6 overflow-auto">
+					{ children... }
+				</div>
 			</div>
 		}
 	}

@@ -9,25 +9,26 @@ type TotalCardProps struct {
 	Icon        templ.Component
 }
 
-templ TotalCard(props TotalCardProps) {	
+templ TotalCard(props TotalCardProps) {
 	<div class="w-full max-w-sm">
 		@card.Card(card.Props{
 			Class: "max-w-sm",
-		}){
-			@card.Header(){
-				@card.Title(){
-					<span class="text-2xl font-bold">{props.Title}</span>
+		}) {
+			@card.Header() {
+				@card.Title() {
+					<span class="text-2xl font-bold">{ props.Title }</span>
 				}
-				@card.Description(){
-					<span class="text-sm text-muted-foreground">{props.Description}</span>
+				@card.Description() {
+					<span class="text-sm text-muted-foreground">{ props.Description }</span>
 				}
 			}
-			@card.Content(){
+			@card.Content() {
 				<div class="flex items-center justify-between">
-					<span class="text-4xl font-bold ">{props.Value}</span>
-					<span class="text-sm text-muted-foreground"> @props.Icon </span>
+					<span class="text-4xl font-bold ">{ props.Value }</span>
+					<span class="text-sm text-muted-foreground">@props.Icon
+</span>
 				</div>
 			}
-		}	
+		}
 	</div>
 }

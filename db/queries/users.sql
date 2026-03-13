@@ -64,7 +64,7 @@ ORDER BY created_at DESC;
 -- name: ListAllUsers :many
 SELECT * FROM users 
 WHERE deleted_at IS NULL 
-ORDER BY created_at DESC
+ORDER BY last_login DESC NULLS LAST
 LIMIT $1 OFFSET $2;
 
 -- name: UpdateUserRole :exec
@@ -86,7 +86,7 @@ WHERE
         username ILIKE '%' || sqlc.arg(search)::text || '%'
         OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
     )
-ORDER BY created_at DESC
+ORDER BY last_login DESC NULLS LAST
 LIMIT $1 OFFSET $2;
 
 -- name: CountUsers :one

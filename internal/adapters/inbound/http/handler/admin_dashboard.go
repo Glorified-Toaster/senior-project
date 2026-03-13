@@ -21,19 +21,8 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		usernameVal, exists := ctx.Get("username")
-		if !exists {
-			ctx.Redirect(http.StatusSeeOther, "/admin/login")
-			return
-		}
-		username := usernameVal.(string)
-		fullnameVal, exists := ctx.Get("fullname")
-		if !exists {
-			ctx.Redirect(http.StatusSeeOther, "/admin/login")
-			fmt.Println("fullname not found")
-			return
-		}
-		fullname := fullnameVal.(string)
+
+		username, fullname := parseUsername(ctx)
 
 		exams := []domain.Exam{}
 
@@ -97,11 +86,33 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 			return
 		}
 
+		username, fullname := parseUsername(ctx)
+
 		params := page.AdminDashboardParam{
 			Users:           users,
 			TotalUsers:      fmt.Sprintf("%d", userCount),
 			TotalUsersCount: userCount,
+			Username:        username,
+			FullName:        fullname,
 		}
 		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AllUsers(params)))
 	}
+}
+
+func parseUsername(ctx *gin.Context) (string, string) {
+	usernameVal, exists := ctx.Get("username")
+	if !exists {
+		ctx.Redirect(http.StatusSeeOther, "/admin/login")
+		return "", ""
+	}
+	username := usernameVal.(string)
+	fullnameVal, exists := ctx.Get("fullname")
+	if !exists {
+		ctx.Redirect(http.StatusSeeOther, "/admin/login")
+		fmt.Println("fullname not found")
+		return "", ""
+	}
+	fullname := fullnameVal.(string)
+
+	return username, fullname
 }

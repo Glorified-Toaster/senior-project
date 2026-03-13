@@ -29,7 +29,7 @@ templ AllUsers(params AdminDashboardParam) {
             Href: "/admin/dashboard/users",
             Path: "Users",
         },
-    }, "admin", "Admin") {
+    }, params.Username, params.FullName) {
 
      			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -69,6 +69,8 @@ templ AllUsers(params AdminDashboardParam) {
 					Limit:      10,
 					Offset:     0,
 					BaseURL:    "/admin/dashboard/users",
+					Search: true,
+					AddUser: true,
 			   })
 			</div>
 	}

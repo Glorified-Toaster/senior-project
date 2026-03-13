@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
+
 	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/adapters/outbound/config"
 	"uot-exam/internal/adapters/outbound/logger"
@@ -80,7 +82,6 @@ func (h *UserHandler) Create() gin.HandlerFunc {
 			},
 		})
 	}
-
 }
 
 func (h *UserHandler) Login() gin.HandlerFunc {
@@ -150,11 +151,10 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		ctx.SetCookie("token", token, 60*60*24, "/", "localhost", true, true)
+		ctx.SetCookie("auth_token", token, 60*60*24, "/", "", false, true)
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
 		ctx.Header("HX-Redirect", "/admin/dashboard")
 	}
-
 }
 
 func (h *UserHandler) GetUserByID() gin.HandlerFunc {
@@ -216,12 +216,32 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 			offset = 0
 		}
 
+		// If search is empty, return the first page with pagination
+		if strings.TrimSpace(search) == "" {
+			users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+				Limit:  int32(limit),
+				Offset: int32(offset),
+			})
+			if err != nil {
+				users = []domain.User{}
+			}
+			totalCount, _ := h.userApp.CountUsers(ctx)
+			ctx.Header("Content-Type", "text/html")
+			render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+				Users:      users,
+				TotalCount: totalCount,
+				Limit:      int32(limit),
+				Offset:     int32(offset),
+				BaseURL:    "/admin/dashboard/users",
+			}))
+			return
+		}
+
 		users, err := h.userApp.SearchUsers(ctx, ports.SearchUsersParams{
 			Search: search,
 			Limit:  int32(limit),
 			Offset: int32(offset),
 		})
-
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
 			render.Render(ctx, components.UserTableRows([]domain.User{}))
@@ -232,7 +252,12 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 			users = []domain.User{}
 		}
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, components.UserTableRows(users))
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			Users:      users,
+			TotalCount: 0,
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+		}))
 	}
 }
 

@@ -1,17 +1,17 @@
 package pagination
 
 import (
-	"uot-exam/web/templates/components/button"
 	"fmt"
+	"uot-exam/web/templates/components/button"
 )
 
 type Props struct {
-	Total      int64
-	Limit      int32
-	Offset     int32
-	BaseURL    string // e.g., "/test"
-	HXTarget   string // for HTMX support
-	HXSwap     string
+	Total    int64
+	Limit    int32
+	Offset   int32
+	BaseURL  string // e.g., "/test"
+	HXTarget string // for HTMX support
+	HXSwap   string
 }
 
 templ Pagination(props Props) {
@@ -30,9 +30,9 @@ templ Pagination(props Props) {
 					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 					Attributes: templ.Attributes{
-						"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (currentPage-2)*limit),
+						"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (currentPage-2)*limit),
 						"hx-target": props.HXTarget,
-						"hx-swap": props.HXSwap,
+						"hx-swap":   props.HXSwap,
 					},
 				}) {
 					Previous
@@ -46,7 +46,6 @@ templ Pagination(props Props) {
 					Previous
 				}
 			}
-
 			// Page Numbers (Simplified for now, showing all if reasonable, else just current/neighbors)
 			<div class="flex items-center gap-1">
 				for i := 1; i <= totalPages; i++ {
@@ -65,9 +64,9 @@ templ Pagination(props Props) {
 								Size:    button.SizeSm,
 								Class:   "w-10 text-slate-600",
 								Attributes: templ.Attributes{
-									"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (i-1)*limit),
+									"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (i-1)*limit),
 									"hx-target": props.HXTarget,
-									"hx-swap": props.HXSwap,
+									"hx-swap":   props.HXSwap,
 								},
 							}) {
 								{ fmt.Sprint(i) }
@@ -86,16 +85,15 @@ templ Pagination(props Props) {
 					}
 				}
 			</div>
-
 			// Next Button
 			if currentPage < totalPages {
 				@button.Button(button.Props{
 					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 					Attributes: templ.Attributes{
-						"hx-get": fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, currentPage*limit),
+						"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, currentPage*limit),
 						"hx-target": props.HXTarget,
-						"hx-swap": props.HXSwap,
+						"hx-swap":   props.HXSwap,
 					},
 				}) {
 					Next

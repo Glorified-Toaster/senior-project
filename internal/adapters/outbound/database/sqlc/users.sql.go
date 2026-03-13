@@ -190,7 +190,7 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 const listAllUsers = `-- name: ListAllUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NULL 
-ORDER BY created_at DESC
+ORDER BY last_login DESC NULLS LAST
 LIMIT $1 OFFSET $2
 `
 
@@ -323,7 +323,7 @@ WHERE
         username ILIKE '%' || $3::text || '%'
         OR full_name ILIKE '%' || $3::text || '%'
     )
-ORDER BY created_at DESC
+ORDER BY last_login DESC NULLS LAST
 LIMIT $1 OFFSET $2
 `
 

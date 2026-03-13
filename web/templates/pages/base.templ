@@ -1,26 +1,24 @@
 package pages
 
-
 templ BasePage(title string, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
-			<meta charset="UTF-8" />
-			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-			<title>{title}</title>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
 			@headers()
 		</head>
 		<body class="h-full w-full antialiased text-slate-900">
-            @content
+			@content
 		</body>
 	</html>
 }
 
-
 templ headers(scripts ...string) {
-    <script src="/src/htmx.min.js"></script>
-    <link rel="stylesheet" href="/static/css/output.css">
-    for _, script := range scripts {
-        <script src={script} defer></script>
-    }
+	<script src="/src/htmx.min.js"></script>
+	<link rel="stylesheet" href="/static/css/output.css"/>
+	for _, script := range scripts {
+		<script src={ script } defer></script>
+	}
 }

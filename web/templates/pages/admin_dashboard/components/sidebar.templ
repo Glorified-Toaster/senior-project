@@ -16,11 +16,11 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 				@sidebar.Menu() {
 					@sidebar.MenuItem() {
 						@sidebar.MenuButton(sidebar.MenuButtonProps{
-							Href: "/admin/dashboard",
+							Href:    "/admin/dashboard",
 							Tooltip: "Dashboard",
 						}) {
-                            @icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
-                            <span class="group-data-[tui-sidebar-state=collapsed]:hidden">Dashboard</span>
+							@icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
+							<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Dashboard</span>
 						}
 					}
 				}
@@ -51,7 +51,7 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 									@sidebar.MenuSub() {
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/dashboard/users",
+												Href:  "/admin/dashboard/users",
 												Class: activeClass(currentPath, "/admin/dashboard/users"),
 											}) {
 												<span>All Users</span>
@@ -59,13 +59,12 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/dashboard/users/deleted-users",
-                                                Class: activeClass(currentPath, "/admin/dashboard/users/deleted-users"),
+												Href:  "/admin/dashboard/users/deleted-users",
+												Class: activeClass(currentPath, "/admin/dashboard/users/deleted-users"),
 											}) {
 												<span>Deleted Users</span>
 											}
 										}
-
 									}
 								}
 							}
@@ -90,7 +89,7 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 									@sidebar.MenuSub() {
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/dashboard/exams",
+												Href:  "/admin/dashboard/exams",
 												Class: activeClass(currentPath, "/admin/dashboard/exams"),
 											}) {
 												<span>All Exams</span>
@@ -98,16 +97,14 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/dashboard/exams/active-exams",
-                                                Class: activeClass(currentPath, "/admin/dashboard/exams/active-exams"),
+												Href:  "/admin/dashboard/exams/active-exams",
+												Class: activeClass(currentPath, "/admin/dashboard/exams/active-exams"),
 											}) {
 												<span>Active Exams</span>
 											}
 										}
-
 									}
 								}
-
 							}
 						}
 					}
@@ -135,8 +132,8 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 									@sidebar.MenuSub() {
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href: "/admin/settings",
-                                                Class: activeClass(currentPath, "/admin/settings"),
+												Href:  "/admin/settings",
+												Class: activeClass(currentPath, "/admin/settings"),
 											}) {
 												<span>General</span>
 											}
@@ -160,11 +157,11 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										@icon.User(icon.Props{Class: "h-6 w-6 mr-2 group-data-[tui-sidebar-state=collapsed]:mr-0"})
 										<div class="flex flex-col group-data-[tui-sidebar-state=collapsed]:hidden">
 											<span class="truncate font-medium">
-											 {fullname}
-											 </span>
-											 <span class="truncate text-xs">
-											 {username}
-											 </span>
+												{ fullname }
+											</span>
+											<span class="truncate text-xs">
+												{ username }
+											</span>
 										</div>
 									</div>
 									@icon.ChevronsUpDown(icon.Props{Class: "ml-auto size-4 group-data-[tui-sidebar-state=collapsed]:hidden"})
@@ -175,7 +172,7 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 								Placement: dropdown.PlacementTopStart,
 							}) {
 								@dropdown.Label() {
-									{fullname}
+									{ fullname }
 								}
 								@dropdown.Separator()
 								@dropdown.Item() {
@@ -205,19 +202,18 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 		}
 		@sidebar.Inset() {
 			<div class="flex h-full flex-col">
-					@navbar.Navbar(navbar.Props{BreadPath: breadPath})
-                <div class="flex-1 p-6 overflow-auto">
-                    { children... }
-                </div>
+				@navbar.Navbar(navbar.Props{BreadPath: breadPath})
+				<div class="flex-1 p-6 overflow-auto">
+					{ children... }
+				</div>
 			</div>
 		}
 	}
 }
 
-
 func activeClass(currentPath, targetPath string) string {
-    if currentPath == targetPath {
-        return "bg-primary text-primary-foreground font-medium shadow-sm"
-    }
-    return "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+	if currentPath == targetPath {
+		return "bg-primary text-primary-foreground font-medium shadow-sm"
+	}
+	return "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 }
