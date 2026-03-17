@@ -12,25 +12,23 @@ import (
 )
 
 const createSubject = `-- name: CreateSubject :one
-INSERT INTO subjects (title, description, instructor_id)
-VALUES ($1, $2, $3)
-RETURNING id, title, description, instructor_id, created_at, updated_at, deleted_at
+INSERT INTO subjects (title, description)
+VALUES ($1, $2)
+RETURNING id, title, description, created_at, updated_at, deleted_at
 `
 
 type CreateSubjectParams struct {
-	Title        string        `json:"title"`
-	Description  *string       `json:"description"`
-	InstructorID uuid.NullUUID `json:"instructor_id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description"`
 }
 
 func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error) {
-	row := q.db.QueryRow(ctx, createSubject, arg.Title, arg.Description, arg.InstructorID)
+	row := q.db.QueryRow(ctx, createSubject, arg.Title, arg.Description)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.InstructorID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -38,84 +36,8 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (S
 	return i, err
 }
 
-const enrollStudent = `-- name: EnrollStudent :one
-INSERT INTO enrollments (student_id, subject_id)
-VALUES ($1, $2)
-RETURNING id, student_id, subject_id, enrolled_at
-`
-
-type EnrollStudentParams struct {
-	StudentID uuid.NullUUID `json:"student_id"`
-	SubjectID uuid.NullUUID `json:"subject_id"`
-}
-
-func (q *Queries) EnrollStudent(ctx context.Context, arg EnrollStudentParams) (Enrollment, error) {
-	row := q.db.QueryRow(ctx, enrollStudent, arg.StudentID, arg.SubjectID)
-	var i Enrollment
-	err := row.Scan(
-		&i.ID,
-		&i.StudentID,
-		&i.SubjectID,
-		&i.EnrolledAt,
-	)
-	return i, err
-}
-
-const getEnrollmentsByStudent = `-- name: GetEnrollmentsByStudent :many
-SELECT id, student_id, subject_id, enrolled_at FROM enrollments WHERE student_id = $1
-`
-
-func (q *Queries) GetEnrollmentsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]Enrollment, error) {
-	rows, err := q.db.Query(ctx, getEnrollmentsByStudent, studentID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Enrollment
-	for rows.Next() {
-		var i Enrollment
-		if err := rows.Scan(
-			&i.ID,
-			&i.StudentID,
-			&i.SubjectID,
-			&i.EnrolledAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getStudentsInSubject = `-- name: GetStudentsInSubject :many
-SELECT student_id FROM enrollments WHERE subject_id = $1
-`
-
-func (q *Queries) GetStudentsInSubject(ctx context.Context, subjectID uuid.NullUUID) ([]uuid.NullUUID, error) {
-	rows, err := q.db.Query(ctx, getStudentsInSubject, subjectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.NullUUID
-	for rows.Next() {
-		var student_id uuid.NullUUID
-		if err := rows.Scan(&student_id); err != nil {
-			return nil, err
-		}
-		items = append(items, student_id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getSubjectByID = `-- name: GetSubjectByID :one
-SELECT id, title, description, instructor_id, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
 `
 
 func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error) {
@@ -125,7 +47,6 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.InstructorID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -133,12 +54,12 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 	return i, err
 }
 
-const listSubjectsByInstructor = `-- name: ListSubjectsByInstructor :many
-SELECT id, title, description, instructor_id, created_at, updated_at, deleted_at FROM subjects WHERE instructor_id = $1 ORDER BY created_at DESC
+const listAllSubjects = `-- name: ListAllSubjects :many
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NULL
 `
 
-func (q *Queries) ListSubjectsByInstructor(ctx context.Context, instructorID uuid.NullUUID) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, listSubjectsByInstructor, instructorID)
+func (q *Queries) ListAllSubjects(ctx context.Context) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listAllSubjects)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +71,37 @@ func (q *Queries) ListSubjectsByInstructor(ctx context.Context, instructorID uui
 			&i.ID,
 			&i.Title,
 			&i.Description,
-			&i.InstructorID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchSubjects = `-- name: SearchSubjects :many
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE title ILIKE '%' || $1::text || '%' AND deleted_at IS NULL
+`
+
+func (q *Queries) SearchSubjects(ctx context.Context, dollar_1 string) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, searchSubjects, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

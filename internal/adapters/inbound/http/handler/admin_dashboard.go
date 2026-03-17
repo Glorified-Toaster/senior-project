@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
-	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
 	"uot-exam/web/templates/pages"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
@@ -14,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"uot-exam/internal/adapters/inbound/http/helpers"
 )
 
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
@@ -25,78 +24,10 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 		}
 
 		username, fullname := parseUsername(ctx)
-		description := "something"
-		exams := []domain.Exam{
-			{
-				ID:              uuid.New(),
-				Title:           "Theory of computation",
-				ExamID:          "TOC-001",
-				Description:     &description,
-				DurationMinutes: 60,
-				TotalMarks:      100,
-				Status:          domain.ExamStatusPublished,
-				CreatedBy:       uuid.New(),
-				StartTime:       time.Now(),
-				EndTime:         time.Now().Add(1 * time.Hour),
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			},
-			{
-				ID:              uuid.New(),
-				Title:           "Theory of automatas",
-				ExamID:          "TOA-001",
-				Description:     &description,
-				DurationMinutes: 60,
-				TotalMarks:      100,
-				Status:          domain.ExamStatusPublished,
-				CreatedBy:       uuid.New(),
-				StartTime:       time.Now(),
-				EndTime:         time.Now().Add(1 * time.Hour),
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			},
-			{
-				ID:              uuid.New(),
-				Title:           "Mathematical Logic",
-				ExamID:          "ML-001",
-				Description:     &description,
-				DurationMinutes: 60,
-				TotalMarks:      100,
-				Status:          domain.ExamStatusClosed,
-				CreatedBy:       uuid.New(),
-				StartTime:       time.Now(),
-				EndTime:         time.Now().Add(1 * time.Hour),
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			},
-			{
-				ID:              uuid.New(),
-				Title:           "Data Structures",
-				ExamID:          "DS-001",
-				Description:     &description,
-				DurationMinutes: 60,
-				TotalMarks:      100,
-				Status:          domain.ExamStatusDraft,
-				CreatedBy:       uuid.New(),
-				StartTime:       time.Now(),
-				EndTime:         time.Now().Add(1 * time.Hour),
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			},
-			{
-				ID:              uuid.New(),
-				Title:           "Computer Graphics",
-				ExamID:          "CG-001",
-				Description:     &description,
-				DurationMinutes: 60,
-				TotalMarks:      100,
-				Status:          domain.ExamStatusDraft,
-				CreatedBy:       uuid.New(),
-				StartTime:       time.Now(),
-				EndTime:         time.Now().Add(1 * time.Hour),
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			},
+		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{Limit: 4, Offset: 0})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
 		userCount, err := h.App.CountUsers(ctx)
@@ -242,6 +173,193 @@ func parseUsername(ctx *gin.Context) (string, string) {
 
 func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		render.Render(ctx, pages.BasePage("All Exams", page.AllExamsPage(page.AllExamsPageParam{})))
+		limitStr := ctx.DefaultQuery("limit", "10")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+
+		limit, _ := strconv.Atoi(limitStr)
+		offset, _ := strconv.Atoi(offsetStr)
+
+		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		examCount, err := h.App.CountExams(ctx)
+		if err != nil {
+			return
+		}
+
+		props := components.ExamTableProps{
+			Title:      "All Exams",
+			Exams:      exams,
+			TotalCount: examCount,
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+			BaseURL:    "/admin/dashboard/exams",
+		}
+
+		// Check if it's an HTMX request
+		if ctx.GetHeader("HX-Request") != "" {
+			render.Render(ctx, components.ExamTableContainer(props))
+			return
+		}
+
+		username, fullname := parseUsername(ctx)
+
+		params := page.AllExamsPageParam{
+			FullName:   fullname,
+			Username:   username,
+			Exams:      exams,
+			TotalExams: examCount,
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+		}
+		render.Render(ctx, pages.BasePage("All Exams", page.AllExamsPage(params)))
+	}
+}
+
+func (h *UserHandler) SearchExams() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		search := ctx.PostForm("search")
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil {
+			limit = 10
+		}
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			offset = 0
+		}
+
+		// If search is empty, return the first page with pagination
+		if helpers.IsTrimmedEmpty(search) {
+			exams, err := h.App.ListAllExams(ctx, ports.ListAllExamsParams{
+				Limit:  int32(limit),
+				Offset: int32(offset),
+			})
+			if err != nil {
+				exams = []domain.Exam{}
+			}
+			totalCount, _ := h.App.CountExams(ctx)
+			ctx.Header("Content-Type", "text/html")
+			render.Render(ctx, components.ExamTableContainer(components.ExamTableProps{
+				Exams:      exams,
+				TotalCount: totalCount,
+				Limit:      int32(limit),
+				Offset:     int32(offset),
+				BaseURL:    "/admin/dashboard/exams",
+			}))
+			return
+		}
+
+		exams, err := h.App.SearchExams(ctx, ports.SearchExamsParams{
+			Search: search,
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		if err != nil {
+			render.Render(ctx, components.ExamTableRows([]domain.Exam{}))
+			return
+		}
+
+		if exams == nil {
+			exams = []domain.Exam{}
+		}
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.ExamTableContainer(components.ExamTableProps{
+			Exams:      exams,
+			TotalCount: 0, // Search results often don't show full pagination
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+			BaseURL:    "/admin/dashboard/exams",
+		}))
+	}
+}
+
+func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam ID"})
+			return
+		}
+
+		if err := h.App.SoftDeleteExam(ctx, id); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete exam"})
+			return
+		}
+
+		// After deletion, we re-render the table container.
+		// For simplicity, we just fetch the first page.
+		exams, err := h.App.ListAllExams(ctx, ports.ListAllExamsParams{Limit: 10, Offset: 0})
+		if err != nil {
+			exams = []domain.Exam{}
+		}
+		totalCount, _ := h.App.CountExams(ctx)
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.ExamTableContainer(components.ExamTableProps{
+			Exams:      exams,
+			TotalCount: totalCount,
+			Limit:      10,
+			Offset:     0,
+			BaseURL:    "/admin/dashboard/exams",
+		}))
+	}
+}
+
+func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjects, err := h.App.ListAllSubjects(ctx.Request.Context())
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		username, fullname := parseUsername(ctx)
+		render.Render(ctx, pages.BasePage("All Subjects", page.AllSubjectsPage(page.AllSubjectsPageParam{
+			Subjects: subjects,
+			Username: username,
+			FullName: fullname,
+		})))
+	}
+}
+
+func (h *UserHandler) SearchSubjects() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		search := ctx.PostForm("search")
+		subjects, err := h.App.SearchSubjects(ctx.Request.Context(), search)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		render.Render(ctx, components.SubjectTable(subjects))
+	}
+}
+
+func (h *UserHandler) Logout() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.SetCookie("auth_token", "", -1, "/", "", false, true)
+		ctx.Redirect(http.StatusSeeOther, "/admin/login")
+	}
+}
+
+func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID := ctx.Param("id")
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
+			Subject: subject,
+		})))
 	}
 }

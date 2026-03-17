@@ -5,6 +5,7 @@ import "uot-exam/web/templates/components/collapsible"
 import "uot-exam/web/templates/components/dropdown"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/button"
 
 templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string) {
 	@sidebar.Layout() {
@@ -107,6 +108,16 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 								}
 							}
 						}
+						@sidebar.MenuItem() {
+							@sidebar.MenuButton(sidebar.MenuButtonProps{
+								Href: "/admin/dashboard/subjects",
+								Tooltip: "Subjects",
+								Class: activeClass(currentPath , "/admin/dashboard/subjects"),
+							}) {
+								@icon.Bookmark(icon.Props{Class: "size-4"})
+								<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Subjects</span>
+							}
+						}
 					}
 				}
 				@sidebar.Separator()
@@ -176,23 +187,37 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 								}
 								@dropdown.Separator()
 								@dropdown.Item() {
-									<span class="flex items-center">
-										@icon.User(icon.Props{Size: 16, Class: "mr-2"})
-										Profile
-									</span>
+									@button.Button(button.Props{
+										Variant: button.VariantGhost,
+										Href:    "/admin/profile",
+									}) {
+										<span class="flex items-center">
+											@icon.User(icon.Props{Size: 16, Class: "mr-2"})
+											Profile
+										</span>
+									}
 								}
 								@dropdown.Item() {
-									<span class="flex items-center">
-										@icon.Settings(icon.Props{Size: 16, Class: "mr-2"})
-										Settings
-									</span>
+									@button.Button(button.Props{
+										Variant: button.VariantGhost,
+										Href:    "/admin/settings",
+									}) {
+										<span class="flex items-center">
+											@icon.Settings(icon.Props{Size: 16, Class: "mr-2"})
+											Settings
+										</span>
+									}
 								}
-								@dropdown.Separator()
 								@dropdown.Item() {
-									<span class="flex items-center">
-										@icon.LogOut(icon.Props{Size: 16, Class: "mr-2"})
-										Log out
-									</span>
+									@button.Button(button.Props{
+										Variant: button.VariantGhost,
+										Href:    "/admin/dashboard/logout",
+									}) {
+										<span class="flex items-start">
+											@icon.LogOut(icon.Props{Class: "h-4 w-4 mr-2"})
+											Log out
+										</span>
+									}
 								}
 							}
 						}

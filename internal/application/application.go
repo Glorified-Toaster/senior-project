@@ -7,12 +7,26 @@ import (
 )
 
 type Application struct {
-	userRepo  ports.UserRepository
-	txManager ports.TransactionManager
-	db        *database.PostgresAdapter
-	log       *logger.Logger
+	userRepo    ports.UserRepository
+	subjectRepo ports.SubjectRepository
+	examRepo    ports.ExamRepository
+	txManager   ports.TransactionManager
+	db          *database.PostgresAdapter
+	log         *logger.Logger
 }
 
-func NewApplication(userRepo ports.UserRepository, txManager ports.TransactionManager, db *database.PostgresAdapter, log *logger.Logger) *Application {
-	return &Application{userRepo: userRepo, txManager: txManager, db: db, log: log}
+func NewApplication(userRepo ports.UserRepository,
+	subjectRepo ports.SubjectRepository,
+	examRepo ports.ExamRepository,
+	txManager ports.TransactionManager,
+	db *database.PostgresAdapter,
+	log *logger.Logger) *Application {
+	return &Application{
+		userRepo:    userRepo,
+		subjectRepo: subjectRepo,
+		examRepo:    examRepo,
+		txManager:   txManager,
+		db:          db,
+		log:         log,
+	}
 }

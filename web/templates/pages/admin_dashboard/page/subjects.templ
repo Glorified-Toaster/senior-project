@@ -1,0 +1,67 @@
+package page
+
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/chart"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/internal/domain"
+
+
+type AllSubjectsPageParam struct {
+	FullName string
+	Username string
+	Subjects []domain.Subject
+}
+
+templ AllSubjectsPage(param AllSubjectsPageParam) {
+	<div class="h-screen">
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+		@dialog.Script()
+		@toast.Script()
+		@chart.Script()
+		@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
+			{Href: "/admin/dashboard", Path: "Dashboard"},
+			{Href: "/admin/dashboard/subjects", Path: "Subjects"},
+		}, param.Username, param.FullName ) {
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
+							All Subjects
+						</h1>
+						<p class="text-slate-500 mt-1">Overview of all subjects on the platform.</p>
+					</div>
+                    
+				</div>
+                <div class="flex items-center gap-2 w-full">
+                    @icon.Search(icon.Props{Class: "h-4 w-4"})
+								@input.Input(input.Props{
+									Type: input.TypeSearch,
+									Name: "search",
+									Placeholder: "Search subjects...",
+									Attributes: templ.Attributes{
+										"hx-post": "/admin/dashboard/subjects/search",
+										"hx-trigger": "keyup changed delay:300ms, search",
+										"hx-target": "#subjects-table-container",
+										"hx-swap": "outerHTML",
+									},			
+								})
+                </div>
+                <div id="subjects-table-container">
+                    @components.SubjectTable(param.Subjects)
+                </div>
+			</div>
+		}
+	</div>
+}

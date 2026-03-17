@@ -1,0 +1,60 @@
+package components
+
+import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/icon"
+
+templ SubjectTable(subjects []domain.Subject) {
+	if len(subjects) == 0 {
+		<div id="subjects-table-container" class="flex flex-col items-center justify-center py-12 px-4 text-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 animate-in fade-in duration-500">
+			<div class="bg-white p-4 rounded-full shadow-sm mb-4">
+				@icon.Search(icon.Props{Class: "h-8 w-8 text-slate-400"})
+			</div>
+			<h3 class="text-lg font-semibold text-slate-900">No subjects found</h3>
+			<p class="text-slate-500 max-w-xs mx-auto mt-2">
+				We couldn't find any subjects matching your search. Try adjusting your keywords or filters.
+			</p>
+		</div>
+	} else {
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="subjects-table-container">
+			for _, subject := range subjects {
+				@SubjectCard(subject)
+			}
+		</div>
+	}
+}
+
+templ SubjectCard(subject domain.Subject) {
+	<div class="w-full max-w-sm">
+		@card.Card(card.Props{
+			Class: "max-w-sm",
+		}) {
+			@card.Header() {
+				@card.Title() {
+					<span class="text-2xl font-bold">
+						{subject.Title}
+					</span>
+				}
+				@card.Description() {
+					if subject.Description != nil {
+						<span class="text-sm text-muted-foreground">{ *subject.Description }</span>
+					} else {
+						<span class="text-sm text-slate-400 italic">No description provided</span>
+					}
+				}
+			}
+			@card.Footer(card.FooterProps{
+				Class: "flex items-center justify-end",
+			}) {
+				<div class="flex items-center justify-between">
+					<span class="text-sm text-muted-foreground">@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Href: "/admin/dashboard/subject/" + subject.ID.String(),
+					}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
+					</span>
+				</div>
+			}
+		}
+	</div>
+}

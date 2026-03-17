@@ -65,32 +65,28 @@ CREATE TABLE subjects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
-    instructor_id UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL
 );
 
-CREATE INDEX idx_subjects_instructor ON subjects(instructor_id);
+-- =============================
+-- SUBJECT INSTRUCTORS (Join Table)
+-- =============================
+CREATE TABLE subject_instructors (
+    subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+    instructor_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (subject_id, instructor_id)
+);
+
+CREATE INDEX idx_subject_instructors_instructor ON subject_instructors(instructor_id);
+CREATE INDEX idx_subject_instructors_subject ON subject_instructors(subject_id);
 
 CREATE TRIGGER subjects_updated_at
 BEFORE UPDATE ON subjects
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
-
--- =============================
--- ENROLLMENTS
--- =============================
-CREATE TABLE enrollments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (student_id, subject_id)
-);
-
-CREATE INDEX idx_enrollments_student ON enrollments(student_id);
-CREATE INDEX idx_enrollments_subject ON enrollments(subject_id);
 
 -- =============================
 -- EXAMS
@@ -120,6 +116,20 @@ CREATE TRIGGER exams_updated_at
 BEFORE UPDATE ON exams
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+-- =============================
+-- ENROLLMENTS
+-- =============================
+CREATE TABLE enrollments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
+    enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (student_id, exam_id)
+);
+
+CREATE INDEX idx_enrollments_student ON enrollments(student_id);
+CREATE INDEX idx_enrollments_exam ON enrollments(exam_id);
 
 -- =============================
 -- QUESTIONS

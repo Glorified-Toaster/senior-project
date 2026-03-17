@@ -22,16 +22,14 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	DisableUser(ctx context.Context, id uuid.UUID) error
 	EnableUser(ctx context.Context, id uuid.UUID) error
-	EnrollStudent(ctx context.Context, arg EnrollStudentParams) (Enrollment, error)
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
-	GetEnrollmentsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]Enrollment, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error)
-	GetStudentsInSubject(ctx context.Context, subjectID uuid.NullUUID) ([]uuid.NullUUID, error)
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
 	ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]Exam, error)
+	ListAllSubjects(ctx context.Context) ([]Subject, error)
 	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
@@ -39,12 +37,14 @@ type Querier interface {
 	ListDeletedUsers(ctx context.Context, arg ListDeletedUsersParams) ([]User, error)
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
-	ListSubjectsByInstructor(ctx context.Context, instructorID uuid.NullUUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
 	SearchDeletedUsers(ctx context.Context, arg SearchDeletedUsersParams) ([]User, error)
+	SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exam, error)
+	SearchSubjects(ctx context.Context, dollar_1 string) ([]Subject, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
+	SoftDeleteExam(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error

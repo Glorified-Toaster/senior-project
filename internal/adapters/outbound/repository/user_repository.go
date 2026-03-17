@@ -4,7 +4,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	"uot-exam/internal/adapters/outbound/database"
 	"uot-exam/internal/adapters/outbound/database/sqlc"
@@ -16,19 +15,8 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// toTimePtr safely converts a pgtype.Timestamptz to *time.Time.
-// Returns nil if the value is not valid (SQL NULL).
-func toTimePtr(ts pgtype.Timestamptz) *time.Time {
-	if !ts.Valid {
-		return nil
-	}
-	t := ts.Time
-	return &t
-}
 
 type UserRepository struct {
 	queries *sqlc.Queries

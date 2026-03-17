@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"syscall"
+	"time"
 
 	"uot-exam/internal/adapters/inbound/http/handler"
 	"uot-exam/internal/adapters/inbound/http/helpers"
@@ -24,6 +25,7 @@ import (
 	"github.com/bxcodec/faker/v4"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"go.uber.org/zap"
 )
 
@@ -76,12 +78,15 @@ func main() {
 
 	query := sqlc.New(pool)
 	userRepo := repository.NewUserRepository(query)
+	subjectRepo := repository.NewSubjectRepository(query)
+	examRepo := repository.NewExamRepository(query)
 	txManager := database.NewPostgresTxManager(pool.Pool)
-	app := application.NewApplication(userRepo, txManager, pool, zlog)
+	app := application.NewApplication(userRepo, subjectRepo, examRepo, txManager, pool, zlog)
 
-	// populateDB(app)
+	//populateDB(app)
 	// mockExam(app)
-
+	//populateSubjects(query)
+	populateExams(query)
 	pool.Stats()
 	// init validator
 	validate := validator.New()
@@ -117,7 +122,7 @@ func mockExam(app *application.Application) {
 
 func populateDB(app *application.Application) {
 	go func() {
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < 500; i++ {
 			user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
 				Username: faker.Username(),
 				FullName: faker.Name(),
@@ -131,4 +136,38 @@ func populateDB(app *application.Application) {
 			log.Println("user", user)
 		}
 	}()
+}
+
+func populateSubjects(query sqlc.Querier) {
+	go func() {
+		str := "for PhD"
+		subject, err := query.CreateSubject(context.Background(), sqlc.CreateSubjectParams{
+			Title:       "",
+			Description: &str,
+		})
+		if err != nil {
+			log.Println("error creating subject", err)
+		}
+		log.Println("subject", subject)
+	}()
+}
+
+func populateExams(query sqlc.Querier) {
+	str := "for PhD"
+	subject, err := query.CreateExam(context.Background(), sqlc.CreateExamParams{
+		SubjectID:       uuid.NullUUID{UUID: uuid.MustParse("dafb9052-dac3-404d-bbf7-b4695258ae77"), Valid: true},
+		Title:           "Exam 1",
+		Description:     &str,
+		DurationMinutes: 60,
+		TotalMarks:      100,
+		StartTime:       pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		EndTime:         pgtype.Timestamptz{Time: time.Now().Add(time.Hour * 2), Valid: true},
+		Status:          "PUBLISHED",
+		CreatedBy:       uuid.NullUUID{UUID: uuid.MustParse("3ee3dead-d765-4f59-8e7f-ea58a4346225"), Valid: true},
+	})
+	if err != nil {
+		log.Println("error creating subject", err)
+	}
+	log.Println("subject", subject)
+
 }

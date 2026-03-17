@@ -9,6 +9,15 @@ import (
 
 type ExamRepository interface {
 	ListAll(ctx context.Context, arg ListAllExamsParams) ([]domain.Exam, error)
+	Search(ctx context.Context, arg SearchExamsParams) ([]domain.Exam, error)
+	Count(ctx context.Context) (int64, error)
+	SoftDelete(ctx context.Context, id uuid.UUID) error
+}
+
+type SearchExamsParams struct {
+	Search string
+	Limit  int32
+	Offset int32
 }
 
 type CreateExamParams struct {

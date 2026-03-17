@@ -58,3 +58,13 @@ RETURNING *;
 
 -- name: ListAnswersByAttempt :many
 SELECT * FROM student_answers WHERE attempt_id = $1;
+
+-- name: SearchExams :many
+SELECT * FROM exams 
+WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
+AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: SoftDeleteExam :exec
+UPDATE exams SET deleted_at = NOW() WHERE id = $1;

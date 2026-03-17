@@ -410,6 +410,63 @@ func (q *Queries) SaveAnswer(ctx context.Context, arg SaveAnswerParams) (Student
 	return i, err
 }
 
+const searchExams = `-- name: SearchExams :many
+SELECT id, subject_id, title, description, duration_minutes, total_marks, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams 
+WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
+AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type SearchExamsParams struct {
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+func (q *Queries) SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exam, error) {
+	rows, err := q.db.Query(ctx, searchExams, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exam
+	for rows.Next() {
+		var i Exam
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const softDeleteExam = `-- name: SoftDeleteExam :exec
+UPDATE exams SET deleted_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) SoftDeleteExam(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteExam, id)
+	return err
+}
+
 const startExamAttempt = `-- name: StartExamAttempt :one
 INSERT INTO exam_attempts (exam_id, student_id)
 VALUES ($1, $2)

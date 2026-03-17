@@ -152,7 +152,7 @@ type Choice struct {
 type Enrollment struct {
 	ID         uuid.UUID          `json:"id"`
 	StudentID  uuid.NullUUID      `json:"student_id"`
-	SubjectID  uuid.NullUUID      `json:"subject_id"`
+	ExamID     uuid.NullUUID      `json:"exam_id"`
 	EnrolledAt pgtype.Timestamptz `json:"enrolled_at"`
 }
 
@@ -202,13 +202,18 @@ type StudentAnswer struct {
 }
 
 type Subject struct {
-	ID           uuid.UUID          `json:"id"`
-	Title        string             `json:"title"`
-	Description  *string            `json:"description"`
-	InstructorID uuid.NullUUID      `json:"instructor_id"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	ID          uuid.UUID          `json:"id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type SubjectInstructor struct {
+	SubjectID    uuid.UUID          `json:"subject_id"`
+	InstructorID uuid.UUID          `json:"instructor_id"`
+	AssignedAt   pgtype.Timestamptz `json:"assigned_at"`
 }
 
 type User struct {

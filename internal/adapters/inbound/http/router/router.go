@@ -80,13 +80,17 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/users/deleted", r.userHandler.DeletedUsersPageRender())
 			dashboardRoutes.POST("/users/deleted/search", r.userHandler.SearchDeletedUsers())
 			dashboardRoutes.GET("/exams", r.userHandler.AllExamsPageRender())
+			dashboardRoutes.GET("/subjects", r.userHandler.AllSubjectsPageRender())
+			dashboardRoutes.POST("/subjects/search", r.userHandler.SearchSubjects())
+			dashboardRoutes.GET("/logout", r.userHandler.Logout())
+			dashboardRoutes.GET("/subject/:id", r.userHandler.EditSubjectPageRender())
 		}
 	}
 
 	// User routes
 	userRoutes := r.router.Group("/users")
-	//userRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
-	//userRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
+	userRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	userRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
 	{
 		userRoutes.POST("/create", r.userHandler.Create())
 		userRoutes.GET("/id/:id", r.userHandler.GetUserByID())
