@@ -1,0 +1,46 @@
+package page
+
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/chart"
+import "uot-exam/internal/domain"
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/navbar"
+
+type AllExamsPageParam struct {
+	Exams []domain.Exam
+}
+
+templ AllExamsPage(params AllExamsPageParam) {
+	<div class="h-screen">
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+		@dialog.Script()
+		@toast.Script()
+		@chart.Script()
+		@components.Sidebar("", []navbar.BreadPath{
+			{Href: "/admin/dashboard", Path: "Dashboard"},
+			{Href: "/admin/dashboard/exams", Path: "Exams"},
+		}, "", "") {
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.LayoutPanelTop(icon.Props{Class: "h-8 w-8"})
+							All Exams
+						</h1>
+						<p class="text-slate-500 mt-1">Overview of all exams on the platform.</p>
+					</div>
+				</div>
+				@components.ExamTable(params.Exams)
+			</div>
+		}
+	</div>
+}

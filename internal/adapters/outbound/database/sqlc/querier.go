@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	CountDeletedUsers(ctx context.Context) (int64, error)
+	CountExams(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
 	CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error)
@@ -29,17 +31,19 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
+	ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]Exam, error)
 	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
 	ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
-	ListDeletedUsers(ctx context.Context) ([]User, error)
+	ListDeletedUsers(ctx context.Context, arg ListDeletedUsersParams) ([]User, error)
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListSubjectsByInstructor(ctx context.Context, instructorID uuid.NullUUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
+	SearchDeletedUsers(ctx context.Context, arg SearchDeletedUsersParams) ([]User, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)

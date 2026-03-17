@@ -132,8 +132,8 @@ func (app *Application) EnableUser(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (app *Application) ListDeletedUsers(ctx context.Context) ([]domain.User, error) {
-	users, err := app.userRepo.ListDeleted(ctx)
+func (app *Application) ListDeletedUsers(ctx context.Context, arg ports.ListDeletedUsersParams) ([]domain.User, error) {
+	users, err := app.userRepo.ListDeleted(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -162,4 +162,20 @@ func (app *Application) CountUsers(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (app *Application) CountDeletedUsers(ctx context.Context) (int64, error) {
+	count, err := app.userRepo.CountDeleted(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (app *Application) SearchDeletedUsers(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
+	users, err := app.userRepo.SearchDeleted(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

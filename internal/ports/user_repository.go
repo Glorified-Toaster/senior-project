@@ -17,10 +17,12 @@ type UserRepository interface {
 	Restore(ctx context.Context, id uuid.UUID) error
 	Disable(ctx context.Context, id uuid.UUID) error
 	Enable(ctx context.Context, id uuid.UUID) error
-	ListDeleted(ctx context.Context) ([]domain.User, error)
+	ListDeleted(ctx context.Context, arg ListDeletedUsersParams) ([]domain.User, error)
 	ListAll(ctx context.Context, arg ListAllUsersParams) ([]domain.User, error)
 	Search(ctx context.Context, arg SearchUsersParams) ([]domain.User, error)
+	SearchDeleted(ctx context.Context, arg SearchUsersParams) ([]domain.User, error)
 	Count(ctx context.Context) (int64, error)
+	CountDeleted(ctx context.Context) (int64, error)
 }
 
 type CreateUserParams struct {
@@ -45,4 +47,9 @@ type SearchUsersParams struct {
 	Search string `json:"search" validate:"required"`
 	Limit  int32  `json:"limit" validate:"required"`
 	Offset int32  `json:"offset" validate:"required"`
+}
+
+type ListDeletedUsersParams struct {
+	Limit  int32 `json:"limit" validate:"required"`
+	Offset int32 `json:"offset" validate:"required"`
 }

@@ -31,7 +31,8 @@ WHERE id = $1;
 -- name: ListDeletedUsers :many
 SELECT * FROM users 
 WHERE deleted_at IS NOT NULL 
-ORDER BY created_at DESC;
+ORDER BY deleted_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: DisableUser :exec
 UPDATE users 
@@ -89,6 +90,21 @@ WHERE
 ORDER BY last_login DESC NULLS LAST
 LIMIT $1 OFFSET $2;
 
+-- name: SearchDeletedUsers :many
+SELECT * FROM users
+WHERE 
+    deleted_at IS NOT NULL 
+    AND (
+        username ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
+    )
+ORDER BY deleted_at DESC
+LIMIT $1 OFFSET $2;
+
 -- name: CountUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NULL;
+
+-- name: CountDeletedUsers :one
+SELECT count(*) FROM users 
+WHERE deleted_at IS NOT NULL;

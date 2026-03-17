@@ -6,6 +6,9 @@ var (
 	// User errors (postgres)
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrUserNotFound      = errors.New("user not found")
+	// Exam errors
+	ErrExamNotFound = errors.New("exam not found")
+
 	// JWT errors
 	ErrInvalidJWTToken = errors.New("invalid token")
 	ErrExpiredJWTToken = errors.New("token has expired")

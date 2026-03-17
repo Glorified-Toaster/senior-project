@@ -23,16 +23,16 @@ import (
 )
 
 type UserHandler struct {
-	userApp     *application.Application
+	App         *application.Application
 	validate    *validator.Validate
 	jwt         *helpers.JWTAuth
 	viperConfig *config.Config
 	logger      *logger.Logger
 }
 
-func NewUserHandler(userApp *application.Application, validate *validator.Validate, jwt *helpers.JWTAuth, viperConfig *config.Config, logger *logger.Logger) *UserHandler {
+func NewUserHandler(App *application.Application, validate *validator.Validate, jwt *helpers.JWTAuth, viperConfig *config.Config, logger *logger.Logger) *UserHandler {
 	return &UserHandler{
-		userApp:     userApp,
+		App:         App,
 		validate:    validate,
 		jwt:         jwt,
 		viperConfig: viperConfig,
@@ -53,7 +53,7 @@ func (h *UserHandler) Create() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userApp.CreateUser(ctx, req)
+		user, err := h.App.CreateUser(ctx, req)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create user : " + err.Error()})
 			return
@@ -113,7 +113,7 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userApp.Login(ctx, req)
+		user, err := h.App.Login(ctx, req)
 		if err != nil {
 			toast.Toast(toast.Props{
 				Title:         "Login Failed",
@@ -166,7 +166,7 @@ func (h *UserHandler) GetUserByID() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userApp.GetUserByID(ctx, id)
+		user, err := h.App.GetUserByID(ctx, id)
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to get user by ID", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to get user by ID"})
@@ -188,7 +188,7 @@ func (h *UserHandler) GetUserByUsername() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userApp.GetUserByUsername(ctx, username)
+		user, err := h.App.GetUserByUsername(ctx, username)
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to get user by username", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to get user by username"})
@@ -218,14 +218,14 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 
 		// If search is empty, return the first page with pagination
 		if strings.TrimSpace(search) == "" {
-			users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+			users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
 				Limit:  int32(limit),
 				Offset: int32(offset),
 			})
 			if err != nil {
 				users = []domain.User{}
 			}
-			totalCount, _ := h.userApp.CountUsers(ctx)
+			totalCount, _ := h.App.CountUsers(ctx)
 			ctx.Header("Content-Type", "text/html")
 			render.Render(ctx, components.UserTableContainer(components.UserTableProps{
 				Users:      users,
@@ -237,7 +237,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 			return
 		}
 
-		users, err := h.userApp.SearchUsers(ctx, ports.SearchUsersParams{
+		users, err := h.App.SearchUsers(ctx, ports.SearchUsersParams{
 			Search: search,
 			Limit:  int32(limit),
 			Offset: int32(offset),
@@ -263,7 +263,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 
 func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{Limit: 100, Offset: 0})
+		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{Limit: 100, Offset: 0})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to list all users", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to list all users"})
@@ -290,7 +290,7 @@ func (h *UserHandler) TestPage() gin.HandlerFunc {
 			offset = 0
 		}
 
-		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
 			Limit:  int32(limit),
 			Offset: int32(offset),
 		})
@@ -300,7 +300,7 @@ func (h *UserHandler) TestPage() gin.HandlerFunc {
 			return
 		}
 
-		totalCount, err := h.userApp.CountUsers(ctx)
+		totalCount, err := h.App.CountUsers(ctx)
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to count users", err)
 			totalCount = 0
@@ -323,7 +323,7 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Invalid request body"})
 			return
 		}
-		if err = h.userApp.SoftDeleteUser(ctx, id); err != nil {
+		if err = h.App.SoftDeleteUser(ctx, id); err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to delete user", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to delete user"})
 			return
@@ -364,7 +364,7 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			}
 		}
 
-		users, err := h.userApp.ListAllUsers(ctx, ports.ListAllUsersParams{
+		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
 			Limit:  int32(limit),
 			Offset: int32(offset),
 		})
@@ -374,7 +374,7 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			return
 		}
 
-		totalCount, err := h.userApp.CountUsers(ctx)
+		totalCount, err := h.App.CountUsers(ctx)
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to count users after delete", err)
 			totalCount = 0
@@ -391,5 +391,65 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.UserTableContainerWithDeleteToast(props))
+	}
+}
+
+func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		search := ctx.PostForm("search")
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil {
+			limit = 10
+		}
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			offset = 0
+		}
+
+		// If search is empty, return the first page with pagination
+		if strings.TrimSpace(search) == "" {
+			users, err := h.App.ListDeletedUsers(ctx, ports.ListDeletedUsersParams{
+				Limit:  int32(limit),
+				Offset: int32(offset),
+			})
+			if err != nil {
+				users = []domain.User{}
+			}
+			totalCount, _ := h.App.CountDeletedUsers(ctx)
+			ctx.Header("Content-Type", "text/html")
+			render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+				Users:      users,
+				TotalCount: totalCount,
+				Limit:      int32(limit),
+				Offset:     int32(offset),
+				BaseURL:    "/admin/dashboard/users/deleted",
+			}))
+			return
+		}
+
+		users, err := h.App.SearchDeletedUsers(ctx, ports.SearchUsersParams{
+			Search: search,
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
+			render.Render(ctx, components.UserTableRows([]domain.User{}))
+			return
+		}
+
+		if users == nil {
+			users = []domain.User{}
+		}
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			Users:      users,
+			TotalCount: 0,
+			Limit:      int32(limit),
+			Offset:     int32(offset),
+		}))
 	}
 }

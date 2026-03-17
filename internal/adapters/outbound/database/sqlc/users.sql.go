@@ -11,6 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const countDeletedUsers = `-- name: CountDeletedUsers :one
+SELECT count(*) FROM users 
+WHERE deleted_at IS NOT NULL
+`
+
+func (q *Queries) CountDeletedUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countDeletedUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NULL
@@ -233,11 +245,17 @@ func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]U
 const listDeletedUsers = `-- name: ListDeletedUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NOT NULL 
-ORDER BY created_at DESC
+ORDER BY deleted_at DESC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListDeletedUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listDeletedUsers)
+type ListDeletedUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListDeletedUsers(ctx context.Context, arg ListDeletedUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listDeletedUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -313,6 +331,55 @@ WHERE id = $1
 func (q *Queries) RestoreUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreUser, id)
 	return err
+}
+
+const searchDeletedUsers = `-- name: SearchDeletedUsers :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users
+WHERE 
+    deleted_at IS NOT NULL 
+    AND (
+        username ILIKE '%' || $3::text || '%'
+        OR full_name ILIKE '%' || $3::text || '%'
+    )
+ORDER BY deleted_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type SearchDeletedUsersParams struct {
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) SearchDeletedUsers(ctx context.Context, arg SearchDeletedUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, searchDeletedUsers, arg.Limit, arg.Offset, arg.Search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchUsers = `-- name: SearchUsers :many

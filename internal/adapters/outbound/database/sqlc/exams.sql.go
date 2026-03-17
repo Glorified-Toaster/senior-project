@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countExams = `-- name: CountExams :one
+SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL
+`
+
+func (q *Queries) CountExams(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countExams)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createChoice = `-- name: CreateChoice :one
 INSERT INTO choices (question_id, choice_text, is_correct)
 VALUES ($1, $2, $3)
@@ -160,6 +171,49 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const listAllExams = `-- name: ListAllExams :many
+SELECT id, subject_id, title, description, duration_minutes, total_marks, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2
+`
+
+type ListAllExamsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]Exam, error) {
+	rows, err := q.db.Query(ctx, listAllExams, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exam
+	for rows.Next() {
+		var i Exam
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAnswersByAttempt = `-- name: ListAnswersByAttempt :many

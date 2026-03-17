@@ -9,6 +9,12 @@ SELECT * FROM exams WHERE id = $1;
 -- name: ListExamsBySubject :many
 SELECT * FROM exams WHERE subject_id = $1 ORDER BY created_at DESC;
 
+-- name: ListAllExams :many
+SELECT * FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+
+-- name: CountExams :one
+SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL;
+
 
 -- name: CreateQuestion :one
 INSERT INTO questions (exam_id, question_text, marks, position)

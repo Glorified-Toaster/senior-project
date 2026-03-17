@@ -59,8 +59,8 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href:  "/admin/dashboard/users/deleted-users",
-												Class: activeClass(currentPath, "/admin/dashboard/users/deleted-users"),
+												Href:  "/admin/dashboard/users/deleted",
+												Class: activeClass(currentPath, "/admin/dashboard/users/deleted"),
 											}) {
 												<span>Deleted Users</span>
 											}
@@ -97,10 +97,10 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
-												Href:  "/admin/dashboard/exams/active-exams",
-												Class: activeClass(currentPath, "/admin/dashboard/exams/active-exams"),
+												Href:  "/admin/dashboard/exams/create",
+												Class: activeClass(currentPath, "/admin/dashboard/exams/create"),
 											}) {
-												<span>Active Exams</span>
+												<span>Create Exam</span>
 											}
 										}
 									}

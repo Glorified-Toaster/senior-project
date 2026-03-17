@@ -5,6 +5,7 @@ import "uot-exam/web/templates/components/table"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/badge"
 
 templ ExamTable(exams []domain.Exam) {
 	@card.Card(card.Props{Class: "w-full"}) {
@@ -24,7 +25,13 @@ templ ExamTable(exams []domain.Exam) {
 									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">ExamID</span>
 								}
 								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
-									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Passing Rate</span>
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</span>
+								}
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Start Time</span>
+								}
+								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
+									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">End Time</span>
 								}
 								@table.Head(table.HeadProps{Class: "px-4 py-2"}) {
 									<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</span>
@@ -61,5 +68,39 @@ templ ExamTableRows(exams []domain.Exam) {
 				</div>
 			</td>
 		</tr>
+	} else {
+		for _, exam := range exams {
+			@table.Row(table.RowProps{Class: "hover:bg-slate-50/80 transition-colors group cursor-default"}) {
+				@table.Cell() {
+					<span class="font-semibold text-slate-800 flex items-center gap-3">
+						<div class="w-8 h-8 rounded-full bg-blue-100 text-primary flex items-center justify-center text-xs font-bold uppercase tracking-wider">{ exam.Title[:2] }</div>
+						{ exam.Title }
+					</span>
+				}
+				@table.Cell() {
+					@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "uppercase tracking-widest text-[10px] font-bold shadow-sm border border-slate-200/60"}) {
+						{ string(exam.ExamID) }
+					}
+				}
+				@table.Cell() {
+					@badge.Badge(badge.Props{Variant: badge.VariantOutline, Class: "uppercase tracking-widest text-[10px] font-bold shadow-sm border border-slate-200/60"}) {
+						{ exam.Status }
+					}
+				}
+				@table.Cell() {
+					<span class="text-sm font-medium text-slate-600">{ exam.StartTime.Format("Jan 02, 2006 15:04") }</span>
+				}
+				@table.Cell() {
+					<span class="text-sm font-medium text-slate-600">{ exam.EndTime.Format("Jan 02, 2006 15:04") }</span>
+				}
+				@table.Cell() {
+					@button.Button(button.Props{
+						Href: "/admin/dashboard/exams/" + string(exam.ExamID),
+					}) {
+						View
+					}
+				}
+			}
+		}
 	}
 }

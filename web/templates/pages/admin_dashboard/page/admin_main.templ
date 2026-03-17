@@ -33,7 +33,7 @@ templ AdminMainPage(params AdminDashboardParam) {
 		@components.Sidebar("", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 		}, params.Username, params.FullName) {
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
@@ -62,11 +62,8 @@ templ AdminMainPage(params AdminDashboardParam) {
 						Value:       "80",
 						Icon:        icon.BadgeQuestionMark(icon.Props{Class: "h-10 w-10"}),
 					})
-					@components.ChartPie(components.ChartData{Pass: 80, Fail: 57, ExamID: "fvbyui34", PassingRate: components.PassRate(80, (80 + 70))})
-					<div class="col-span-2 md:col-span-2">
-						@components.ExamTable(params.Exams)
-					</div>
 				</div>
+				@components.ExamTable(params.Exams)
 				@components.UserTable(components.UserTableProps{
 					Users:         params.Users,
 					Title:         "Recent Users",

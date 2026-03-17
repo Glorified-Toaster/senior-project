@@ -74,16 +74,15 @@ func (r *UserRepository) Create(ctx context.Context, arg ports.CreateUserParams)
 	}
 
 	return domain.User{
-		ID:           user.ID,
-		Username:     user.Username,
-		FullName:     user.FullName,
-		PasswordHash: user.PasswordHash,
-		Role:         domain.UserRole(user.Role),
-		IsActive:     user.IsActive,
-		LastLogin:    toTimePtr(user.LastLogin),
-		CreatedAt:    user.CreatedAt.Time,
-		UpdatedAt:    user.UpdatedAt.Time,
-		DeletedAt:    toTimePtr(user.DeletedAt),
+		ID:        user.ID,
+		Username:  user.Username,
+		FullName:  user.FullName,
+		Role:      domain.UserRole(user.Role),
+		IsActive:  user.IsActive,
+		LastLogin: toTimePtr(user.LastLogin),
+		CreatedAt: user.CreatedAt.Time,
+		UpdatedAt: user.UpdatedAt.Time,
+		DeletedAt: toTimePtr(user.DeletedAt),
 	}, nil
 }
 
@@ -144,16 +143,15 @@ func (r *UserRepository) Login(ctx context.Context, arg ports.LoginParams) (doma
 	}
 
 	return domain.User{
-		ID:           user.ID,
-		Username:     user.Username,
-		FullName:     user.FullName,
-		PasswordHash: user.PasswordHash,
-		Role:         domain.UserRole(user.Role),
-		IsActive:     user.IsActive,
-		LastLogin:    toTimePtr(user.LastLogin),
-		CreatedAt:    user.CreatedAt.Time,
-		UpdatedAt:    user.UpdatedAt.Time,
-		DeletedAt:    toTimePtr(user.DeletedAt),
+		ID:        user.ID,
+		Username:  user.Username,
+		FullName:  user.FullName,
+		Role:      domain.UserRole(user.Role),
+		IsActive:  user.IsActive,
+		LastLogin: toTimePtr(user.LastLogin),
+		CreatedAt: user.CreatedAt.Time,
+		UpdatedAt: user.UpdatedAt.Time,
+		DeletedAt: toTimePtr(user.DeletedAt),
 	}, nil
 }
 
@@ -261,13 +259,16 @@ func (r *UserRepository) Enable(ctx context.Context, id uuid.UUID) error {
 }
 
 // ListDeleted : list all deleted users
-func (r *UserRepository) ListDeleted(ctx context.Context) ([]domain.User, error) {
+func (r *UserRepository) ListDeleted(ctx context.Context, arg ports.ListDeletedUsersParams) ([]domain.User, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	users, err := queries.ListDeletedUsers(ctx)
+	users, err := queries.ListDeletedUsers(ctx, sqlc.ListDeletedUsersParams{
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -275,16 +276,15 @@ func (r *UserRepository) ListDeleted(ctx context.Context) ([]domain.User, error)
 	var domainUsers []domain.User
 	for _, user := range users {
 		domainUsers = append(domainUsers, domain.User{
-			ID:           user.ID,
-			Username:     user.Username,
-			FullName:     user.FullName,
-			PasswordHash: user.PasswordHash,
-			Role:         domain.UserRole(user.Role),
-			IsActive:     user.IsActive,
-			LastLogin:    toTimePtr(user.LastLogin),
-			CreatedAt:    user.CreatedAt.Time,
-			UpdatedAt:    user.UpdatedAt.Time,
-			DeletedAt:    toTimePtr(user.DeletedAt),
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
 		})
 	}
 
@@ -309,16 +309,15 @@ func (r *UserRepository) ListAll(ctx context.Context, arg ports.ListAllUsersPara
 	var domainUsers []domain.User
 	for _, user := range users {
 		domainUsers = append(domainUsers, domain.User{
-			ID:           user.ID,
-			Username:     user.Username,
-			FullName:     user.FullName,
-			PasswordHash: user.PasswordHash,
-			Role:         domain.UserRole(user.Role),
-			IsActive:     user.IsActive,
-			LastLogin:    toTimePtr(user.LastLogin),
-			CreatedAt:    user.CreatedAt.Time,
-			UpdatedAt:    user.UpdatedAt.Time,
-			DeletedAt:    toTimePtr(user.DeletedAt),
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
 		})
 	}
 
@@ -344,16 +343,15 @@ func (r *UserRepository) Search(ctx context.Context, arg ports.SearchUsersParams
 	var domainUsers []domain.User
 	for _, user := range users {
 		domainUsers = append(domainUsers, domain.User{
-			ID:           user.ID,
-			Username:     user.Username,
-			FullName:     user.FullName,
-			PasswordHash: user.PasswordHash,
-			Role:         domain.UserRole(user.Role),
-			IsActive:     user.IsActive,
-			LastLogin:    toTimePtr(user.LastLogin),
-			CreatedAt:    user.CreatedAt.Time,
-			UpdatedAt:    user.UpdatedAt.Time,
-			DeletedAt:    toTimePtr(user.DeletedAt),
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
 		})
 	}
 
@@ -372,4 +370,51 @@ func (r *UserRepository) Count(ctx context.Context) (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (r *UserRepository) CountDeleted(ctx context.Context) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountDeletedUsers(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *UserRepository) SearchDeleted(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	users, err := queries.SearchDeletedUsers(ctx, sqlc.SearchDeletedUsersParams{
+		Search: arg.Search,
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainUsers []domain.User
+	for _, user := range users {
+		domainUsers = append(domainUsers, domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
+		})
+	}
+
+	return domainUsers, nil
 }
