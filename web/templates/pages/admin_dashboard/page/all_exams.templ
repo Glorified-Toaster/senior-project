@@ -13,7 +13,12 @@ import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
 
 type AllExamsPageParam struct {
-	Exams []domain.Exam
+	FullName   string
+	Username   string
+	Exams      []domain.Exam
+	TotalExams int64
+	Limit      int32
+	Offset     int32
 }
 
 templ AllExamsPage(params AllExamsPageParam) {
@@ -28,7 +33,7 @@ templ AllExamsPage(params AllExamsPageParam) {
 		@components.Sidebar("", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/dashboard/exams", Path: "Exams"},
-		}, "", "") {
+		}, params.Username, params.FullName) {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
@@ -39,7 +44,17 @@ templ AllExamsPage(params AllExamsPageParam) {
 						<p class="text-slate-500 mt-1">Overview of all exams on the platform.</p>
 					</div>
 				</div>
-				@components.ExamTable(params.Exams)
+				@components.ExamTable(components.ExamTableProps{
+					Title:      "All Exams",
+					Exams:      params.Exams,
+					TotalCount: params.TotalExams,
+					Limit:      params.Limit,
+					Offset:     params.Offset,
+					BaseURL:    "/admin/dashboard/exams",
+					Search:     true,
+					SearchAPI:  "/admin/dashboard/exams/search",
+					CreateExam: true,
+				})
 			</div>
 		}
 	</div>

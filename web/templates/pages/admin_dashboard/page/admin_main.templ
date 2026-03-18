@@ -63,7 +63,15 @@ templ AdminMainPage(params AdminDashboardParam) {
 						Icon:        icon.BadgeQuestionMark(icon.Props{Class: "h-10 w-10"}),
 					})
 				</div>
-				@components.ExamTable(params.Exams)
+				@components.ExamTable(components.ExamTableProps{
+					Title:         "Recent Exams",
+					Exams:         params.Exams,
+					TotalCount:    0,
+					Limit:         4,
+					Offset:        0,
+					BaseURL:       "/admin/dashboard/exams",
+					ShowAllButton: true,
+				})
 				@components.UserTable(components.UserTableProps{
 					Users:         params.Users,
 					Title:         "Recent Users",
