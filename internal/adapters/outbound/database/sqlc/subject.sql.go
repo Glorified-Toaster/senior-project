@@ -9,7 +9,54 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const assignInstructorToSubject = `-- name: AssignInstructorToSubject :one
+INSERT INTO subject_instructors (subject_id, instructor_id)
+VALUES ($1, $2)
+RETURNING subject_id, instructor_id, assigned_at, assigned_by, deleted_at
+`
+
+type AssignInstructorToSubjectParams struct {
+	SubjectID    uuid.UUID `json:"subject_id"`
+	InstructorID uuid.UUID `json:"instructor_id"`
+}
+
+func (q *Queries) AssignInstructorToSubject(ctx context.Context, arg AssignInstructorToSubjectParams) (SubjectInstructor, error) {
+	row := q.db.QueryRow(ctx, assignInstructorToSubject, arg.SubjectID, arg.InstructorID)
+	var i SubjectInstructor
+	err := row.Scan(
+		&i.SubjectID,
+		&i.InstructorID,
+		&i.AssignedAt,
+		&i.AssignedBy,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const countDeletedSubjects = `-- name: CountDeletedSubjects :one
+SELECT COUNT(*) FROM subjects WHERE deleted_at IS NOT NULL
+`
+
+func (q *Queries) CountDeletedSubjects(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countDeletedSubjects)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countSubjects = `-- name: CountSubjects :one
+SELECT COUNT(*) FROM subjects WHERE deleted_at IS NULL
+`
+
+func (q *Queries) CountSubjects(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countSubjects)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createSubject = `-- name: CreateSubject :one
 INSERT INTO subjects (title, description)
@@ -24,6 +71,24 @@ type CreateSubjectParams struct {
 
 func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error) {
 	row := q.db.QueryRow(ctx, createSubject, arg.Title, arg.Description)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const deleteSubject = `-- name: DeleteSubject :one
+UPDATE subjects SET deleted_at = NOW() WHERE id = $1 RETURNING id, title, description, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, deleteSubject, id)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
@@ -85,12 +150,17 @@ func (q *Queries) ListAllSubjects(ctx context.Context) ([]Subject, error) {
 	return items, nil
 }
 
-const searchSubjects = `-- name: SearchSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE title ILIKE '%' || $1::text || '%' AND deleted_at IS NULL
+const listDeletedSubjects = `-- name: ListDeletedSubjects :many
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NOT NULL LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) SearchSubjects(ctx context.Context, dollar_1 string) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, searchSubjects, dollar_1)
+type ListDeletedSubjectsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListDeletedSubjects(ctx context.Context, arg ListDeletedSubjectsParams) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listDeletedSubjects, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -114,4 +184,173 @@ func (q *Queries) SearchSubjects(ctx context.Context, dollar_1 string) ([]Subjec
 		return nil, err
 	}
 	return items, nil
+}
+
+const listInstructorsBySubjectID = `-- name: ListInstructorsBySubjectID :many
+SELECT 
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    si.assigned_at,
+    u.deleted_at
+FROM subject_instructors si
+INNER JOIN users u ON si.instructor_id = u.id
+WHERE si.subject_id = $1
+  AND si.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND (u.role = 'INSTRUCTOR' OR u.role = 'ADMIN')
+ORDER BY u.full_name ASC
+`
+
+type ListInstructorsBySubjectIDRow struct {
+	ID         uuid.UUID          `json:"id"`
+	Username   string             `json:"username"`
+	FullName   string             `json:"full_name"`
+	Role       UserRoleType       `json:"role"`
+	IsActive   bool               `json:"is_active"`
+	LastLogin  pgtype.Timestamptz `json:"last_login"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+}
+
+func (q *Queries) ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListInstructorsBySubjectIDRow, error) {
+	rows, err := q.db.Query(ctx, listInstructorsBySubjectID, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListInstructorsBySubjectIDRow
+	for rows.Next() {
+		var i ListInstructorsBySubjectIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AssignedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const restoreSubject = `-- name: RestoreSubject :one
+UPDATE subjects SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, restoreSubject, id)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const searchSubjects = `-- name: SearchSubjects :many
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
+WHERE title LIKE $1
+AND deleted_at IS NULL 
+LIMIT $3 OFFSET $2
+`
+
+type SearchSubjectsParams struct {
+	Title      string `json:"title"`
+	PageOffset int32  `json:"page_offset"`
+	PageLimit  int32  `json:"page_limit"`
+}
+
+func (q *Queries) SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, searchSubjects, arg.Title, arg.PageOffset, arg.PageLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const unassignInstructorFromSubject = `-- name: UnassignInstructorFromSubject :one
+UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1 AND instructor_id = $2 RETURNING subject_id, instructor_id, assigned_at, assigned_by, deleted_at
+`
+
+type UnassignInstructorFromSubjectParams struct {
+	SubjectID    uuid.UUID `json:"subject_id"`
+	InstructorID uuid.UUID `json:"instructor_id"`
+}
+
+func (q *Queries) UnassignInstructorFromSubject(ctx context.Context, arg UnassignInstructorFromSubjectParams) (SubjectInstructor, error) {
+	row := q.db.QueryRow(ctx, unassignInstructorFromSubject, arg.SubjectID, arg.InstructorID)
+	var i SubjectInstructor
+	err := row.Scan(
+		&i.SubjectID,
+		&i.InstructorID,
+		&i.AssignedAt,
+		&i.AssignedBy,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateSubject = `-- name: UpdateSubject :one
+UPDATE subjects SET title = $2, description = $3, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, title, description, created_at, updated_at, deleted_at
+`
+
+type UpdateSubjectParams struct {
+	ID          uuid.UUID `json:"id"`
+	Title       string    `json:"title"`
+	Description *string   `json:"description"`
+}
+
+func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error) {
+	row := q.db.QueryRow(ctx, updateSubject, arg.ID, arg.Title, arg.Description)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }

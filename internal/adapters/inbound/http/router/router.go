@@ -84,6 +84,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/subjects/search", r.userHandler.SearchSubjects())
 			dashboardRoutes.GET("/logout", r.userHandler.Logout())
 			dashboardRoutes.GET("/subject/:id", r.userHandler.EditSubjectPageRender())
+			dashboardRoutes.POST("/subject/edit/:id", r.userHandler.EditSubjectInfo())
 		}
 	}
 

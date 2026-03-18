@@ -83,10 +83,12 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, subjectRepo, examRepo, txManager, pool, zlog)
 
-	//populateDB(app)
+	populateDB(app)
 	// mockExam(app)
 	//populateSubjects(query)
 	//populateExams(query)
+	//assignInstructorToSubject(query)
+
 	pool.Stats()
 	// init validator
 	validate := validator.New()
@@ -122,11 +124,11 @@ func mockExam(app *application.Application) {
 
 func populateDB(app *application.Application) {
 	go func() {
-		for i := 0; i < 500; i++ {
+		for i := 0; i < 100; i++ {
 			user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
 				Username: faker.Username(),
 				FullName: faker.Name(),
-				Password: "P123" + faker.Password(),
+				Password: "1A" + faker.Password(),
 				Role:     "STUDENT",
 				IsActive: true,
 			})
@@ -142,7 +144,7 @@ func populateSubjects(query sqlc.Querier) {
 	go func() {
 		str := "for PhD"
 		subject, err := query.CreateSubject(context.Background(), sqlc.CreateSubjectParams{
-			Title:       "",
+			Title:       "Theory of Computation",
 			Description: &str,
 		})
 		if err != nil {
@@ -170,4 +172,11 @@ func populateExams(query sqlc.Querier) {
 	}
 	log.Println("subject", subject)
 
+}
+
+func assignInstructorToSubject(query sqlc.Querier) {
+	query.AssignInstructorToSubject(context.Background(), sqlc.AssignInstructorToSubjectParams{
+		SubjectID:    uuid.MustParse("15b31d77-d499-4d6c-8d3d-4db159dd9478"),
+		InstructorID: uuid.MustParse("459f0f6f-d2eb-4506-8f37-896ba2fa4cbe"),
+	})
 }

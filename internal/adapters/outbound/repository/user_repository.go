@@ -406,3 +406,35 @@ func (r *UserRepository) SearchDeleted(ctx context.Context, arg ports.SearchUser
 
 	return domainUsers, nil
 }
+
+func (r *UserRepository) ListAllInstructors(ctx context.Context, arg ports.ListAllInstructorsParams) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	users, err := queries.ListAllInstructors(ctx, sqlc.ListAllInstructorsParams{
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainUsers []domain.User
+	for _, user := range users {
+		domainUsers = append(domainUsers, domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
+		})
+	}
+
+	return domainUsers, nil
+}

@@ -23,6 +23,18 @@ func (q *Queries) CountDeletedUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countInstructors = `-- name: CountInstructors :one
+SELECT count(*) FROM users 
+WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL
+`
+
+func (q *Queries) CountInstructors(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countInstructors)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NULL
@@ -170,6 +182,49 @@ ORDER BY created_at DESC
 
 func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 	rows, err := q.db.Query(ctx, listActiveUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllInstructors = `-- name: ListAllInstructors :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL
+ORDER BY last_login DESC NULLS LAST
+LIMIT $1 OFFSET $2
+`
+
+type ListAllInstructorsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAllInstructors(ctx context.Context, arg ListAllInstructorsParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listAllInstructors, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

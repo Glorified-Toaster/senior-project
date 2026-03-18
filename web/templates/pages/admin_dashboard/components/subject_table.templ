@@ -34,7 +34,7 @@ templ SubjectCard(subject domain.Subject) {
 				}
 				@card.Description() {
 					if subject.Description != nil {
-						<span class="text-sm text-muted-foreground">{ *subject.Description }</span>
+						<span class="text-sm text-muted-foreground">{ truncateText(*subject.Description, 30)}</span>
 					} else {
 						<span class="text-sm text-slate-400 italic">No description provided</span>
 					}
@@ -90,3 +90,13 @@ templ EmptyState() {
 		}
 	}
 }}
+
+
+
+func truncateText(s string, max int) string {
+    runes := []rune(s)
+    if len(runes) <= max {
+        return s
+    }
+    return string(runes[:max]) + "..."
+}

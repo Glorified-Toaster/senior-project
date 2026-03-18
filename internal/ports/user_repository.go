@@ -23,6 +23,7 @@ type UserRepository interface {
 	SearchDeleted(ctx context.Context, arg SearchUsersParams) ([]domain.User, error)
 	Count(ctx context.Context) (int64, error)
 	CountDeleted(ctx context.Context) (int64, error)
+	ListAllInstructors(ctx context.Context, arg ListAllInstructorsParams) ([]domain.User, error)
 }
 
 type CreateUserParams struct {

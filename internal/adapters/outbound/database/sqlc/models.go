@@ -214,6 +214,8 @@ type SubjectInstructor struct {
 	SubjectID    uuid.UUID          `json:"subject_id"`
 	InstructorID uuid.UUID          `json:"instructor_id"`
 	AssignedAt   pgtype.Timestamptz `json:"assigned_at"`
+	AssignedBy   uuid.NullUUID      `json:"assigned_by"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type User struct {

@@ -179,3 +179,11 @@ func (app *Application) SearchDeletedUsers(ctx context.Context, arg ports.Search
 	}
 	return users, nil
 }
+
+func (app *Application) ListAllInstructors(ctx context.Context, arg ports.ListAllInstructorsParams) ([]domain.User, error) {
+	users, err := app.userRepo.ListAllInstructors(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}

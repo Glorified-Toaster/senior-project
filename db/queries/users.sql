@@ -108,3 +108,13 @@ WHERE deleted_at IS NULL;
 -- name: CountDeletedUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NOT NULL;
+
+-- name: ListAllInstructors :many
+SELECT * FROM users 
+WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL
+ORDER BY last_login DESC NULLS LAST
+LIMIT $1 OFFSET $2;
+
+-- name: CountInstructors :one
+SELECT count(*) FROM users 
+WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL;

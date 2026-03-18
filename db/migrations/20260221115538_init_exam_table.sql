@@ -76,12 +76,15 @@ CREATE TABLE subjects (
 CREATE TABLE subject_instructors (
     subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
     instructor_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    assigned_at TIMESTAMPTZ DEFAULT NOW(),
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    deleted_at TIMESTAMPTZ,
     PRIMARY KEY (subject_id, instructor_id)
 );
 
-CREATE INDEX idx_subject_instructors_instructor ON subject_instructors(instructor_id);
-CREATE INDEX idx_subject_instructors_subject ON subject_instructors(subject_id);
+CREATE INDEX idx_subject_instructors_subject ON subject_instructors(subject_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_subject_instructors_instructor ON subject_instructors(instructor_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_subject_instructors_deleted ON subject_instructors(deleted_at) WHERE deleted_at IS NOT NULL;
 
 CREATE TRIGGER subjects_updated_at
 BEFORE UPDATE ON subjects

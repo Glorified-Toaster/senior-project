@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
+	"uot-exam/web/templates/components/toast"
 	"uot-exam/web/templates/pages"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
 	"uot-exam/web/templates/pages/admin_dashboard/page"
@@ -361,10 +362,80 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		instructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
-			Subject:  subject,
-			Username: username,
-			FullName: fullname,
+			Subject:     subject,
+			Username:    username,
+			FullName:    fullname,
+			Instructors: instructors,
 		})))
+	}
+}
+
+func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		name := ctx.PostForm("subject_name")
+		description := ctx.PostForm("subject_description")
+
+		if helpers.IsTrimmedEmpty(name) {
+			toast.Toast(toast.Props{
+				Title:         "Edit Subject Failed",
+				Description:   "Subject name cannot be empty",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+			return
+		}
+
+		if len(description) > 255 {
+			toast.Toast(toast.Props{
+				Title:         "Edit Subject Failed",
+				Description:   "Subject description cannot be longer than 255 characters",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+			return
+		}
+
+		_, err := h.App.UpdateSubject(ctx, domain.Subject{
+			ID:          uuid.MustParse(id),
+			Title:       name,
+			Description: &description,
+		})
+		if err != nil {
+			toast.Toast(toast.Props{
+				Title:         "Edit Subject Failed",
+				Description:   "Failed to update subject",
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+			return
+		}
+
+		toast.Toast(toast.Props{
+			Title:         "Edit Subject Success",
+			Description:   "Subject updated successfully",
+			Variant:       toast.VariantSuccess,
+			Duration:      4000,
+			ShowIndicator: true,
+			Dismissible:   true,
+			Icon:          true,
+		}).Render(ctx.Request.Context(), ctx.Writer)
+
 	}
 }

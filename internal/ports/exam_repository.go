@@ -36,3 +36,8 @@ type ListAllExamsParams struct {
 	Limit  int32
 	Offset int32
 }
+
+type ListAllInstructorsParams struct {
+	Limit  int32
+	Offset int32
+}

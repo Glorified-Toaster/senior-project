@@ -26,7 +26,8 @@ type UserTableProps struct {
 	Search bool
 	SearchAPI string
 	AddUser bool
-	DeletedButton bool	
+	DeletedButton bool
+	AddAPI string
 }
 
 templ UserTable(props UserTableProps) {
@@ -58,7 +59,7 @@ templ UserTable(props UserTableProps) {
 
 					if props.AddUser {
 						@button.Button(button.Props{
-							Href: "/admin/dashboard/users/add",
+							Href: props.AddAPI,
 						}) {
 							Add User
 						}

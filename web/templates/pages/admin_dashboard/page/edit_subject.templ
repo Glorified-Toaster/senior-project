@@ -16,12 +16,14 @@ import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/label"
+import "uot-exam/web/templates/components/textarea"
 import "uot-exam/web/templates/utils"
 
 type EditSubjectPageParam struct {
 	Username string
 	FullName string
 	Subject  domain.Subject
+	Instructors []domain.User
 }
 
 templ EditSubjectPage(param EditSubjectPageParam) {
@@ -34,6 +36,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
     @toast.Script()
     @chart.Script()
     @input.Script()
+	@textarea.Script()
 
     @components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
         {
@@ -62,6 +65,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
                </div>
 				@TabsSubject(param)
 			</div>
+			<div id="toast"></div>
 		}
 	}
 
@@ -73,13 +77,14 @@ templ TabsSubject(param EditSubjectPageParam) {
 			Class: "w-full max-w-xs",
 		}) {
 			@tabs.Trigger(tabs.TriggerProps{
-				Value:    "information",
+				Value: "exams",
 				IsActive: true,
                 TabsID:   "account-tabs",
                 Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
-				Information
+				Exams
 			}
+
 			@tabs.Trigger(tabs.TriggerProps{
 				Value: "instructors",
                 TabsID:   "account-tabs",
@@ -87,28 +92,40 @@ templ TabsSubject(param EditSubjectPageParam) {
 			}) {
 				Instructors
 			}
+
+
 			@tabs.Trigger(tabs.TriggerProps{
-				Value: "exams",
+				Value:    "information",
                 TabsID:   "account-tabs",
                 Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
-				Exams
+				Information
 			}
-
 		}
 		<div class="w-full mt-2">
 			@tabs.Content(tabs.ContentProps{
 				Value:    "information",
-				IsActive: true,
                 TabsID:   "account-tabs",
 			}) {
-				@AccountTab(param)
+				@InformationTab(param)
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:    "exams",
+                TabsID:   "account-tabs",
+			}) {
+				//@ExamsTab(param)
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:    "instructors",
+                TabsID:   "account-tabs",
+			}) {
+				@InstructorsTab(param)
 			}
 		</div>
 	}
 }
 
-templ AccountTab(param EditSubjectPageParam) {
+templ InformationTab(param EditSubjectPageParam) {
 	@card.Card() {
 		@card.Header() {
 			@card.Title() {
@@ -118,6 +135,10 @@ templ AccountTab(param EditSubjectPageParam) {
 				Make changes to your subject here. Click save when you are done.
 			}
 		}
+		<form id="edit_subject_form"
+			hx-post={ "/admin/dashboard/subject/edit/" + param.Subject.ID.String() }
+			hx-target="#toast"
+			hx-swap="beforeend">
 		@card.Content() {
 			@label.Label(label.Props{
 				For: "subject_name",
@@ -133,6 +154,7 @@ templ AccountTab(param EditSubjectPageParam) {
 				Type: input.TypeText,
 				Placeholder: "Subject Name",
 				ID: "subject_name",
+				Name: "subject_name",
 				Value: param.Subject.Title,
 				Class: "mb-4",
 			})
@@ -147,10 +169,12 @@ templ AccountTab(param EditSubjectPageParam) {
 				Subject Description
 			}
 
-			@input.Input(input.Props{
-				Type: input.TypeText,
+			@textarea.Textarea(textarea.Props{
 				Placeholder: "Subject Description",
 				ID: "subject_description",
+				Name: "subject_description",
+				Rows: 3,
+				
 				Value: utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
 				Class: "mb-4",
 			})
@@ -172,14 +196,31 @@ templ AccountTab(param EditSubjectPageParam) {
 				Disabled: true,
 				Class: "mb-4",
 			})
-
 		}
 		@card.Footer(card.FooterProps{
 			Class: "flex justify-end",
 		}) {
-			@button.Button() {
+			@button.Button(button.Props{
+				Type: button.TypeSubmit,
+				Form: "edit_subject_form",
+				
+			}) {
 				Save changes
 			}
 		}
+		</form>
 	}
+}
+
+templ InstructorsTab(param EditSubjectPageParam) {
+	@components.UserTable(components.UserTableProps{
+		Users: param.Instructors,
+		Title: "Instructors",
+		BaseURL: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors",
+		ID: "instructors-table",
+		Search: true,
+		SearchAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/search",
+		AddUser: true,
+		AddAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/add",
+	})
 }
