@@ -86,7 +86,7 @@ func main() {
 	//populateDB(app)
 	// mockExam(app)
 	//populateSubjects(query)
-	populateExams(query)
+	//populateExams(query)
 	pool.Stats()
 	// init validator
 	validate := validator.New()

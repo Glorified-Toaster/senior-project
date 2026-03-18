@@ -11,19 +11,29 @@ import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/label"
+import "uot-exam/web/templates/utils"
 
 type EditSubjectPageParam struct {
-	Subject domain.Subject
+	Username string
+	FullName string
+	Subject  domain.Subject
 }
 
 templ EditSubjectPage(param EditSubjectPageParam) {
-        @sidebar.Script()
+    @sidebar.Script()
+	@tabs.Script()
 	@collapsible.Script()
 	@dropdown.Script()
 	@popover.Script()
     @dialog.Script()
     @toast.Script()
     @chart.Script()
+    @input.Script()
 
     @components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
         {
@@ -31,24 +41,145 @@ templ EditSubjectPage(param EditSubjectPageParam) {
             Path: "Dashboard",
         },
         {
-            Href: "/admin/dashboard/users",
-            Path: "Users",
+            Href: "/admin/dashboard/subjects",
+            Path: "Subjects",
         },
-    }, "", "") {
+        {
+            Href: "/admin/dashboard/subject/" + param.Subject.ID.String(),
+            Path: param.Subject.Title,
+        },
+    }, param.Username, param.FullName) {
 
      			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-							@icon.Users(icon.Props{Class: "h-8 w-8"})
+							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
 							{param.Subject.Title}
 						</h1>
-						<p class="text-slate-500 mt-1">List of all users on the platform.</p>
+						<p class="text-slate-500 mt-1">Edit subject information</p>
 					</div>
                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-			   </div>
+				@TabsSubject(param)
 			</div>
 		}
 	}
+
+templ TabsSubject(param EditSubjectPageParam) {
+	@tabs.Tabs(tabs.Props{
+		ID: "account-tabs",
+	}) {
+		@tabs.List(tabs.ListProps{
+			Class: "w-full max-w-xs",
+		}) {
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:    "information",
+				IsActive: true,
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Information
+			}
+			@tabs.Trigger(tabs.TriggerProps{
+				Value: "instructors",
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Instructors
+			}
+			@tabs.Trigger(tabs.TriggerProps{
+				Value: "exams",
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Exams
+			}
+
+		}
+		<div class="w-full mt-2">
+			@tabs.Content(tabs.ContentProps{
+				Value:    "information",
+				IsActive: true,
+                TabsID:   "account-tabs",
+			}) {
+				@AccountTab(param)
+			}
+		</div>
+	}
+}
+
+templ AccountTab(param EditSubjectPageParam) {
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				Information 
+			}
+			@card.Description() {
+				Make changes to your subject here. Click save when you are done.
+			}
+		}
+		@card.Content() {
+			@label.Label(label.Props{
+				For: "subject_name",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Subject Name
+			}
+
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Subject Name",
+				ID: "subject_name",
+				Value: param.Subject.Title,
+				Class: "mb-4",
+			})
+			
+			@label.Label(label.Props{
+				For: "subject_description",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.MessageSquareText(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Subject Description
+			}
+
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Subject Description",
+				ID: "subject_description",
+				Value: utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
+				Class: "mb-4",
+			})
+
+			@label.Label(label.Props{
+				For: "subject_uuid",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Hash(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Subject UUID 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "subject_uuid",
+				Value: param.Subject.ID.String(),
+				Readonly: true,
+				Disabled: true,
+				Class: "mb-4",
+			})
+
+		}
+		@card.Footer(card.FooterProps{
+			Class: "flex justify-end",
+		}) {
+			@button.Button() {
+				Save changes
+			}
+		}
+	}
+}

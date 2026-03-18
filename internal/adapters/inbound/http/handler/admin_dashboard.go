@@ -355,13 +355,16 @@ func (h *UserHandler) Logout() gin.HandlerFunc {
 func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		subjectID := ctx.Param("id")
+		username, fullname := parseUsername(ctx)
 		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(subjectID))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
-			Subject: subject,
+			Subject:  subject,
+			Username: username,
+			FullName: fullname,
 		})))
 	}
 }

@@ -37,6 +37,9 @@ templ UserTable(props UserTableProps) {
 					@icon.Users(icon.Props{Class: "h-7 w-7"})
 					<span class="text-2xl font-bold">
 					{ props.Title }
+					</span>
+				</div>
+					<div class="flex items-center gap-2">
 					if props.Search {
 						<div>
 								@input.Input(input.Props{
@@ -60,8 +63,7 @@ templ UserTable(props UserTableProps) {
 							Add User
 						}
 					}			
-					</span>
-				</div>
+					</div>
 			</div>
 		}
 		@card.Content(card.ContentProps{Class: "p-4"}) {
