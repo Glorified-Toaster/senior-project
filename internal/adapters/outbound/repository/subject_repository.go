@@ -98,6 +98,20 @@ func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string, li
 	return domainSubjects, nil
 }
 
+func (r *SubjectRepository) CountSearchSubjects(ctx context.Context, title string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	// Keep behavior consistent with SearchSubjects: apply wildcard matching.
+	count, err := queries.CountSearchSubjects(ctx, "%" + title + "%")
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *SubjectRepository) UpdateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

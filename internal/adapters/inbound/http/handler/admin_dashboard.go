@@ -3,7 +3,9 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
 	"uot-exam/web/templates/components/toast"
@@ -330,11 +332,32 @@ func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		totalCount, err := h.App.CountSubjects(ctx.Request.Context())
+		if err != nil {
+			totalCount = 0
+		}
+
 		username, fullname := parseUsername(ctx)
+
+		if ctx.GetHeader("HX-Request") != "" {
+			render.Render(ctx, components.SubjectTableContainer(components.SubjectTableContainerProps{
+				Subjects:   subjects,
+				TotalCount: totalCount,
+				Limit:      int32(limitInt),
+				Offset:     int32(offsetInt),
+				BaseURL:    "/admin/dashboard/subjects",
+			}))
+			return
+		}
+
 		render.Render(ctx, pages.BasePage("All Subjects", page.AllSubjectsPage(page.AllSubjectsPageParam{
-			Subjects: subjects,
-			Username: username,
-			FullName: fullname,
+			Subjects:   subjects,
+			Username:   username,
+			FullName:   fullname,
+			TotalCount: totalCount,
+			Limit:      int32(limitInt),
+			Offset:     int32(offsetInt),
 		})))
 	}
 }
@@ -345,13 +368,53 @@ func (h *UserHandler) SearchSubjects() gin.HandlerFunc {
 		limitInt, _ := strconv.Atoi(limit)
 		offset := ctx.DefaultQuery("offset", "0")
 		offsetInt, _ := strconv.Atoi(offset)
-		search := ctx.PostForm("search")
-		subjects, err := h.App.SearchSubjects(ctx.Request.Context(), search, int32(limitInt), int32(offsetInt))
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
 		}
-		render.Render(ctx, components.SubjectTable(subjects))
+
+		var (
+			subjects   []domain.Subject
+			totalCount int64
+			baseURL    string
+		)
+
+		if search == "" {
+			// Empty search behaves like the normal list.
+			baseURL = "/admin/dashboard/subjects"
+			var err error
+			subjects, err = h.App.ListAllSubjects(ctx.Request.Context(), int32(limitInt), int32(offsetInt))
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			totalCount, err = h.App.CountSubjects(ctx.Request.Context())
+			if err != nil {
+				totalCount = 0
+			}
+		} else {
+			baseURL = "/admin/dashboard/subjects/search?search=" + url.QueryEscape(search)
+
+			var err error
+			subjects, err = h.App.SearchSubjects(ctx.Request.Context(), search, int32(limitInt), int32(offsetInt))
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			totalCount, err = h.App.CountSearchSubjects(ctx.Request.Context(), search)
+			if err != nil {
+				totalCount = 0
+			}
+		}
+
+		render.Render(ctx, components.SubjectTableContainer(components.SubjectTableContainerProps{
+			Subjects:   subjects,
+			TotalCount: totalCount,
+			Limit:      int32(limitInt),
+			Offset:     int32(offsetInt),
+			BaseURL:    baseURL,
+		}))
 	}
 }
 
@@ -453,7 +516,18 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 			helpers.Toast(ctx, "Create Subject Failed", "Failed to list subjects", toast.VariantError)
 			return
 		}
-		render.Render(ctx, components.SubjectTable(subjects))
+		totalCount, err := h.App.CountSubjects(ctx.Request.Context())
+		if err != nil {
+			totalCount = 0
+		}
+
+		render.Render(ctx, components.SubjectTableContainer(components.SubjectTableContainerProps{
+			Subjects:   subjects,
+			TotalCount: totalCount,
+			Limit:      int32(limitInt),
+			Offset:     int32(offsetInt),
+			BaseURL:    "/admin/dashboard/subjects",
+		}))
 		helpers.Toast(ctx, "Create Subject Success", "Subject created successfully", toast.VariantSuccess)
 
 	}

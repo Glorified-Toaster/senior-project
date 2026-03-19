@@ -15,6 +15,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	csrf "github.com/utrack/gin-csrf"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type Router struct {
@@ -25,6 +26,17 @@ type Router struct {
 }
 
 func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.AuthMiddleware, viperConfig *config.Config) *Router {
+
+	gin.DisableConsoleColor()
+	// Logging to a file.
+	gin.DefaultWriter = &lumberjack.Logger{
+		Filename:   viperConfig.GinLogger.Filename,
+		MaxSize:    viperConfig.Lumberjack.MaxSize,
+		MaxBackups: viperConfig.Lumberjack.MaxBackups,
+		MaxAge:     viperConfig.Lumberjack.MaxAge,
+		Compress:   viperConfig.Lumberjack.Compress,
+	}
+
 	// useing gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
 
@@ -43,6 +55,7 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	router.Static("/web/static/src", "./web/static/src")
 	router.Static("/images", "./web/static/images")
 	router.Static("/static", "./web/static")
+	router.LoadHTMLGlob("web/static/*.html")
 
 	return &Router{
 		router:         router,
@@ -81,6 +94,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/users/deleted/search", r.userHandler.SearchDeletedUsers())
 			dashboardRoutes.GET("/exams", r.userHandler.AllExamsPageRender())
 			dashboardRoutes.GET("/subjects", r.userHandler.AllSubjectsPageRender())
+			dashboardRoutes.GET("/subjects/search", r.userHandler.SearchSubjects())
 			dashboardRoutes.POST("/subjects/search", r.userHandler.SearchSubjects())
 			dashboardRoutes.POST("/subjects/create", r.userHandler.CreateSubject())
 			dashboardRoutes.GET("/logout", r.userHandler.Logout())
@@ -101,6 +115,10 @@ func (r *Router) SetupRoutes() {
 		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
 		userRoutes.DELETE("/delete/:id", r.userHandler.SoftDeleteUser())
 	}
+
+	r.router.NoRoute(func(c *gin.Context) {
+		c.HTML(http.StatusNotFound, "404.html", nil)
+	})
 }
 
 func (r *Router) GetHandler() http.Handler {

@@ -22,6 +22,7 @@ type Config struct {
 	JWTAuth     *JWTAuthConf      `yaml:"jwt_auth" mapstructure:"jwt_auth"`
 	CSRF        *CSRFConfig       `yaml:"csrf" mapstructure:"csrf"`
 	GinSession  *GinSessionConfig `yaml:"gin_session" mapstructure:"gin_session"`
+	GinLogger   *GinLoggerConf    `yaml:"gin_logger" mapstructure:"gin_logger"`
 }
 
 func (cfg *Configuration) Init(path, file string) error {
@@ -114,6 +115,9 @@ func (cfg *Config) Validate() error {
 	}
 	if cfg.CSRF == nil {
 		return fmt.Errorf("csrf configuration is required")
+	}
+	if cfg.GinLogger == nil {
+		return fmt.Errorf("gin_logger configuration is required")
 	}
 
 	return nil

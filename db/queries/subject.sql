@@ -7,13 +7,23 @@ RETURNING *;
 SELECT * FROM subjects WHERE id = $1;
 
 -- name: ListAllSubjects :many
-SELECT * FROM subjects WHERE deleted_at IS NULL LIMIT $1 OFFSET $2;
+SELECT * FROM subjects 
+WHERE deleted_at IS NULL
+ORDER BY updated_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: SearchSubjects :many
 SELECT * FROM subjects 
 WHERE title LIKE sqlc.arg(title)
-AND deleted_at IS NULL 
+AND deleted_at IS NULL
+ORDER BY updated_at DESC
 LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
+
+-- name: CountSearchSubjects :one
+SELECT COUNT(*)
+FROM subjects
+WHERE title LIKE sqlc.arg(title)
+AND deleted_at IS NULL;
 
 -- name: UpdateSubject :one
 UPDATE subjects SET title = $2, description = $3, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING *;

@@ -16,6 +16,7 @@ type Querier interface {
 	CountDeletedUsers(ctx context.Context) (int64, error)
 	CountExams(ctx context.Context) (int64, error)
 	CountInstructors(ctx context.Context) (int64, error)
+	CountSearchSubjects(ctx context.Context, title string) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)

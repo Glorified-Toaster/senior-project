@@ -47,6 +47,20 @@ func (q *Queries) CountDeletedSubjects(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countSearchSubjects = `-- name: CountSearchSubjects :one
+SELECT COUNT(*)
+FROM subjects
+WHERE title LIKE $1
+AND deleted_at IS NULL
+`
+
+func (q *Queries) CountSearchSubjects(ctx context.Context, title string) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchSubjects, title)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSubjects = `-- name: CountSubjects :one
 SELECT COUNT(*) FROM subjects WHERE deleted_at IS NULL
 `
@@ -129,7 +143,10 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const listAllSubjects = `-- name: ListAllSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NULL LIMIT $1 OFFSET $2
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
+WHERE deleted_at IS NULL
+ORDER BY updated_at DESC
+LIMIT $1 OFFSET $2
 `
 
 type ListAllSubjectsParams struct {
@@ -286,7 +303,8 @@ func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, er
 const searchSubjects = `-- name: SearchSubjects :many
 SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
 WHERE title LIKE $1
-AND deleted_at IS NULL 
+AND deleted_at IS NULL
+ORDER BY updated_at DESC
 LIMIT $3 OFFSET $2
 `
 

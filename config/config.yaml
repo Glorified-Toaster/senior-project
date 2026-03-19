@@ -30,6 +30,10 @@ lumberjack:
   max_age: 30 #30 days
   compress: true # useing Gzip
 
+gin_logger:
+  filename: "logs/gin.log"
+
+
 jwt_auth:
   # 512 bit secret key
   secret: "hKRsetU-zf]A%8IYxSrWS5Jm<0Ut3H$nAz:Fpy;{auj"

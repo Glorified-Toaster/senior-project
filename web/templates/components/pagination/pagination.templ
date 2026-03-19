@@ -2,6 +2,7 @@ package pagination
 
 import (
 	"fmt"
+	"strings"
 	"uot-exam/web/templates/components/button"
 )
 
@@ -21,6 +22,10 @@ templ Pagination(props Props) {
 		offset := int(props.Offset)
 		currentPage := (offset / limit) + 1
 		totalPages := (total + limit - 1) / limit
+		separator := "?"
+		if strings.Contains(props.BaseURL, "?") {
+			separator = "&"
+		}
 	}}
 	if totalPages > 1 {
 		<nav class="flex items-center justify-center space-x-2 py-4" aria-label="Pagination">
@@ -30,7 +35,7 @@ templ Pagination(props Props) {
 					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 					Attributes: templ.Attributes{
-						"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (currentPage-2)*limit),
+						"hx-get":    fmt.Sprintf("%s%slimit=%d&offset=%d", props.BaseURL, separator, limit, (currentPage-2)*limit),
 						"hx-target": props.HXTarget,
 						"hx-swap":   props.HXSwap,
 					},
@@ -64,7 +69,7 @@ templ Pagination(props Props) {
 								Size:    button.SizeSm,
 								Class:   "w-10 text-slate-600",
 								Attributes: templ.Attributes{
-									"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, (i-1)*limit),
+									"hx-get":    fmt.Sprintf("%s%slimit=%d&offset=%d", props.BaseURL, separator, limit, (i-1)*limit),
 									"hx-target": props.HXTarget,
 									"hx-swap":   props.HXSwap,
 								},
@@ -91,7 +96,7 @@ templ Pagination(props Props) {
 					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 					Attributes: templ.Attributes{
-						"hx-get":    fmt.Sprintf("%s?limit=%d&offset=%d", props.BaseURL, limit, currentPage*limit),
+						"hx-get":    fmt.Sprintf("%s%slimit=%d&offset=%d", props.BaseURL, separator, limit, currentPage*limit),
 						"hx-target": props.HXTarget,
 						"hx-swap":   props.HXSwap,
 					},

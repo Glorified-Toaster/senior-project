@@ -5,7 +5,6 @@ import (
 	"uot-exam/internal/adapters/outbound/logger"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type AuthMiddleware struct {
@@ -18,19 +17,6 @@ func NewAuthMiddleware(jwt *helpers.JWTAuth, logger *logger.Logger) *AuthMiddlew
 		jwt:    jwt,
 		logger: logger,
 	}
-}
-
-func (auth *AuthMiddleware) collectFootPrintsAndLog(ctx *gin.Context) {
-	// get client info for logging
-	clientIP := ctx.ClientIP()
-	path := ctx.Request.URL.Path
-	method := ctx.Request.Method
-
-	auth.logger.LogInfo("HTTP_SERVER",
-		"Auth middleware",
-		zap.String("IP address", clientIP),
-		zap.String("method", method),
-		zap.String("path", path))
 }
 
 func setClaimsInContext(ctx *gin.Context, claims *helpers.Claims) {

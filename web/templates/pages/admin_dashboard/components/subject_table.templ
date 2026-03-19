@@ -4,16 +4,45 @@ import "uot-exam/internal/domain"
 import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/pagination"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/form"
+import "uot-exam/web/templates/components/input"
 
-templ SubjectTable(subjects []domain.Subject) {
+type SubjectTableContainerProps struct {
+	Subjects   []domain.Subject
+	TotalCount int64
+	Limit      int32
+	Offset     int32
+	BaseURL    string
+}
+
+templ SubjectTableGrid(subjects []domain.Subject) {
+	if len(subjects) == 0 {
+		@EmptyState()
+	} else {
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+			for _, subject := range subjects {
+				@SubjectCard(subject)
+			}
+		</div>
+	}
+}
+
+templ SubjectTableContainer(props SubjectTableContainerProps) {
 	<div id="subjects-table-container">
-		if len(subjects) == 0 {
-			@EmptyState()
-		} else {
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="subjects-table-container">
-				for _, subject := range subjects {
-					@SubjectCard(subject)
-				}
+		@SubjectTableGrid(props.Subjects)
+
+		if props.TotalCount > int64(props.Limit) {
+			<div id="pagination-container" class="mt-4">
+				@pagination.Pagination(pagination.Props{
+					Total:    props.TotalCount,
+					Limit:    props.Limit,
+					Offset:   props.Offset,
+					BaseURL:  props.BaseURL,
+					HXTarget: "#subjects-table-container",
+					HXSwap:   "outerHTML",
+				})
 			</div>
 		}
 	</div>
@@ -80,16 +109,13 @@ templ EmptyState() {
 			@card.Footer(card.FooterProps{
 				Class: "flex items-center justify-center",
 			}) {
-				@button.Button(button.Props{
-					Variant: button.VariantGhost,
-					Href: "/admin/dashboard/subjects/create",
-				}) {
-					@icon.Plus(icon.Props{Class: "h-4 w-4"})
-					Create Subject
-				}
+
+				@DialogAddSubject()
+
+			}
 		}
 	}
-}}
+}
 
 
 
@@ -99,4 +125,74 @@ func truncateText(s string, max int) string {
         return s
     }
     return string(runes[:max]) + "..."
+}
+
+
+templ DialogAddSubject() {
+	@dialog.Dialog(dialog.Props{
+		ID: "add-subject-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+			}) {
+				Add Subject
+			}
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add Subject
+				}
+				@dialog.Description() {
+					Add a new subject to the platform.
+				}
+			}
+			<form id="add-subject-form" hx-post="/admin/dashboard/subjects/create"
+				hx-target="#subjects-table-container"
+				hx-swap="outerHTML">
+			<div class="space-y-4">
+				<div class="space-y-2 mb-4">
+					@form.Label(form.LabelProps{For: "title"}) {
+						Title
+					}
+					@input.Input(input.Props{
+						ID:          "title",
+						Name: "title",
+						Placeholder: "Enter subject title",
+					})
+				</div>
+				<div class="space-y-2 mb-4">
+					@form.Label(form.LabelProps{For: "description"}) {
+						Description
+					}
+					@input.Input(input.Props{
+						ID:          "description",
+						Name: "description", 
+						Placeholder: "Enter subject description",
+					})
+				</div>
+			</div>
+			
+			@dialog.Footer() {
+				@dialog.Close() {
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,
+					}) {
+						Cancel
+					}
+				}
+				@button.Button(
+					button.Props{
+						Variant: button.VariantDefault,
+						Type: button.TypeSubmit,
+					}) {
+					Add Subject
+				}
+			}
+			</form>
+		}
+	}
 }

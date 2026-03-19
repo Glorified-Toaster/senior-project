@@ -73,6 +73,10 @@ type GinSessionConfig struct {
 	Secret string `yaml:"secret" mapstructure:"secret"`
 }
 
+type GinLoggerConf struct {
+	Filename string `yaml:"filename" mapstructure:"filename"`
+}
+
 // setDefaultConfig : to set important default values.
 func setDefaultConfig(viperInst *viper.Viper) {
 	// setting important default values
@@ -96,4 +100,7 @@ func setDefaultConfig(viperInst *viper.Viper) {
 	viperInst.SetDefault("zap_logger.level", "debug")
 	viperInst.SetDefault("zap_logger.encoding", "json")
 	viperInst.SetDefault("zap_logger.log_file", "app.log")
+
+	// Gin default values
+	viperInst.SetDefault("gin_logger.filename", "logs/gin.log")
 }

@@ -9,8 +9,6 @@ import (
 
 func (auth *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		auth.collectFootPrintsAndLog(ctx)
-
 		// getting the header from the context
 		authHeader, err := ctx.Cookie("auth_token")
 		if err != nil {

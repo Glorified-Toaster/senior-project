@@ -37,6 +37,16 @@ func (a *Application) SearchSubjects(ctx context.Context, title string, limit in
 	return subjects, err
 }
 
+func (a *Application) CountSearchSubjects(ctx context.Context, title string) (int64, error) {
+	var count int64
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = a.subjectRepo.CountSearchSubjects(txCtx, title)
+		return err
+	})
+	return count, err
+}
+
 func (a *Application) UpdateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error) {
 	var updatedSubject domain.Subject
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
