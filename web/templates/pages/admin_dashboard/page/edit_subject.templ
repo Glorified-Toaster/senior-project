@@ -24,6 +24,7 @@ type EditSubjectPageParam struct {
 	FullName string
 	Subject  domain.Subject
 	Instructors []domain.User
+	Exams []domain.Exam
 }
 
 templ EditSubjectPage(param EditSubjectPageParam) {
@@ -225,6 +226,15 @@ templ InformationTab(param EditSubjectPageParam) {
 }
 
 templ InstructorsTab(param EditSubjectPageParam) {
+	<div class="flex flex-col gap-4">
+	@components.TotalCard(components.TotalCardProps{
+		Title: "Instructors",
+		Description: "Instructors for this subject",
+		Icon: icon.User(icon.Props{
+			Class: "h-6 w-6",
+		}),
+		Value: "10",
+	})
 	@components.UserTable(components.UserTableProps{
 		Users: param.Instructors,
 		Title: "Instructors",
@@ -235,11 +245,12 @@ templ InstructorsTab(param EditSubjectPageParam) {
 		AddUser: true,
 		AddAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/add",
 	})
+	</div>
 }
 
 
 templ ExamPassChart(title string, description string) {
-	@card.Card(card.Props{Class: "max-w-sm"}) {
+	@card.Card(card.Props{Class: "w-full"}) {
 		@card.Header() {
 			@card.Title() {
 				{title}
@@ -255,17 +266,33 @@ templ ExamPassChart(title string, description string) {
 					Labels: []string{"Pass", "Fail"},
 					Datasets: []chart.Dataset{
 						{
-							Data: []float64{7, 16},
+							Label: "Students",
+							Data: []float64{85, 15},
+							BackgroundColor: []string{"#10b981", "#ef4444"},
 						},
 					},
+				},
+				Options: chart.Options{
+					Responsive: true,
+					Legend:     true,
 				},
 			})
 		}
 	}
 }
 
-templ ExamScoreChart(title string, description string) {
-	@card.Card(card.Props{Class: "max-w-sm"}) {
+templ ExamPassRateChart(title string, description string) {{{ 
+    passRates := []float64{90, 80, 40, 60, 30}
+    var colors []string
+    for _, val := range passRates {
+        if val <= 50.0 {
+            colors = append(colors, "#ef4444")
+        } else {
+            colors = append(colors, "#67b5e1")
+        }
+    }
+}}
+	@card.Card(card.Props{Class: "w-full"}) {
 		@card.Header() {
 			@card.Title() {
 				{title}
@@ -276,15 +303,17 @@ templ ExamScoreChart(title string, description string) {
 		}
 		@card.Content() {
 			@chart.Chart(chart.Props{
-				Horizontal:  true,
 				Variant: chart.VariantBar,
-				ShowXGrid:   true,
+				Horizontal: true,
+				ShowXGrid:   false,
 				ShowYLabels: true,
 				Data: chart.Data{
-					Labels: []string{"A", "B", "C", "D", "F"},
+					Labels: []string{"TOC-2026-1", "TOC-2026-2", "TOC-2026-3", "TOC-2026-4", "TOC-2026-5"},
 					Datasets: []chart.Dataset{
 						{
-							Data: []float64{7, 16, 5, 20, 14},
+							Label: "Pass Rate",
+							Data: passRates,
+							BackgroundColor: colors,
 						},
 					},
 				},
@@ -293,36 +322,49 @@ templ ExamScoreChart(title string, description string) {
 	}
 }
 
-
-
-
 templ ExamTab(param EditSubjectPageParam) {
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-		@ExamPassChart("Last Exam Statistics", "Exam ID: " + "TOC-2026-1")
-		@ExamScoreChart("Last Exam Statistics", "Exam ID: " + "TOC-2026-1")
-		po
+	<div class="flex gap-4">
+		<div class="w-full mb-4">
+		@components.TotalCard(components.TotalCardProps{
+			Title: "Total Exams",
+			Value: "0",
+			Description: "Total exams in this subject",
+			Icon: icon.Book(icon.Props{Class: "h-10 w-10"}),
+		})
+		</div>
+	</div>
+	<div class="grid grid-cols-1 md:grid-cols-2 w-full mb-4">
+		@ExamPassRateChart("Pass Rate", "Past Exams Pass Rate")
 	</div>
 	@card.Card() {
 		@card.Header() {
 			@card.Title() {
-				Exams 
-			}
-			@card.Description() {
-				Make changes to your subject here. Click save when you are done.
+				<div class="flex items-center gap-2">
+				@icon.Book(icon.Props{
+					Class: "h-6 w-6",
+				})
+				<span class="text-xl font-bold">Exams</span>
+				<div class="flex-1 flex justify-end">
+				@button.Button(button.Props{
+					Type: button.TypeButton,
+					Class: "bg-primary hover:bg-primary/90",
+					Attributes: templ.Attributes{
+						"hx-get": "/admin/dashboard/subject/" + param.Subject.ID.String() + "/exams/add",
+						"hx-target": "#toast-container",
+						"hx-swap": "none",
+					},
+				}) {
+					Add Exam
+				}
+				</div>
+				</div>
 			}
 		}
 		@card.Content() {
-			
+			@components.ExamTableGrid(param.Exams)
 		}
 		@card.Footer(card.FooterProps{
 			Class: "flex justify-end gap-2",
-		}) {
-			@button.Button(button.Props{
-				Type: button.TypeSubmit,
-				Form: "edit_subject_form",
-			}) {
-				Save changes
-			}
-		}
+		})
 	}
 }

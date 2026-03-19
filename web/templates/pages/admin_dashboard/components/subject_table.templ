@@ -19,7 +19,7 @@ type SubjectTableContainerProps struct {
 
 templ SubjectTableGrid(subjects []domain.Subject) {
 	if len(subjects) == 0 {
-		@EmptyState()
+		@EmptyState("No subjects found", "We couldn't find any subjects matching your search. Try adjusting your keywords or filters.", true, false)
 	} else {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 			for _, subject := range subjects {
@@ -28,6 +28,53 @@ templ SubjectTableGrid(subjects []domain.Subject) {
 		</div>
 	}
 }
+
+templ ExamTableGrid(exams []domain.Exam) {
+	if len(exams) == 0 {
+		@EmptyState("No exams found", "We couldn't find any exams matching your search. Try adjusting your keywords or filters.", false, true) 
+	} else {
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+			for _, exam := range exams {
+				@ExamCard(exam)
+			}
+		</div>
+	}
+}
+
+templ ExamCard(exam domain.Exam) {
+	<div class="w-full max-w-sm">
+		@card.Card(card.Props{
+			Class: "max-w-sm",
+		}) {
+			@card.Header() {
+				@card.Title() {
+					<span class="text-2xl font-bold">
+						{exam.Title}
+					</span>
+				}
+				@card.Description() {
+					if exam.Description != nil {
+						<span class="text-sm text-muted-foreground">{ truncateText(*exam.Description, 30)}</span>
+					} else {
+						<span class="text-sm text-slate-400 italic">No description provided</span>
+					}
+				}
+			}
+			@card.Footer(card.FooterProps{
+				Class: "flex items-center justify-end",
+			}) {
+				<div class="flex items-center justify-between">
+					<span class="text-sm text-muted-foreground">@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Href: "/admin/dashboard/exam/" + exam.ID.String(),
+					}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
+					</span>
+				</div>
+			}
+		}
+	</div>
+}
+
 
 templ SubjectTableContainer(props SubjectTableContainerProps) {
 	<div id="subjects-table-container">
@@ -84,7 +131,7 @@ templ SubjectCard(subject domain.Subject) {
 	</div>
 }
 
-templ EmptyState() {
+templ EmptyState(title string, description string, addSubject bool, addExam bool) {
 	@card.Card(card.Props{
 		Class: "w-full",
 	}) {
@@ -98,19 +145,23 @@ templ EmptyState() {
 					@icon.Search(icon.Props{Class: "h-8 w-8 text-slate-400"})
 				</div>
 				<span class="text-2xl font-bold">
-					No subjects found
+					{title}
 				</span>
 			}
 			@card.Content(card.ContentProps{
 				Class: "flex flex-col items-center justify-center",
 			}) {
-				<span class="text-sm text-muted-foreground">We couldn't find any subjects matching your search. Try adjusting your keywords or filters.</span>
+				<span class="text-sm text-muted-foreground">{description}</span>
 			}
 			@card.Footer(card.FooterProps{
 				Class: "flex items-center justify-center",
 			}) {
 
-				@DialogAddSubject()
+				if addSubject {
+					@DialogAddSubject()
+				} else if addExam {
+					//@DialogAddExam()
+				}
 
 			}
 		}
