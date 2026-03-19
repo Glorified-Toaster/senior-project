@@ -12,6 +12,8 @@ import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/form"
 
 
 type AllSubjectsPageParam struct {
@@ -57,11 +59,83 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 										"hx-swap": "outerHTML",
 									},			
 								})
+					@DialogAddSubject()
                 </div>
                 <div id="subjects-table-container">
                     @components.SubjectTable(param.Subjects)
                 </div>
 			</div>
+			<div id="toast-container" hx-swap-oob="beforeend"></div>
 		}
 	</div>
+}
+
+
+templ DialogAddSubject() {
+	@dialog.Dialog(dialog.Props{
+		ID: "add-subject-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+			}) {
+				Add Subject
+			}
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add Subject
+				}
+				@dialog.Description() {
+					Add a new subject to the platform.
+				}
+			}
+			<form id="add-subject-form" hx-post="/admin/dashboard/subjects/create"
+				hx-target="#subjects-table-container"
+				hx-swap="outerHTML">
+			<div class="space-y-4">
+				<div class="space-y-2 mb-4">
+					@form.Label(form.LabelProps{For: "title"}) {
+						Title
+					}
+					@input.Input(input.Props{
+						ID:          "title",
+						Name: "title",
+						Placeholder: "Enter subject title",
+					})
+				</div>
+				<div class="space-y-2 mb-4">
+					@form.Label(form.LabelProps{For: "description"}) {
+						Description
+					}
+					@input.Input(input.Props{
+						ID:          "description",
+						Name: "description", 
+						Placeholder: "Enter subject description",
+					})
+				</div>
+			</div>
+			
+			@dialog.Footer() {
+				@dialog.Close() {
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,
+					}) {
+						Cancel
+					}
+				}
+				@button.Button(
+					button.Props{
+						Variant: button.VariantDefault,
+						Type: button.TypeSubmit,
+					}) {
+					Add Subject
+				}
+			}
+			</form>
+		}
+	}
 }

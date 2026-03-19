@@ -209,7 +209,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			limit = 10
+			limit = 12
 		}
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil {
@@ -283,7 +283,7 @@ func (h *UserHandler) TestPage() gin.HandlerFunc {
 
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			limit = 10
+			limit = 12
 		}
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil {
@@ -331,7 +331,7 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 
 		// Keep the table showing the same number of users by re-rendering
 		// the current page of users after deletion.
-		limit := 10
+		limit := 12
 		offset := 0
 
 		// Try to get paging from query params first.

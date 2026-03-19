@@ -82,9 +82,11 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/exams", r.userHandler.AllExamsPageRender())
 			dashboardRoutes.GET("/subjects", r.userHandler.AllSubjectsPageRender())
 			dashboardRoutes.POST("/subjects/search", r.userHandler.SearchSubjects())
+			dashboardRoutes.POST("/subjects/create", r.userHandler.CreateSubject())
 			dashboardRoutes.GET("/logout", r.userHandler.Logout())
 			dashboardRoutes.GET("/subject/:id", r.userHandler.EditSubjectPageRender())
 			dashboardRoutes.POST("/subject/edit/:id", r.userHandler.EditSubjectInfo())
+			dashboardRoutes.POST("/subject/delete/:id", r.userHandler.DeleteSubject())
 		}
 	}
 

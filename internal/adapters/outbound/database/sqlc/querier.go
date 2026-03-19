@@ -24,6 +24,7 @@ type Querier interface {
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, error)
+	DeleteSubjectAndInstructors(ctx context.Context, subjectID uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	DisableUser(ctx context.Context, id uuid.UUID) error
 	EnableUser(ctx context.Context, id uuid.UUID) error
@@ -35,7 +36,7 @@ type Querier interface {
 	ListActiveUsers(ctx context.Context) ([]User, error)
 	ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]Exam, error)
 	ListAllInstructors(ctx context.Context, arg ListAllInstructorsParams) ([]User, error)
-	ListAllSubjects(ctx context.Context) ([]Subject, error)
+	ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams) ([]Subject, error)
 	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)

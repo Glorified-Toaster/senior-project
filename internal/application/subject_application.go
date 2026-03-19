@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func (a *Application) ListAllSubjects(ctx context.Context) ([]domain.Subject, error) {
+func (a *Application) ListAllSubjects(ctx context.Context, limit int32, offset int32) ([]domain.Subject, error) {
 	var subjects []domain.Subject
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		var err error
-		subjects, err = a.subjectRepo.ListAllSubjects(txCtx)
+		subjects, err = a.subjectRepo.ListAllSubjects(txCtx, limit, offset)
 		return err
 	})
 	return subjects, err
@@ -27,11 +27,11 @@ func (a *Application) GetSubjectByID(ctx context.Context, id uuid.UUID) (domain.
 	return subject, err
 }
 
-func (a *Application) SearchSubjects(ctx context.Context, title string) ([]domain.Subject, error) {
+func (a *Application) SearchSubjects(ctx context.Context, title string, limit int32, offset int32) ([]domain.Subject, error) {
 	var subjects []domain.Subject
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		var err error
-		subjects, err = a.subjectRepo.SearchSubjects(txCtx, title)
+		subjects, err = a.subjectRepo.SearchSubjects(txCtx, title, limit, offset)
 		return err
 	})
 	return subjects, err
@@ -51,7 +51,7 @@ func (a *Application) DeleteSubject(ctx context.Context, id uuid.UUID) (domain.S
 	var deletedSubject domain.Subject
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		var err error
-		deletedSubject, err = a.subjectRepo.DeleteSubject(txCtx, id.String())
+		deletedSubject, err = a.subjectRepo.DeleteSubject(txCtx, id)
 		return err
 	})
 	return deletedSubject, err
@@ -61,7 +61,7 @@ func (a *Application) RestoreSubject(ctx context.Context, id uuid.UUID) (domain.
 	var restoredSubject domain.Subject
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		var err error
-		restoredSubject, err = a.subjectRepo.RestoreSubject(txCtx, id.String())
+		restoredSubject, err = a.subjectRepo.RestoreSubject(txCtx, id)
 		return err
 	})
 	return restoredSubject, err
@@ -101,8 +101,27 @@ func (a *Application) ListInstructorsBySubjectID(ctx context.Context, subjectID 
 	var instructors []domain.User
 	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		var err error
-		instructors, err = a.subjectRepo.ListInstructorsBySubjectID(txCtx, subjectID.String())
+		instructors, err = a.subjectRepo.ListInstructorsBySubjectID(txCtx, subjectID)
 		return err
 	})
 	return instructors, err
+}
+
+func (a *Application) CreateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error) {
+	var createdSubject domain.Subject
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		createdSubject, err = a.subjectRepo.CreateSubject(txCtx, subject)
+		return err
+	})
+	return createdSubject, err
+}
+
+func (a *Application) DeleteSubjectAndEnrolledInstructors(ctx context.Context, subjectID uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		err = a.subjectRepo.DeleteSubjectAndEnrolledInstructors(txCtx, subjectID)
+		return err
+	})
+	return err
 }

@@ -18,13 +18,16 @@ func NewSubjectRepository(queries *sqlc.Queries) *SubjectRepository {
 	return &SubjectRepository{queries: queries}
 }
 
-func (r *SubjectRepository) ListAllSubjects(ctx context.Context) ([]domain.Subject, error) {
+func (r *SubjectRepository) ListAllSubjects(ctx context.Context, limit int32, offset int32) ([]domain.Subject, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	subjects, err := queries.ListAllSubjects(ctx)
+	subjects, err := queries.ListAllSubjects(ctx, sqlc.ListAllSubjectsParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +68,7 @@ func (r *SubjectRepository) GetSubjectByID(ctx context.Context, id string) (doma
 	}, nil
 }
 
-func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string) ([]domain.Subject, error) {
+func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string, limit int32, offset int32) ([]domain.Subject, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
@@ -73,8 +76,8 @@ func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string) ([
 
 	subjects, err := queries.SearchSubjects(ctx, sqlc.SearchSubjectsParams{
 		Title:      "%" + title + "%",
-		PageLimit:  10,
-		PageOffset: 0,
+		PageLimit:  limit,
+		PageOffset: offset,
 	})
 	if err != nil {
 		return nil, err
@@ -120,13 +123,13 @@ func (r *SubjectRepository) UpdateSubject(ctx context.Context, subject domain.Su
 	}, nil
 }
 
-func (r *SubjectRepository) DeleteSubject(ctx context.Context, id string) (domain.Subject, error) {
+func (r *SubjectRepository) DeleteSubject(ctx context.Context, id uuid.UUID) (domain.Subject, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	deletedSubject, err := queries.DeleteSubject(ctx, uuid.MustParse(id))
+	deletedSubject, err := queries.DeleteSubject(ctx, id)
 	if err != nil {
 		return domain.Subject{}, err
 	}
@@ -141,13 +144,13 @@ func (r *SubjectRepository) DeleteSubject(ctx context.Context, id string) (domai
 	}, nil
 }
 
-func (r *SubjectRepository) RestoreSubject(ctx context.Context, id string) (domain.Subject, error) {
+func (r *SubjectRepository) RestoreSubject(ctx context.Context, id uuid.UUID) (domain.Subject, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	restoredSubject, err := queries.RestoreSubject(ctx, uuid.MustParse(id))
+	restoredSubject, err := queries.RestoreSubject(ctx, id)
 	if err != nil {
 		return domain.Subject{}, err
 	}
@@ -219,13 +222,13 @@ func (r *SubjectRepository) ListDeletedSubjects(ctx context.Context, limit int32
 	return domainSubjects, nil
 }
 
-func (r *SubjectRepository) ListInstructorsBySubjectID(ctx context.Context, subjectID string) ([]domain.User, error) {
+func (r *SubjectRepository) ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]domain.User, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	instructors, err := queries.ListInstructorsBySubjectID(ctx, uuid.MustParse(subjectID))
+	instructors, err := queries.ListInstructorsBySubjectID(ctx, subjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -246,4 +249,42 @@ func (r *SubjectRepository) ListInstructorsBySubjectID(ctx context.Context, subj
 	}
 
 	return domainInstructors, nil
+}
+
+func (r *SubjectRepository) CreateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	createdSubject, err := queries.CreateSubject(ctx, sqlc.CreateSubjectParams{
+		Title:       subject.Title,
+		Description: subject.Description,
+	})
+	if err != nil {
+		return domain.Subject{}, err
+	}
+
+	return domain.Subject{
+		ID:          createdSubject.ID,
+		Title:       createdSubject.Title,
+		Description: createdSubject.Description,
+		CreatedAt:   createdSubject.CreatedAt.Time,
+		UpdatedAt:   createdSubject.UpdatedAt.Time,
+		DeletedAt:   toTimePtr(createdSubject.DeletedAt),
+	}, nil
+}
+
+func (r *SubjectRepository) DeleteSubjectAndEnrolledInstructors(ctx context.Context, subjectID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	err := queries.DeleteSubjectAndInstructors(ctx, subjectID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

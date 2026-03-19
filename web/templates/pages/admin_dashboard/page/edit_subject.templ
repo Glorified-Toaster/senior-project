@@ -65,7 +65,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
                </div>
 				@TabsSubject(param)
 			</div>
-			<div id="toast"></div>
+			<div id="toast-container"></div>
 		}
 	}
 
@@ -137,8 +137,8 @@ templ InformationTab(param EditSubjectPageParam) {
 		}
 		<form id="edit_subject_form"
 			hx-post={ "/admin/dashboard/subject/edit/" + param.Subject.ID.String() }
-			hx-target="#toast"
-			hx-swap="beforeend">
+			hx-target="#toast-container"
+			hx-swap="none">
 		@card.Content() {
 			@label.Label(label.Props{
 				For: "subject_name",
@@ -174,7 +174,6 @@ templ InformationTab(param EditSubjectPageParam) {
 				ID: "subject_description",
 				Name: "subject_description",
 				Rows: 3,
-				
 				Value: utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
 				Class: "mb-4",
 			})
@@ -198,8 +197,20 @@ templ InformationTab(param EditSubjectPageParam) {
 			})
 		}
 		@card.Footer(card.FooterProps{
-			Class: "flex justify-end",
+			Class: "flex justify-end gap-2",
 		}) {
+			@button.Button(button.Props{
+				Type: button.TypeButton,
+				Class: "bg-red-500 hover:bg-red-600",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/subject/delete/" + param.Subject.ID.String(),
+					"hx-target": "#toast-container",
+					"hx-swap": "none",
+				},
+			}) {
+				Delete Subject
+			}
+
 			@button.Button(button.Props{
 				Type: button.TypeSubmit,
 				Form: "edit_subject_form",

@@ -58,7 +58,7 @@ func (h *UserHandler) AdminLogin() gin.HandlerFunc {
 
 func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		limitStr := ctx.DefaultQuery("limit", "10")
+		limitStr := ctx.DefaultQuery("limit", "12")
 		offsetStr := ctx.DefaultQuery("offset", "0")
 
 		limit, _ := strconv.Atoi(limitStr)
@@ -108,7 +108,7 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 
 func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		limitStr := ctx.DefaultQuery("limit", "10")
+		limitStr := ctx.DefaultQuery("limit", "12")
 		offsetStr := ctx.DefaultQuery("offset", "0")
 
 		limit, _ := strconv.Atoi(limitStr)
@@ -176,7 +176,7 @@ func parseUsername(ctx *gin.Context) (string, string) {
 
 func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		limitStr := ctx.DefaultQuery("limit", "10")
+		limitStr := ctx.DefaultQuery("limit", "12")
 		offsetStr := ctx.DefaultQuery("offset", "0")
 
 		limit, _ := strconv.Atoi(limitStr)
@@ -320,7 +320,12 @@ func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
 
 func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		subjects, err := h.App.ListAllSubjects(ctx.Request.Context())
+		limit := ctx.DefaultQuery("limit", "12")
+		limitInt, _ := strconv.Atoi(limit)
+		offset := ctx.DefaultQuery("offset", "0")
+		offsetInt, _ := strconv.Atoi(offset)
+
+		subjects, err := h.App.ListAllSubjects(ctx.Request.Context(), int32(limitInt), int32(offsetInt))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -336,8 +341,12 @@ func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 
 func (h *UserHandler) SearchSubjects() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		limit := ctx.DefaultQuery("limit", "12")
+		limitInt, _ := strconv.Atoi(limit)
+		offset := ctx.DefaultQuery("offset", "0")
+		offsetInt, _ := strconv.Atoi(offset)
 		search := ctx.PostForm("search")
-		subjects, err := h.App.SearchSubjects(ctx.Request.Context(), search)
+		subjects, err := h.App.SearchSubjects(ctx.Request.Context(), search, int32(limitInt), int32(offsetInt))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -384,28 +393,12 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 		description := ctx.PostForm("subject_description")
 
 		if helpers.IsTrimmedEmpty(name) {
-			toast.Toast(toast.Props{
-				Title:         "Edit Subject Failed",
-				Description:   "Subject name cannot be empty",
-				Variant:       toast.VariantError,
-				Duration:      4000,
-				ShowIndicator: true,
-				Dismissible:   true,
-				Icon:          true,
-			}).Render(ctx.Request.Context(), ctx.Writer)
+			helpers.Toast(ctx, "Edit Subject Failed", "Subject name cannot be empty", toast.VariantError)
 			return
 		}
 
 		if len(description) > 255 {
-			toast.Toast(toast.Props{
-				Title:         "Edit Subject Failed",
-				Description:   "Subject description cannot be longer than 255 characters",
-				Variant:       toast.VariantError,
-				Duration:      4000,
-				ShowIndicator: true,
-				Dismissible:   true,
-				Icon:          true,
-			}).Render(ctx.Request.Context(), ctx.Writer)
+			helpers.Toast(ctx, "Edit Subject Failed", "Subject description cannot be longer than 255 characters", toast.VariantError)
 			return
 		}
 
@@ -415,27 +408,74 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 			Description: &description,
 		})
 		if err != nil {
-			toast.Toast(toast.Props{
-				Title:         "Edit Subject Failed",
-				Description:   "Failed to update subject",
-				Variant:       toast.VariantError,
-				Duration:      4000,
-				ShowIndicator: true,
-				Dismissible:   true,
-				Icon:          true,
-			}).Render(ctx.Request.Context(), ctx.Writer)
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to update subject", toast.VariantError)
 			return
 		}
 
-		toast.Toast(toast.Props{
-			Title:         "Edit Subject Success",
-			Description:   "Subject updated successfully",
-			Variant:       toast.VariantSuccess,
-			Duration:      4000,
-			ShowIndicator: true,
-			Dismissible:   true,
-			Icon:          true,
-		}).Render(ctx.Request.Context(), ctx.Writer)
+		helpers.Toast(ctx, "Edit Subject Success", "Subject updated successfully", toast.VariantSuccess)
+	}
+}
 
+func (h *UserHandler) CreateSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		name := ctx.PostForm("title")
+		description := ctx.PostForm("description")
+
+		if helpers.IsTrimmedEmpty(name) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Subject Failed", "Subject name cannot be empty", toast.VariantError)
+			return
+		}
+
+		if len(description) > 255 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Subject Failed", "Subject description cannot be longer than 255 characters", toast.VariantError)
+			return
+		}
+
+		_, err := h.App.CreateSubject(ctx, domain.Subject{
+			Title:       name,
+			Description: &description,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Subject Failed", "Failed to create subject", toast.VariantError)
+			return
+		}
+		limit := ctx.DefaultQuery("limit", "12")
+		limitInt, _ := strconv.Atoi(limit)
+		offset := ctx.DefaultQuery("offset", "0")
+		offsetInt, _ := strconv.Atoi(offset)
+		subjects, err := h.App.ListAllSubjects(ctx.Request.Context(), int32(limitInt), int32(offsetInt))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Subject Failed", "Failed to list subjects", toast.VariantError)
+			return
+		}
+		render.Render(ctx, components.SubjectTable(subjects))
+		helpers.Toast(ctx, "Create Subject Success", "Subject created successfully", toast.VariantSuccess)
+
+	}
+}
+
+func (h *UserHandler) DeleteSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		if helpers.IsTrimmedEmpty(id) {
+			helpers.Toast(ctx, "Delete Subject Failed", "Subject ID cannot be empty", toast.VariantError)
+			return
+		}
+		subjectID, err := uuid.Parse(id)
+		if err != nil {
+			helpers.Toast(ctx, "Delete Subject Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+		_, err = h.App.DeleteSubject(ctx, subjectID)
+		if err != nil {
+			helpers.Toast(ctx, "Delete Subject Failed", "Failed to delete subject", toast.VariantError)
+			return
+		}
+		ctx.Header("HX-Redirect", "/admin/dashboard/subjects")
 	}
 }

@@ -7,7 +7,7 @@ RETURNING *;
 SELECT * FROM subjects WHERE id = $1;
 
 -- name: ListAllSubjects :many
-SELECT * FROM subjects WHERE deleted_at IS NULL;
+SELECT * FROM subjects WHERE deleted_at IS NULL LIMIT $1 OFFSET $2;
 
 -- name: SearchSubjects :many
 SELECT * FROM subjects 
@@ -50,7 +50,7 @@ INNER JOIN users u ON si.instructor_id = u.id
 WHERE si.subject_id = $1
   AND si.deleted_at IS NULL
   AND u.deleted_at IS NULL
-  AND (u.role = 'INSTRUCTOR' OR u.role = 'ADMIN')
+  AND u.role = 'INSTRUCTOR'
 ORDER BY u.full_name ASC;
 
 -- name: AssignInstructorToSubject :one
@@ -60,3 +60,7 @@ RETURNING *;
 
 -- name: UnassignInstructorFromSubject :one
 UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1 AND instructor_id = $2 RETURNING *;
+
+-- name: DeleteSubjectAndInstructors :exec
+UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1;
+UPDATE subjects SET deleted_at = NOW() WHERE id = $1;

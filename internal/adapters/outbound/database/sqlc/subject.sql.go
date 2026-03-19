@@ -101,6 +101,15 @@ func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, err
 	return i, err
 }
 
+const deleteSubjectAndInstructors = `-- name: DeleteSubjectAndInstructors :exec
+UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1
+`
+
+func (q *Queries) DeleteSubjectAndInstructors(ctx context.Context, subjectID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSubjectAndInstructors, subjectID)
+	return err
+}
+
 const getSubjectByID = `-- name: GetSubjectByID :one
 SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
 `
@@ -120,11 +129,16 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const listAllSubjects = `-- name: ListAllSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NULL
+SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NULL LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListAllSubjects(ctx context.Context) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, listAllSubjects)
+type ListAllSubjectsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listAllSubjects, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +217,7 @@ INNER JOIN users u ON si.instructor_id = u.id
 WHERE si.subject_id = $1
   AND si.deleted_at IS NULL
   AND u.deleted_at IS NULL
-  AND (u.role = 'INSTRUCTOR' OR u.role = 'ADMIN')
+  AND u.role = 'INSTRUCTOR'
 ORDER BY u.full_name ASC
 `
 
