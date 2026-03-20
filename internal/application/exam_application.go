@@ -43,3 +43,13 @@ func (app *Application) SoftDeleteExam(ctx context.Context, id uuid.UUID) error 
 		return app.examRepo.SoftDelete(txCtx, id)
 	})
 }
+
+func (app *Application) GetExamByID(ctx context.Context, id uuid.UUID) (domain.Exam, error) {
+	var exam domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exam, err = app.examRepo.GetByID(txCtx, id)
+		return err
+	})
+	return exam, err
+}

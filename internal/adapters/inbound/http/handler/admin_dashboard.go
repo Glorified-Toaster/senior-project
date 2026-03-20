@@ -28,7 +28,7 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname := parseUsername(ctx)
+		username, fullname, _ := parseUsername(ctx)
 		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{Limit: 4, Offset: 0})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -95,7 +95,7 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname := parseUsername(ctx)
+		username, fullname, _ := parseUsername(ctx)
 
 		params := page.AdminDashboardParam{
 			Users:           users,
@@ -144,7 +144,7 @@ func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname := parseUsername(ctx)
+		username, fullname, _ := parseUsername(ctx)
 
 		params := page.DeletedUsersPageParams{
 			DeletedUsers:    deletedUsers,
@@ -158,22 +158,28 @@ func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
 	}
 }
 
-func parseUsername(ctx *gin.Context) (string, string) {
+func parseUsername(ctx *gin.Context) (string, string, uuid.UUID) {
 	usernameVal, exists := ctx.Get("username")
 	if !exists {
 		ctx.Redirect(http.StatusSeeOther, "/admin/login")
-		return "", ""
+		return "", "", uuid.Nil
 	}
 	username := usernameVal.(string)
 	fullnameVal, exists := ctx.Get("fullname")
 	if !exists {
 		ctx.Redirect(http.StatusSeeOther, "/admin/login")
 		fmt.Println("fullname not found")
-		return "", ""
+		return "", "", uuid.Nil
 	}
 	fullname := fullnameVal.(string)
+	userIDVal, exists := ctx.Get("userID")
+	if !exists {
+		ctx.Redirect(http.StatusSeeOther, "/admin/login")
+		return "", "", uuid.Nil
+	}
+	userID := uuid.Must(uuid.Parse(userIDVal.(string)))
 
-	return username, fullname
+	return username, fullname, userID
 }
 
 func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
@@ -213,7 +219,7 @@ func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname := parseUsername(ctx)
+		username, fullname, _ := parseUsername(ctx)
 
 		params := page.AllExamsPageParam{
 			FullName:   fullname,
@@ -338,7 +344,7 @@ func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 			totalCount = 0
 		}
 
-		username, fullname := parseUsername(ctx)
+		username, fullname, _ := parseUsername(ctx)
 
 		if ctx.GetHeader("HX-Request") != "" {
 			render.Render(ctx, components.SubjectTableContainer(components.SubjectTableContainerProps{
@@ -428,7 +434,7 @@ func (h *UserHandler) Logout() gin.HandlerFunc {
 func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		subjectID := ctx.Param("id")
-		username, fullname := parseUsername(ctx)
+		username, fullname, userID := parseUsername(ctx)
 		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(subjectID))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -440,11 +446,22 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{
+			Limit:  10,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
 			Subject:     subject,
 			Username:    username,
 			FullName:    fullname,
 			Instructors: instructors,
+			Exams:       exams,
+			UserID:      userID,
 		})))
 	}
 }
@@ -551,5 +568,36 @@ func (h *UserHandler) DeleteSubject() gin.HandlerFunc {
 			return
 		}
 		ctx.Header("HX-Redirect", "/admin/dashboard/subjects")
+	}
+}
+
+func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		examID := ctx.Param("id")
+		if helpers.IsTrimmedEmpty(examID) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Exam ID cannot be empty", toast.VariantError)
+			return
+		}
+		examIDUUID, err := uuid.Parse(examID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+		exam, err := h.App.GetExamByID(ctx.Request.Context(), examIDUUID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Failed to get exam", toast.VariantError)
+			return
+		}
+		//instructor, err := h.App.GetUserByID(ctx.Request.Context(), exam.InstructorID)
+
+		username, fullname, _ := parseUsername(ctx)
+		render.Render(ctx, pages.BasePage("Edit Exam", page.EditExamPage(page.EditExamPageParam{
+			Exam:     exam,
+			Username: username,
+			FullName: fullname,
+		})))
 	}
 }

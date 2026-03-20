@@ -83,8 +83,8 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, subjectRepo, examRepo, txManager, pool, zlog)
 
-	//populateDB(app)
-	// mockExam(app)
+	populateDB(app)
+	//mockExam(app)
 	//populateSubjects(query)
 	//populateExams(query)
 	//assignInstructorToSubject(query)
@@ -123,6 +123,18 @@ func mockExam(app *application.Application) {
 }
 
 func populateDB(app *application.Application) {
+	user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
+		Role:     "ADMIN",
+		Username: "admin",
+		FullName: "Admin",
+		Password: "Admin123",
+		IsActive: true,
+	})
+	if err != nil {
+		log.Println("error creating user", err)
+		return
+	}
+	log.Println("user", user)
 	go func() {
 		for i := 0; i < 100; i++ {
 			user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
@@ -155,22 +167,40 @@ func populateSubjects(query sqlc.Querier) {
 }
 
 func populateExams(query sqlc.Querier) {
+	ctx := context.Background()
+
+	// Get a subject
+	subjects, err := query.ListAllSubjects(ctx, sqlc.ListAllSubjectsParams{Limit: 1, Offset: 0})
+	if err != nil || len(subjects) == 0 {
+		log.Println("no subjects found to populate exams")
+		return
+	}
+	subjectID := subjects[0].ID
+
+	// Get a user (instructor or admin)
+	users, err := query.ListAllUsers(ctx, sqlc.ListAllUsersParams{Limit: 1, Offset: 0})
+	if err != nil || len(users) == 0 {
+		log.Println("no users found to populate exams")
+		return
+	}
+	userID := users[0].ID
+
 	str := "for PhD"
-	subject, err := query.CreateExam(context.Background(), sqlc.CreateExamParams{
-		SubjectID:       uuid.NullUUID{UUID: uuid.MustParse("dafb9052-dac3-404d-bbf7-b4695258ae77"), Valid: true},
-		Title:           "Exam 1",
+	exam, err := query.CreateExam(ctx, sqlc.CreateExamParams{
+		SubjectID:       uuid.NullUUID{UUID: subjectID, Valid: true},
+		Title:           "Exam 3",
 		Description:     &str,
 		DurationMinutes: 60,
 		TotalMarks:      100,
 		StartTime:       pgtype.Timestamptz{Time: time.Now(), Valid: true},
 		EndTime:         pgtype.Timestamptz{Time: time.Now().Add(time.Hour * 2), Valid: true},
 		Status:          "PUBLISHED",
-		CreatedBy:       uuid.NullUUID{UUID: uuid.MustParse("3ee3dead-d765-4f59-8e7f-ea58a4346225"), Valid: true},
+		CreatedBy:       uuid.NullUUID{UUID: userID, Valid: true},
 	})
 	if err != nil {
-		log.Println("error creating subject", err)
+		log.Println("error creating exam", err)
 	}
-	log.Println("subject", subject)
+	log.Println("exam created successfully", exam)
 
 }
 

@@ -8,6 +8,7 @@ import "uot-exam/web/templates/components/pagination"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/badge"
 
 type SubjectTableContainerProps struct {
 	Subjects   []domain.Subject
@@ -58,18 +59,44 @@ templ ExamCard(exam domain.Exam) {
 					} else {
 						<span class="text-sm text-slate-400 italic">No description provided</span>
 					}
+					<br/>
+					@badge.Badge(badge.Props{
+					Variant: badge.VariantOutline,
+					Class: "mt-2",
+				}) {
+					@icon.Clock(icon.Props{Class: "h-4 w-4"})
+					{100}
+				} 
+					@badge.Badge(badge.Props{
+					Variant: badge.VariantOutline,
+					Class: "mt-2",
+				}) {
+					@icon.Users(icon.Props{Class: "h-4 w-4"})
+					{30}
+				}
+				@badge.Badge(badge.Props{
+					Variant: badge.VariantOutline,
+					Class: "mt-2",
+				}) {
+					@icon.CircleQuestionMark(icon.Props{Class: "h-4 w-4"})
+					{30}
+				} 
 				}
 			}
 			@card.Footer(card.FooterProps{
-				Class: "flex items-center justify-end",
+				Class: "flex items-center justify-between",
 			}) {
-				<div class="flex items-center justify-between">
-					<span class="text-sm text-muted-foreground">@button.Button(button.Props{
-						Variant: button.VariantGhost,
-						Href: "/admin/dashboard/exam/" + exam.ID.String(),
-					}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
-					</span>
-				</div>
+				@badge.Badge(badge.Props{
+					Variant: badge.VariantSecondary,
+					Class: "mt-2",
+				}) {
+					DRAFT
+				}
+
+				@button.Button(button.Props{
+					Variant: button.VariantGhost,
+					Href: "/admin/dashboard/exam/" + exam.ID.String(),
+				}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
 			}
 		}
 	</div>

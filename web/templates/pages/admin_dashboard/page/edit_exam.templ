@@ -1,0 +1,125 @@
+package page
+
+import "uot-exam/internal/domain"
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/chart"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/textarea"
+
+type EditExamPageParam struct {
+	Username string
+	FullName string
+	Subject  domain.Subject
+	Instructor domain.User
+	Exam domain.Exam
+}
+
+templ EditExamPage(param EditExamPageParam) {
+    @sidebar.Script()
+	@tabs.Script()
+	@collapsible.Script()
+	@dropdown.Script()
+	@popover.Script()
+    @dialog.Script()
+    @toast.Script()
+    @chart.Script()
+    @input.Script()
+	@textarea.Script()
+	@chart.Script()
+
+    @components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
+        {
+            Href: "/admin/dashboard",
+            Path: "Dashboard",
+        },
+        {
+            Href: "/admin/dashboard/subjects",
+            Path: "Subjects",
+        },
+        {
+            Href: "/admin/dashboard/subject/" + param.Subject.ID.String(),
+            Path: param.Subject.Title,
+        },
+    }, param.Username, param.FullName) {
+
+     			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
+							{param.Subject.Title}
+						</h1>
+						<p class="text-slate-500 mt-1">Edit subject information</p>
+					</div>
+               </div>
+				@TabsExam(param)
+			</div>
+			<div id="toast-container"></div>
+		}
+	}
+
+templ TabsExam(param EditExamPageParam) {
+	@tabs.Tabs(tabs.Props{
+		ID: "account-tabs",
+	}) {
+		@tabs.List(tabs.ListProps{
+			Class: "w-full max-w-xs",
+		}) {
+			@tabs.Trigger(tabs.TriggerProps{
+				Value: "exams",
+				IsActive: true,
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Exams
+			}
+
+			@tabs.Trigger(tabs.TriggerProps{
+				Value: "instructors",
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Instructors
+			}
+
+
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:    "information",
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Information
+			}
+		}
+		<div class="w-full mt-2">
+			@tabs.Content(tabs.ContentProps{
+				Value:    "information",
+                TabsID:   "account-tabs",
+			}) {
+                // TODO: Implement InformationTab
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:    "exams",
+                TabsID:   "account-tabs",
+			}) {
+                // TODO: Implement ExamTab
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:    "instructors",
+                TabsID:   "account-tabs",
+			}) {
+                // TODO: Implement InstructorsTab
+			}
+		</div>
+	}
+}
+

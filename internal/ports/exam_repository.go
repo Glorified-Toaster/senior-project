@@ -12,6 +12,7 @@ type ExamRepository interface {
 	Search(ctx context.Context, arg SearchExamsParams) ([]domain.Exam, error)
 	Count(ctx context.Context) (int64, error)
 	SoftDelete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (domain.Exam, error)
 }
 
 type SearchExamsParams struct {

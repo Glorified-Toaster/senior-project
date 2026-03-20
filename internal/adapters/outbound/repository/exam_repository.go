@@ -99,3 +99,16 @@ func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 	}
 }
 
+func (r *ExamRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.Exam, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	exam, err := queries.GetExamByID(ctx, id)
+	if err != nil {
+		return domain.Exam{}, err
+	}
+
+	return mapSqlcExamToDomain(exam), nil
+}

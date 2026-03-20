@@ -18,8 +18,11 @@ import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/label"
 import "uot-exam/web/templates/components/textarea"
 import "uot-exam/web/templates/utils"
+import "uot-exam/web/templates/components/form"
+import "github.com/google/uuid"
 
 type EditSubjectPageParam struct {
+	UserID uuid.UUID
 	Username string
 	FullName string
 	Subject  domain.Subject
@@ -344,18 +347,21 @@ templ ExamTab(param EditSubjectPageParam) {
 					Class: "h-6 w-6",
 				})
 				<span class="text-xl font-bold">Exams</span>
-				<div class="flex-1 flex justify-end">
-				@button.Button(button.Props{
-					Type: button.TypeButton,
-					Class: "bg-primary hover:bg-primary/90",
-					Attributes: templ.Attributes{
-						"hx-get": "/admin/dashboard/subject/" + param.Subject.ID.String() + "/exams/add",
-						"hx-target": "#toast-container",
-						"hx-swap": "none",
-					},
-				}) {
-					Add Exam
-				}
+				<div class="flex-1 flex justify-end gap-2">
+					<div class="w-64">
+						@input.Input(input.Props{
+								Type:        input.TypeSearch,
+								Name:        "search",
+								Placeholder: "Search exams...",
+								Attributes: templ.Attributes{
+									"hx-post":    "/admin/dashboard/subject/" + param.Subject.ID.String() + "/exams/search",
+									"hx-trigger": "keyup changed delay:300ms, search",
+									"hx-target":  "#exams-table-container",
+									"hx-swap":    "outerHTML",
+								},
+							})
+						</div>
+				@DialogAddExam(param)
 				</div>
 				</div>
 			}
@@ -367,4 +373,144 @@ templ ExamTab(param EditSubjectPageParam) {
 			Class: "flex justify-end gap-2",
 		})
 	}
+}
+
+templ DialogAddExam(param EditSubjectPageParam) {
+	@dialog.Dialog(dialog.Props{
+		ID: "add-exam-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+			}) {
+				Add Exam
+			}
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add Exam
+				}
+				@dialog.Description() {
+					Add a new exam to the platform.
+				}
+			}
+			<form id="add-exam-form" hx-post="/admin/dashboard/exams/create"
+				hx-target="#exams-table-container"
+				hx-swap="outerHTML">
+			<div class="space-y-4">
+				<div class="space-y-2 mb-4">
+					@ExamForm(param)
+				</div>
+			</div>
+			
+			@dialog.Footer() {
+				@dialog.Close() {
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,
+					}) {
+						Cancel
+					}
+				}
+				@button.Button(
+					button.Props{
+						Variant: button.VariantDefault,
+						Type: button.TypeSubmit,
+					}) {
+					Add Exam
+				}
+			}
+			</form>
+		}
+	}
+}
+
+templ ExamForm(param EditSubjectPageParam) {
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "title", Class: "block text-sm font-medium mb-2"}) {
+		Title
+	}
+	@input.Input(input.Props{
+		ID: "title",
+		Name: "title",
+		Placeholder: "Enter exam title",
+	})
+	</div>
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "subject_id", Class: "block text-sm font-medium mb-2"}) {
+		Subject
+	}
+	@input.Input(input.Props{
+		ID: "subject_id",
+		Name: "subject_id",
+		Value: param.Subject.ID.String(),
+		Disabled: true,
+	})
+	</div>
+
+		<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "created_by", Class: "block text-sm font-medium mb-2"}) {
+		Created By
+	}
+	@input.Input(input.Props{
+		ID: "created_by",
+		Name: "created_by",
+		Value: param.UserID.String(),
+		Disabled: true,
+	})
+	</div>
+
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "description", Class: "block text-sm font-medium mb-2"}) {
+		Description
+	}
+	@textarea.Textarea(textarea.Props{
+		ID: "description",
+		Name: "description",
+		Placeholder: "Enter exam description",
+		Rows: 3,
+	})
+	</div>
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "duration", Class: "block text-sm font-medium mb-2"}) {
+		Duration
+	}
+	@input.Input(input.Props{
+		ID: "duration",
+		Name: "duration",
+		Placeholder: "Enter exam duration",
+	})
+	</div>
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "total_questions", Class: "block text-sm font-medium mb-2"}) {
+		Total Questions
+	}
+	@input.Input(input.Props{
+		ID: "total_questions",
+		Name: "total_questions",
+		Placeholder: "Enter total questions",
+	})
+	</div>
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "total_marks", Class: "block text-sm font-medium mb-2"}) {
+		Total Marks
+	}
+	@input.Input(input.Props{
+		ID: "total_marks",
+		Name: "total_marks",
+		Placeholder: "Enter total marks",
+	})
+	</div>
+	<div class="space-y-2 mb-4">
+	@form.Label(form.LabelProps{For: "pass_marks", Class: "block text-sm font-medium mb-2"}) {
+		Pass Marks
+	}
+	@input.Input(input.Props{
+		ID: "pass_marks",
+		Name: "pass_marks",
+		Placeholder: "Enter pass marks",
+	})
+	</div>
 }
