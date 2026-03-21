@@ -1,0 +1,121 @@
+package components
+
+import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/radio"
+import "uot-exam/web/templates/components/label"
+import "fmt"
+
+type QuestionListProps struct {
+	Questions []domain.Question
+    Choices []domain.Choice
+}
+
+templ QuestionList(props QuestionListProps) {
+	@QuestionItem(domain.Question{
+		QuestionText: "potato",
+	}, []domain.Choice{
+		domain.Choice{
+			ChoiceText: "potato",
+		},
+		domain.Choice{
+			ChoiceText: "potato",
+		},
+		domain.Choice{
+			ChoiceText: "potato",
+		},
+		domain.Choice{
+			ChoiceText: "potato",
+		},
+	})
+}
+
+templ QuestionItem(question domain.Question, choices []domain.Choice) {
+    @card.Card(){
+        @card.Header(){
+            @card.Title(){
+                <span class="font-bold">{"Q.1"} \ </span>
+                <span class="latex-content">{"Solve the following differential equations:"}</span>
+            }
+        }
+        @card.Content(){
+                <span class="latex-content">{`
+                    \[
+L(G) = D(G) - A(G) = \begin{pmatrix}
+\deg(v_1) & -a_{12} & \cdots & -a_{1n} \\
+-a_{21} & \deg(v_2) & \cdots & -a_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+-a_{n1} & -a_{n2} & \cdots & \deg(v_n)
+\end{pmatrix}
+                    \]
+                ` }</span>
+        }
+
+        @card.Footer(){
+            <div class="grid grid-cols-2 gap-3 w-full">
+                @ChoiseItem(domain.Choice{
+                    ChoiceText: `
+                    \[
+                    c^2 = a^2 + b^2
+                    \]
+                    `,
+                }, "A")
+                @ChoiseItem(domain.Choice{
+                    ChoiceText: `
+                    \[
+                    m = \frac{y_2 - y_1}{x_2 - x_1}
+                    \]
+                    `,
+                }, "B")
+                @ChoiseItem(domain.Choice{
+                    ChoiceText: `
+                    \[
+                    y = mx + b
+                    \]
+                    `,
+                }, "C")
+                @ChoiseItem(domain.Choice{
+                    ChoiceText: `
+                    \[
+                    matrix = \begin{pmatrix}
+                    1 & 2 \\
+                    3 & 4
+                    \end{pmatrix}
+                    \]
+                    `,
+                }, "D")
+            </div>
+        }
+    }
+}
+
+
+templ ChoiseItem(choice domain.Choice, questionIndex string) {
+    		@label.Label(label.Props{
+			For:   fmt.Sprintf("option-%s", questionIndex),
+			Class: "block cursor-pointer",
+		}) {
+            @card.Card(card.Props{
+                    Class: "hover:border-primary/50 has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:border-primary transition-all",
+                }) {
+                    @card.Content(card.ContentProps{
+                        Class: "p-3 flex items-start gap-3 items-center",
+                    }) {
+                        @radio.Radio(radio.Props{
+                            ID:    fmt.Sprintf("option-%s", questionIndex),
+                            Name:  "options",
+                            Value: "premium",
+                            Class: "peer hidden",
+                        })
+                        <div class="bg-muted peer-checked:bg-primary peer-checked:text-white transition-all text-muted-foreground w-8 h-8 flex items-center justify-center rounded-sm">
+                            <span>{questionIndex}</span>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <p class="text-md leading-none font-medium">
+                                {choice.ChoiceText}
+                            </p>
+                        </div>
+                    }
+                }
+         }
+}

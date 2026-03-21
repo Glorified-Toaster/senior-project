@@ -495,6 +495,13 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
+		// Verify if the user exists (prevents foreign key violation due to stale sessions)
+		if _, err := h.App.GetUserByID(ctx, createdBy); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Session expired or user not found. Please log out and log in again.", toast.VariantError)
+			return
+		}
+
 		durationParts := strings.Split(durationStr, ":")
 		if len(durationParts) != 2 {
 			ctx.Header("HX-Reswap", "none")
@@ -685,10 +692,12 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 
 		username, fullname, _ := parseUsername(ctx)
 		render.Render(ctx, pages.BasePage("Edit Exam", page.EditExamPage(page.EditExamPageParam{
-			Exam:     exam,
-			Subject:  subject,
-			Username: username,
-			FullName: fullname,
+			Exam:      exam,
+			Subject:   subject,
+			Username:  username,
+			FullName:  fullname,
+			Questions: []domain.Question{},
+			Choices:   []domain.Choice{},
 		})))
 	}
 }
@@ -717,11 +726,17 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		}
 
 		duration, err := strconv.Atoi(durationStr)
-		if err != nil { duration = 0 }
+		if err != nil {
+			duration = 0
+		}
 		passScore, err := strconv.Atoi(passScoreStr)
-		if err != nil { passScore = 0 }
+		if err != nil {
+			passScore = 0
+		}
 		totalMarks, err := strconv.Atoi(totalMarksStr)
-		if err != nil { totalMarks = 0 }
+		if err != nil {
+			totalMarks = 0
+		}
 
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
 			ID:              examID,

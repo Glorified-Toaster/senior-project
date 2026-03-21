@@ -143,12 +143,17 @@ CREATE TABLE questions (
     exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
     question_text TEXT NOT NULL,
     marks INT NOT NULL DEFAULT 1 CHECK (marks > 0),
-    position INT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (exam_id, position)
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE INDEX idx_questions_exam ON questions(exam_id);
+
+CREATE TRIGGER questions_updated_at
+BEFORE UPDATE ON questions
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
 -- =============================
 -- CHOICES
@@ -157,10 +162,18 @@ CREATE TABLE choices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
     choice_text TEXT NOT NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE
+    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE INDEX idx_choices_question ON choices(question_id);
+
+CREATE TRIGGER choices_updated_at
+BEFORE UPDATE ON choices
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
 CREATE UNIQUE INDEX one_correct_choice_per_question
 ON choices (question_id)

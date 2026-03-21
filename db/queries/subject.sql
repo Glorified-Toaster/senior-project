@@ -14,7 +14,7 @@ LIMIT $1 OFFSET $2;
 
 -- name: SearchSubjects :many
 SELECT * FROM subjects 
-WHERE title LIKE sqlc.arg(title)
+WHERE title ILIKE '%' || sqlc.arg(title) || '%'
 AND deleted_at IS NULL
 ORDER BY updated_at DESC
 LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
@@ -22,7 +22,7 @@ LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
 -- name: CountSearchSubjects :one
 SELECT COUNT(*)
 FROM subjects
-WHERE title LIKE sqlc.arg(title)
+WHERE title ILIKE '%' || sqlc.arg(title) || '%'
 AND deleted_at IS NULL;
 
 -- name: UpdateSubject :one

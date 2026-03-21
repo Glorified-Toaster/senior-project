@@ -26,7 +26,7 @@ func (q *Queries) CountExams(ctx context.Context) (int64, error) {
 const createChoice = `-- name: CreateChoice :one
 INSERT INTO choices (question_id, choice_text, is_correct)
 VALUES ($1, $2, $3)
-RETURNING id, question_id, choice_text, is_correct
+RETURNING id, question_id, choice_text, is_correct, created_at, updated_at, deleted_at
 `
 
 type CreateChoiceParams struct {
@@ -43,6 +43,9 @@ func (q *Queries) CreateChoice(ctx context.Context, arg CreateChoiceParams) (Cho
 		&i.QuestionID,
 		&i.ChoiceText,
 		&i.IsCorrect,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -100,33 +103,28 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 }
 
 const createQuestion = `-- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_text, marks, position)
-VALUES ($1, $2, $3, $4)
-RETURNING id, exam_id, question_text, marks, position, created_at
+INSERT INTO questions (exam_id, question_text, marks)
+VALUES ($1, $2, $3)
+RETURNING id, exam_id, question_text, marks, created_at, updated_at, deleted_at
 `
 
 type CreateQuestionParams struct {
 	ExamID       uuid.NullUUID `json:"exam_id"`
 	QuestionText string        `json:"question_text"`
 	Marks        int32         `json:"marks"`
-	Position     int32         `json:"position"`
 }
 
 func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error) {
-	row := q.db.QueryRow(ctx, createQuestion,
-		arg.ExamID,
-		arg.QuestionText,
-		arg.Marks,
-		arg.Position,
-	)
+	row := q.db.QueryRow(ctx, createQuestion, arg.ExamID, arg.QuestionText, arg.Marks)
 	var i Question
 	err := row.Scan(
 		&i.ID,
 		&i.ExamID,
 		&i.QuestionText,
 		&i.Marks,
-		&i.Position,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -286,7 +284,7 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 }
 
 const listChoicesByQuestion = `-- name: ListChoicesByQuestion :many
-SELECT id, question_id, choice_text, is_correct FROM choices WHERE question_id = $1
+SELECT id, question_id, choice_text, is_correct, created_at, updated_at, deleted_at FROM choices WHERE question_id = $1
 `
 
 func (q *Queries) ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error) {
@@ -303,6 +301,9 @@ func (q *Queries) ListChoicesByQuestion(ctx context.Context, questionID uuid.Nul
 			&i.QuestionID,
 			&i.ChoiceText,
 			&i.IsCorrect,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 }
 
 const listQuestionsByExam = `-- name: ListQuestionsByExam :many
-SELECT id, exam_id, question_text, marks, position, created_at FROM questions WHERE exam_id = $1 ORDER BY position ASC
+SELECT id, exam_id, question_text, marks, created_at, updated_at, deleted_at FROM questions WHERE exam_id = $1 ORDER BY created_at ASC
 `
 
 func (q *Queries) ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error) {
@@ -371,8 +372,9 @@ func (q *Queries) ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID)
 			&i.ExamID,
 			&i.QuestionText,
 			&i.Marks,
-			&i.Position,
 			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

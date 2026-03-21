@@ -50,11 +50,11 @@ func (q *Queries) CountDeletedSubjects(ctx context.Context) (int64, error) {
 const countSearchSubjects = `-- name: CountSearchSubjects :one
 SELECT COUNT(*)
 FROM subjects
-WHERE title LIKE $1
+WHERE title ILIKE '%' || $1 || '%'
 AND deleted_at IS NULL
 `
 
-func (q *Queries) CountSearchSubjects(ctx context.Context, title string) (int64, error) {
+func (q *Queries) CountSearchSubjects(ctx context.Context, title *string) (int64, error) {
 	row := q.db.QueryRow(ctx, countSearchSubjects, title)
 	var count int64
 	err := row.Scan(&count)
@@ -302,16 +302,16 @@ func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, er
 
 const searchSubjects = `-- name: SearchSubjects :many
 SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
-WHERE title LIKE $1
+WHERE title ILIKE '%' || $1 || '%'
 AND deleted_at IS NULL
 ORDER BY updated_at DESC
 LIMIT $3 OFFSET $2
 `
 
 type SearchSubjectsParams struct {
-	Title      string `json:"title"`
-	PageOffset int32  `json:"page_offset"`
-	PageLimit  int32  `json:"page_limit"`
+	Title      *string `json:"title"`
+	PageOffset int32   `json:"page_offset"`
+	PageLimit  int32   `json:"page_limit"`
 }
 
 func (q *Queries) SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error) {

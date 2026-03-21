@@ -75,7 +75,7 @@ func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string, li
 	}
 
 	subjects, err := queries.SearchSubjects(ctx, sqlc.SearchSubjectsParams{
-		Title:      "%" + title + "%",
+		Title:      &title,
 		PageLimit:  limit,
 		PageOffset: offset,
 	})
@@ -104,8 +104,8 @@ func (r *SubjectRepository) CountSearchSubjects(ctx context.Context, title strin
 		queries = queries.WithTx(tx)
 	}
 
-	// Keep behavior consistent with SearchSubjects: apply wildcard matching.
-	count, err := queries.CountSearchSubjects(ctx, "%" + title + "%")
+	// Wildcard matching is handled in the SQL query itself.
+	count, err := queries.CountSearchSubjects(ctx, &title)
 	if err != nil {
 		return 0, err
 	}

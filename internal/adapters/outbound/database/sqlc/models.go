@@ -143,10 +143,13 @@ func (ns NullUserRoleType) Value() (driver.Value, error) {
 }
 
 type Choice struct {
-	ID         uuid.UUID     `json:"id"`
-	QuestionID uuid.NullUUID `json:"question_id"`
-	ChoiceText string        `json:"choice_text"`
-	IsCorrect  bool          `json:"is_correct"`
+	ID         uuid.UUID          `json:"id"`
+	QuestionID uuid.NullUUID      `json:"question_id"`
+	ChoiceText string             `json:"choice_text"`
+	IsCorrect  bool               `json:"is_correct"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Enrollment struct {
@@ -189,8 +192,9 @@ type Question struct {
 	ExamID       uuid.NullUUID      `json:"exam_id"`
 	QuestionText string             `json:"question_text"`
 	Marks        int32              `json:"marks"`
-	Position     int32              `json:"position"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type StudentAnswer struct {

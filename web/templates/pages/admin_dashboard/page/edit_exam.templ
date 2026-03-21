@@ -9,7 +9,6 @@ import (
  "uot-exam/web/templates/components/collapsible"
  "uot-exam/web/templates/components/dropdown"
  "uot-exam/web/templates/components/popover"
- "uot-exam/web/templates/components/dialog"
  "uot-exam/web/templates/components/toast"
  "uot-exam/web/templates/components/chart"
  "uot-exam/web/templates/components/icon"
@@ -31,6 +30,8 @@ type EditExamPageParam struct {
 	Subject  domain.Subject
 	Instructor domain.User
 	Exam domain.Exam
+	Questions []domain.Question
+	Choices []domain.Choice
 }
 
 templ EditExamPage(param EditExamPageParam) {
@@ -72,14 +73,13 @@ templ EditExamPage(param EditExamPageParam) {
 	@collapsible.Script()
 	@dropdown.Script()
 	@popover.Script()
-    @dialog.Script()
     @toast.Script()
-    @chart.Script()
     @input.Script()
 	@selectbox.Script()
 	@textarea.Script()
 	@chart.Script()
-
+	@label.Script()
+	
 	<script>
             // Highlight all code blocks on page load
             hljs.highlightAll();
@@ -490,7 +490,7 @@ templ QuestionsTab(param EditExamPageParam) {
 	@card.Card() {
 		@card.Header() {
 			@card.Title() {
-				<div class="flex items-center gap-2 justify-between w-full mb-4">
+				<div class="flex items-center gap-2 justify-between w-full">
 				Questions
 			@button.Button(button.Props{
 				Type: button.TypeButton,
@@ -504,7 +504,16 @@ templ QuestionsTab(param EditExamPageParam) {
 				Add Question
 			}
 			</div>
+			@card.Description() {
+				create questions for your exam here.
 			}
+			}
+		}
+		@card.Content() {
+			@components.QuestionList(components.QuestionListProps{
+				Questions: param.Questions,
+				Choices: param.Choices,
+			})
 		}
 	}
 }

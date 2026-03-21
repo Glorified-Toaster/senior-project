@@ -29,12 +29,12 @@ SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL;
 
 
 -- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_text, marks, position)
-VALUES ($1, $2, $3, $4)
+INSERT INTO questions (exam_id, question_text, marks)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: ListQuestionsByExam :many
-SELECT * FROM questions WHERE exam_id = $1 ORDER BY position ASC;
+SELECT * FROM questions WHERE exam_id = $1 ORDER BY created_at ASC;
 
 
 -- name: CreateChoice :one
