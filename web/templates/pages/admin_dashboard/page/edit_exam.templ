@@ -119,20 +119,6 @@ templ EditExamPage(param EditExamPageParam) {
 							{param.Exam.Title}
 						</h1>
 						<p class="text-slate-500 mt-1">Edit exam information</p>
-
-						// TODO: Remove this
-            <div class="text-gray-800 text-lg latex-content">
-                { `
-					$S = {x \in \mathbb{Z} : x > 0}$
-				` }
-
-        <pre><code class="language-go">{ `package main
-import "fmt"
-
-func main() {
-    fmt.Println("Hello, World!")
-}` }</code></pre>            </div>
-			
 					</div>
                </div>
 				@TabsExam(param)
