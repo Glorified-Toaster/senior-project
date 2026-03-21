@@ -80,23 +80,18 @@ templ EditExamPage(param EditExamPageParam) {
 	@textarea.Script()
 	@chart.Script()
 
-<script>
-    hljs.highlightAll();
-    
-    // After highlighting, show what language was detected
-    document.querySelectorAll('pre code').forEach((block) => {
-        const detectedLanguage = block.className.match(/language-(\w+)/);
-        if (detectedLanguage) {
-            console.log('Detected:', detectedLanguage[1]);
+	<script>
+            // Highlight all code blocks on page load
+            hljs.highlightAll();
             
-            // Add label to show detected language
-            const label = document.createElement('div');
-            label.className = 'bg-gray-800 text-gray-300 text-sm px-4 py-2';
-            label.textContent = detectedLanguage[1].toUpperCase();
-            block.parentElement.insertBefore(label, block);
-        }
-    });
-</script>
+            // Re-highlight after HTMX updates
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                event.detail.target.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            });
+        </script>
+
     @components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
         {
             Href: "/admin/dashboard",
