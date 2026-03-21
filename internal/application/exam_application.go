@@ -53,3 +53,23 @@ func (app *Application) GetExamByID(ctx context.Context, id uuid.UUID) (domain.E
 	})
 	return exam, err
 }
+
+func (app *Application) CreateExam(ctx context.Context, arg ports.CreateExamParams) (domain.Exam, error) {
+	var exam domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exam, err = app.examRepo.Create(txCtx, arg)
+		return err
+	})
+	return exam, err
+}
+
+func (app *Application) ListExamsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.Exam, error) {
+	var exams []domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exams, err = app.examRepo.ListBySubject(txCtx, subjectID)
+		return err
+	})
+	return exams, err
+}

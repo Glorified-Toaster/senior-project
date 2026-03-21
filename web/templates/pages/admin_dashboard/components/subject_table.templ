@@ -31,6 +31,7 @@ templ SubjectTableGrid(subjects []domain.Subject) {
 }
 
 templ ExamTableGrid(exams []domain.Exam) {
+	<div id="exams-table-container">
 	if len(exams) == 0 {
 		@EmptyState("No exams found", "We couldn't find any exams matching your search. Try adjusting your keywords or filters.", false, true) 
 	} else {
@@ -40,6 +41,7 @@ templ ExamTableGrid(exams []domain.Exam) {
 			}
 		</div>
 	}
+	</div>
 }
 
 templ ExamCard(exam domain.Exam) {
@@ -65,14 +67,14 @@ templ ExamCard(exam domain.Exam) {
 					Class: "mt-2",
 				}) {
 					@icon.Clock(icon.Props{Class: "h-4 w-4"})
-					{100}
+					{exam.DurationMinutes}
 				} 
 					@badge.Badge(badge.Props{
 					Variant: badge.VariantOutline,
 					Class: "mt-2",
 				}) {
 					@icon.Users(icon.Props{Class: "h-4 w-4"})
-					{30}
+					{10}
 				}
 				@badge.Badge(badge.Props{
 					Variant: badge.VariantOutline,
@@ -90,7 +92,7 @@ templ ExamCard(exam domain.Exam) {
 					Variant: badge.VariantSecondary,
 					Class: "mt-2",
 				}) {
-					DRAFT
+					{exam.Status}
 				}
 
 				@button.Button(button.Props{
@@ -189,7 +191,6 @@ templ EmptyState(title string, description string, addSubject bool, addExam bool
 				} else if addExam {
 					//@DialogAddExam()
 				}
-
 			}
 		}
 	}

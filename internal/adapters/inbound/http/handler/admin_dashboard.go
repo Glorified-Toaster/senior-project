@@ -447,10 +447,7 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			return
 		}
 
-		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{
-			Limit:  10,
-			Offset: 0,
-		})
+		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), uuid.MustParse(subjectID))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -463,6 +460,62 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Exams:       exams,
 			UserID:      userID,
 		})))
+	}
+}
+
+func (h *UserHandler) CreateExam() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		title := ctx.PostForm("title")
+		subjectIDStr := ctx.PostForm("subject_id")
+		createdByStr := ctx.PostForm("created_by")
+		description := ctx.PostForm("description")
+		durationStr := ctx.PostForm("duration")
+		totalMarksStr := ctx.PostForm("total_marks")
+
+		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) || helpers.IsTrimmedEmpty(createdByStr) {
+			helpers.Toast(ctx, "Create Exam Failed", "Missing required fields", toast.VariantError)
+			return
+		}
+
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		createdBy, err := uuid.Parse(createdByStr)
+		if err != nil {
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid creator ID", toast.VariantError)
+			return
+		}
+
+		duration, _ := strconv.Atoi(durationStr)
+		totalMarks, _ := strconv.Atoi(totalMarksStr)
+
+		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
+			Title:           title,
+			SubjectID:       subjectID,
+			CreatedBy:       createdBy,
+			Description:     &description,
+			DurationMinutes: int32(duration),
+			TotalMarks:      int32(totalMarks),
+			Status:          domain.ExamStatusDraft,
+		})
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Failed to create exam", toast.VariantError)
+			return
+		}
+
+		// Return updated exam grid
+		exams, err := h.App.ListExamsBySubject(ctx, subjectID)
+		if err != nil {
+			exams = []domain.Exam{}
+		}
+
+		render.Render(ctx, components.ExamTableGrid(exams))
+		helpers.Toast(ctx, "Create Exam Success", "Exam created successfully", toast.VariantSuccess)
 	}
 }
 
@@ -591,11 +644,18 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			helpers.Toast(ctx, "Edit Exam Failed", "Failed to get exam", toast.VariantError)
 			return
 		}
-		//instructor, err := h.App.GetUserByID(ctx.Request.Context(), exam.InstructorID)
+
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), exam.SubjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Failed to get subject", toast.VariantError)
+			return
+		}
 
 		username, fullname, _ := parseUsername(ctx)
 		render.Render(ctx, pages.BasePage("Edit Exam", page.EditExamPage(page.EditExamPageParam{
 			Exam:     exam,
+			Subject:  subject,
 			Username: username,
 			FullName: fullname,
 		})))

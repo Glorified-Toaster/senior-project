@@ -418,6 +418,7 @@ templ DialogAddExam(param EditSubjectPageParam) {
 					button.Props{
 						Variant: button.VariantDefault,
 						Type: button.TypeSubmit,
+						Form: "add-exam-form",
 					}) {
 					Add Exam
 				}
@@ -435,6 +436,7 @@ templ ExamForm(param EditSubjectPageParam) {
 	@input.Input(input.Props{
 		ID: "title",
 		Name: "title",
+		Required: true,
 		Placeholder: "Enter exam title",
 	})
 	</div>
@@ -445,8 +447,9 @@ templ ExamForm(param EditSubjectPageParam) {
 	@input.Input(input.Props{
 		ID: "subject_id",
 		Name: "subject_id",
+		Required: true,
 		Value: param.Subject.ID.String(),
-		Disabled: true,
+		Readonly: true,
 	})
 	</div>
 
@@ -457,8 +460,9 @@ templ ExamForm(param EditSubjectPageParam) {
 	@input.Input(input.Props{
 		ID: "created_by",
 		Name: "created_by",
+		Required: true,
 		Value: param.UserID.String(),
-		Disabled: true,
+		Readonly: true,
 	})
 	</div>
 
@@ -480,6 +484,7 @@ templ ExamForm(param EditSubjectPageParam) {
 	@input.Input(input.Props{
 		ID: "duration",
 		Name: "duration",
+		Required: true,
 		Placeholder: "Enter exam duration",
 	})
 	</div>

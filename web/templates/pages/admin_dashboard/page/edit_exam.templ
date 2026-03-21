@@ -49,16 +49,20 @@ templ EditExamPage(param EditExamPageParam) {
             Href: "/admin/dashboard/subject/" + param.Subject.ID.String(),
             Path: param.Subject.Title,
         },
+		{
+			Href: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/exam/" + param.Exam.ID.String(),
+			Path: param.Exam.Title,
+		},
     }, param.Username, param.FullName) {
 
      			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
-							{param.Subject.Title}
+							@icon.Book(icon.Props{Class: "h-8 w-8"})
+							{param.Exam.Title}
 						</h1>
-						<p class="text-slate-500 mt-1">Edit subject information</p>
+						<p class="text-slate-500 mt-1">Edit exam information</p>
 					</div>
                </div>
 				@TabsExam(param)
@@ -72,32 +76,39 @@ templ TabsExam(param EditExamPageParam) {
 		ID: "account-tabs",
 	}) {
 		@tabs.List(tabs.ListProps{
-			Class: "w-full max-w-xs",
+			Class: "w-full max-w-full",
 		}) {
 			@tabs.Trigger(tabs.TriggerProps{
-				Value: "exams",
+				Value: "questions",
 				IsActive: true,
                 TabsID:   "account-tabs",
                 Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
-				Exams
+				Questions
 			}
 
 			@tabs.Trigger(tabs.TriggerProps{
-				Value: "instructors",
+				Value: "students",
                 TabsID:   "account-tabs",
                 Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
-				Instructors
+				Students	
 			}
 
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:    "analytics",
+                TabsID:   "account-tabs",
+                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Exam Analytics
+			}
 
 			@tabs.Trigger(tabs.TriggerProps{
 				Value:    "information",
                 TabsID:   "account-tabs",
                 Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
-				Information
+				Exam Information
 			}
 		}
 		<div class="w-full mt-2">
@@ -108,16 +119,22 @@ templ TabsExam(param EditExamPageParam) {
                 // TODO: Implement InformationTab
 			}
 			@tabs.Content(tabs.ContentProps{
-				Value:    "exams",
+				Value:    "questions",
                 TabsID:   "account-tabs",
 			}) {
-                // TODO: Implement ExamTab
+                // TODO: Implement QuestionsTab
 			}
 			@tabs.Content(tabs.ContentProps{
-				Value:    "instructors",
+				Value:    "students",
                 TabsID:   "account-tabs",
 			}) {
-                // TODO: Implement InstructorsTab
+                // TODO: Implement StudentsTab
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:    "analytics",
+                TabsID:   "account-tabs",
+			}) {
+                // TODO: Implement AnalyticsTab
 			}
 		</div>
 	}
