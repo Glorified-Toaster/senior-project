@@ -73,3 +73,13 @@ func (app *Application) ListExamsBySubject(ctx context.Context, subjectID uuid.U
 	})
 	return exams, err
 }
+
+func (app *Application) UpdateExam(ctx context.Context, arg ports.UpdateExamParams) (domain.Exam, error) {
+	var exam domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exam, err = app.examRepo.Update(txCtx, arg)
+		return err
+	})
+	return exam, err
+}

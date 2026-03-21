@@ -1,6 +1,18 @@
 -- name: CreateExam :one
-INSERT INTO exams (subject_id, title, description, duration_minutes, total_marks, start_time, end_time, status, created_by)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+INSERT INTO exams (subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING *;
+
+-- name: UpdateExam :one
+UPDATE exams
+SET 
+  title = $2,
+  description = $3,
+  duration_minutes = $4,
+  total_marks = $5,
+  pass_score = $6,
+  status = $7
+WHERE id = $1
 RETURNING *;
 
 -- name: GetExamByID :one

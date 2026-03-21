@@ -163,6 +163,7 @@ type Exam struct {
 	Description     *string            `json:"description"`
 	DurationMinutes int32              `json:"duration_minutes"`
 	TotalMarks      int32              `json:"total_marks"`
+	PassScore       int32              `json:"pass_score"`
 	StartTime       pgtype.Timestamptz `json:"start_time"`
 	EndTime         pgtype.Timestamptz `json:"end_time"`
 	Status          ExamStatusType     `json:"status"`

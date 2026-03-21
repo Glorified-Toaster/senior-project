@@ -60,6 +60,7 @@ type Querier interface {
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error
 	UnassignInstructorFromSubject(ctx context.Context, arg UnassignInstructorFromSubjectParams) (SubjectInstructor, error)
+	UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, error)
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error

@@ -307,6 +307,11 @@ func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
 			return
 		}
 
+		if ctx.GetHeader("HX-Target") == "toast-container" {
+			ctx.Header("HX-Redirect", "/admin/dashboard/exams")
+			return
+		}
+
 		// After deletion, we re-render the table container.
 		// For simplicity, we just fetch the first page.
 		exams, err := h.App.ListAllExams(ctx, ports.ListAllExamsParams{Limit: 10, Offset: 0})
@@ -471,6 +476,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		description := ctx.PostForm("description")
 		durationStr := ctx.PostForm("duration")
 		totalMarksStr := ctx.PostForm("total_marks")
+		passScoreStr := ctx.PostForm("pass_marks")
 
 		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) || helpers.IsTrimmedEmpty(createdByStr) {
 			helpers.Toast(ctx, "Create Exam Failed", "Missing required fields", toast.VariantError)
@@ -509,6 +515,12 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			helpers.Toast(ctx, "Create Exam Failed", "Invalid total marks", toast.VariantError)
 			return
 		}
+		passScore, err := strconv.Atoi(passScoreStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid pass score", toast.VariantError)
+			return
+		}
 
 		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
 			Title:           title,
@@ -517,6 +529,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			Description:     &description,
 			DurationMinutes: int32(duration),
 			TotalMarks:      int32(totalMarks),
+			PassScore:       int32(passScore),
 			Status:          domain.ExamStatusDraft,
 		})
 
@@ -677,5 +690,55 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			Username: username,
 			FullName: fullname,
 		})))
+	}
+}
+
+func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		idStr := ctx.Param("id")
+		name := ctx.PostForm("exam_name")
+		description := ctx.PostForm("exam_description")
+		durationStr := ctx.PostForm("exam_duration")
+		passScoreStr := ctx.PostForm("exam_pass_score")
+		totalMarksStr := ctx.PostForm("exam_total_marks")
+		statusStr := ctx.PostForm("exam_status")
+
+		if helpers.IsTrimmedEmpty(idStr) || helpers.IsTrimmedEmpty(name) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Exam ID and Name are required", toast.VariantError)
+			return
+		}
+
+		examID, err := uuid.Parse(idStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+
+		duration, err := strconv.Atoi(durationStr)
+		if err != nil { duration = 0 }
+		passScore, err := strconv.Atoi(passScoreStr)
+		if err != nil { passScore = 0 }
+		totalMarks, err := strconv.Atoi(totalMarksStr)
+		if err != nil { totalMarks = 0 }
+
+		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
+			ID:              examID,
+			Title:           name,
+			Description:     &description,
+			DurationMinutes: int32(duration),
+			PassScore:       int32(passScore),
+			TotalMarks:      int32(totalMarks),
+			Status:          domain.ExamStatus(statusStr),
+		})
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Failed to update exam: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		helpers.Toast(ctx, "Edit Exam Success", "Exam updated successfully", toast.VariantSuccess)
 	}
 }

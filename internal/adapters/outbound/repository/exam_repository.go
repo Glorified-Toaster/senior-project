@@ -91,6 +91,7 @@ func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 		Description:     exam.Description,
 		DurationMinutes: exam.DurationMinutes,
 		TotalMarks:      exam.TotalMarks,
+		PassScore:       exam.PassScore,
 		StartTime:       exam.StartTime.Time,
 		EndTime:         exam.EndTime.Time,
 		Status:          domain.ExamStatus(exam.Status),
@@ -143,6 +144,7 @@ func (r *ExamRepository) Create(ctx context.Context, arg ports.CreateExamParams)
 		Description:     arg.Description,
 		DurationMinutes: arg.DurationMinutes,
 		TotalMarks:      arg.TotalMarks,
+		PassScore:       arg.PassScore,
 		StartTime:       startTime,
 		EndTime:         endTime,
 		Status:          sqlc.ExamStatusType(arg.Status),
@@ -172,4 +174,26 @@ func (r *ExamRepository) ListBySubject(ctx context.Context, subjectID uuid.UUID)
 	}
 
 	return exams, nil
+}
+
+func (r *ExamRepository) Update(ctx context.Context, arg ports.UpdateExamParams) (domain.Exam, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	exam, err := queries.UpdateExam(ctx, sqlc.UpdateExamParams{
+		ID:              arg.ID,
+		Title:           arg.Title,
+		Description:     arg.Description,
+		DurationMinutes: arg.DurationMinutes,
+		TotalMarks:      arg.TotalMarks,
+		PassScore:       arg.PassScore,
+		Status:          sqlc.ExamStatusType(arg.Status),
+	})
+	if err != nil {
+		return domain.Exam{}, err
+	}
+
+	return mapSqlcExamToDomain(exam), nil
 }

@@ -14,6 +14,7 @@ type ExamRepository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (domain.Exam, error)
 	Create(ctx context.Context, arg CreateExamParams) (domain.Exam, error)
+	Update(ctx context.Context, arg UpdateExamParams) (domain.Exam, error)
 	ListBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.Exam, error)
 }
 
@@ -29,10 +30,21 @@ type CreateExamParams struct {
 	Description     *string
 	DurationMinutes int32
 	TotalMarks      int32
+	PassScore       int32
 	StartTime       *string
 	EndTime         *string
 	Status          domain.ExamStatus
 	CreatedBy       uuid.UUID
+}
+
+type UpdateExamParams struct {
+	ID              uuid.UUID
+	Title           string
+	Description     *string
+	DurationMinutes int32
+	TotalMarks      int32
+	PassScore       int32
+	Status          domain.ExamStatus
 }
 
 type ListAllExamsParams struct {
