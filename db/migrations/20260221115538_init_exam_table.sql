@@ -101,6 +101,7 @@ CREATE TABLE exams (
     description TEXT,
     duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
     total_marks INT NOT NULL CHECK (total_marks > 0),
+    pass_score INT NOT NULL CHECK (pass_score > 0),
     start_time TIMESTAMPTZ,
     end_time TIMESTAMPTZ,
     status exam_status_type NOT NULL DEFAULT 'DRAFT',

@@ -22,6 +22,7 @@ type Exam struct {
 	Description     *string
 	DurationMinutes int32
 	TotalMarks      int32
+	PassScore       int32
 	StartTime       time.Time
 	EndTime         time.Time
 	Status          ExamStatus

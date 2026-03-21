@@ -14,6 +14,11 @@ import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/tabs"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/textarea"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/label"
+import "uot-exam/web/templates/utils"
+import "uot-exam/web/templates/components/button"
+import "strconv"
 
 type EditExamPageParam struct {
 	Username string
@@ -147,7 +152,7 @@ templ TabsExam(param EditExamPageParam) {
 				Value:    "information",
                 TabsID:   "account-tabs",
 			}) {
-                // TODO: Implement InformationTab
+				@ExamInformationTab(param)
 			}
 			@tabs.Content(tabs.ContentProps{
 				Value:    "questions",
@@ -171,3 +176,212 @@ templ TabsExam(param EditExamPageParam) {
 	}
 }
 
+templ ExamInformationTab(param EditExamPageParam) {
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				Exam Information 
+			}
+			@card.Description() {
+				Make changes to your exam here. Click save when you are done.
+			}
+		}
+		<form id="edit_exam_form"
+			hx-post={ "/admin/dashboard/exam/edit/" + param.Exam.ID.String() }
+			hx-target="#toast-container"
+			hx-swap="none">
+		@card.Content() {
+			<div class="grid grid-cols-2 gap-4">
+			<div>
+			@label.Label(label.Props{
+				For: "exam_name",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Name
+			}
+
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Exam Name",
+				ID: "exam_name",
+				Name: "exam_name",
+				Value: param.Exam.Title,
+				Class: "mb-4",
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
+				For: "exam_uuid",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Hash(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam UUID 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_uuid",
+				Value: param.Exam.ID.String(),
+				Readonly: true,
+				Disabled: true,
+				Class: "mb-4",
+			})
+			</div>
+			
+			<div>
+			@label.Label(label.Props{
+				For: "exam_duration",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Clock(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Duration 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_duration",
+				Value: strconv.Itoa(int(param.Exam.DurationMinutes)),
+				Class: "mb-4",
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
+				For: "exam_subject_uuid",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Book(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Subject UUID 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_subject_uuid",
+				Value: param.Exam.SubjectID.String(),
+				Readonly: true,
+				Disabled: true,
+				Class: "mb-4",
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
+				For: "exam_pass_score",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Trophy(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Pass Score 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_pass_score",
+				Value: strconv.Itoa(int(param.Exam.PassScore)),
+				Class: "mb-4",
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
+				For: "exam_created_by",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.User(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Created By 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_created_by",
+				Value: param.Exam.CreatedBy.String(),
+				Readonly: true,
+				Disabled: true,
+				Class: "mb-4",
+			})
+			</div>
+
+			<div>
+			@label.Label(label.Props{
+				For: "exam_total_marks",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Total Marks 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_total_marks",
+				Value: strconv.Itoa(int(param.Exam.TotalMarks)),
+				Class: "mb-4",
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
+				For: "exam_status",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Status 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "exam_status",
+				Value: string(param.Exam.Status),
+				Class: "mb-4",
+			})
+			</div>
+			</div>
+			@label.Label(label.Props{
+				For: "exam_description",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.MessageSquareText(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Description
+			}
+
+			@textarea.Textarea(textarea.Props{
+				Placeholder: "Exam Description",
+				ID: "exam_description",
+				Name: "exam_description",
+				Rows: 3,
+				Value: utils.IfElse(param.Exam.Description != nil, *param.Exam.Description, ""),
+				Class: "mb-4",
+			})
+		}
+		@card.Footer(card.FooterProps{
+			Class: "flex justify-end gap-2",
+		}) {
+			@button.Button(button.Props{
+				Type: button.TypeButton,
+				Class: "bg-red-500 hover:bg-red-600",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/delete/" + param.Exam.ID.String(),
+					"hx-target": "#toast-container",
+					"hx-swap": "none",
+				},
+			}) {
+				Delete Exam
+			}
+
+			@button.Button(button.Props{
+				Type: button.TypeSubmit,
+				Form: "edit_exam_form",
+				
+			}) {
+				Save changes
+			}
+		}
+		</form>
+	}
+}

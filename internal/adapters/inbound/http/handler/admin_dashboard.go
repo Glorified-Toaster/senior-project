@@ -489,8 +489,26 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
-		duration, _ := strconv.Atoi(durationStr)
-		totalMarks, _ := strconv.Atoi(totalMarksStr)
+		durationParts := strings.Split(durationStr, ":")
+		if len(durationParts) != 2 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid duration format (expected HH:MM)", toast.VariantError)
+			return
+		}
+		hrs, err1 := strconv.Atoi(durationParts[0])
+		m, err2 := strconv.Atoi(durationParts[1])
+		if err1 != nil || err2 != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid duration values", toast.VariantError)
+			return
+		}
+		duration := hrs*60 + m
+		totalMarks, err := strconv.Atoi(totalMarksStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid total marks", toast.VariantError)
+			return
+		}
 
 		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
 			Title:           title,
@@ -504,7 +522,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Exam Failed", "Failed to create exam", toast.VariantError)
+			helpers.Toast(ctx, "Create Exam Failed", "Failed to create exam : "+err.Error(), toast.VariantError)
 			return
 		}
 

@@ -67,7 +67,7 @@ templ ExamCard(exam domain.Exam) {
 					Class: "mt-2",
 				}) {
 					@icon.Clock(icon.Props{Class: "h-4 w-4"})
-					{exam.DurationMinutes}
+					{exam.DurationMinutes} min
 				} 
 					@badge.Badge(badge.Props{
 					Variant: badge.VariantOutline,
