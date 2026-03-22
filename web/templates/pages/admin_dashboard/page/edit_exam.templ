@@ -22,6 +22,7 @@ import (
  "strconv"
  "uot-exam/web/templates/components/badge"
  "uot-exam/web/templates/components/selectbox"
+	"uot-exam/web/templates/components/dialog"
 )
 
 type EditExamPageParam struct {
@@ -73,6 +74,7 @@ templ EditExamPage(param EditExamPageParam) {
 	@collapsible.Script()
 	@dropdown.Script()
 	@popover.Script()
+	@dialog.Script()
     @toast.Script()
     @input.Script()
 	@selectbox.Script()
@@ -478,17 +480,7 @@ templ QuestionsTab(param EditExamPageParam) {
 			@card.Title() {
 				<div class="flex items-center gap-2 justify-between w-full">
 				Questions
-			@button.Button(button.Props{
-				Type: button.TypeButton,
-				Variant: button.VariantSecondary,
-				Attributes: templ.Attributes{
-					"hx-post": "/admin/dashboard/exam/question/add/" + param.Exam.ID.String(),
-					"hx-target": "#toast-container",
-					"hx-swap": "none",
-				},
-			}) {
-				Add Question
-			}
+				@AddQuestionButton(param.Exam.ID.String())
 			</div>
 			@card.Description() {
 				create questions for your exam here.
@@ -504,4 +496,35 @@ templ QuestionsTab(param EditExamPageParam) {
 	}
 }
 
+templ AddQuestionButton(examID string) {
+	@dialog.Dialog(){
+		@dialog.Trigger(){
+			@button.Button(button.Props{
+				Type: button.TypeButton,
+				Variant: button.VariantDefault,
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/question/add/" + examID,
+					"hx-target": "#toast-container",
+					"hx-swap": "none",
+				},
+			}) {
+				Add Question
+			}
+		}
 
+		@dialog.Content(){
+			@dialog.Header(){
+				@dialog.Title(){
+					Add Question
+				}
+				@dialog.Description(){
+					create questions for your exam here.
+				}
+			}
+
+			@dialog.Content(){
+
+			}
+		}
+	}
+	}

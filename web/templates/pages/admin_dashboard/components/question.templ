@@ -5,6 +5,11 @@ import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/radio"
 import "uot-exam/web/templates/components/label"
 import "fmt"
+import "uot-exam/web/templates/components/aspectratio"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/textarea"
 
 type QuestionListProps struct {
 	Questions []domain.Question
@@ -38,28 +43,28 @@ templ QuestionList(props QuestionListProps) {
 
 @QuestionCodeItem(domain.Question{
     QuestionTitle: "give the output of the following code",
-    QuestionText: `package main
-import "fmt"
-
-type Person struct {
-    Name string
-    Age int
+    QuestionText: `trait Area { fn area(&self) -> f64; }
+struct Circle { r: f64 }
+impl Area for Circle {
+    fn area(&self) -> f64 { std::f64::consts::PI * self.r * self.r }
 }
-
-func main() {
-    p := Person{
-        Name: "John",
-        Age: 30,
-    }
-    fmt.Println(p)
-}`,
+fn print_area<T: Area>(shape: &T) { println!("{}", shape.area()); }`,
 }, []domain.Choice{
-    {ChoiceText: `{Name:"John", Age:30}`},
-    {ChoiceText: `{Name:"John", Age:30}`},
-    {ChoiceText: `{Name:"John", Age:30}`},
-    {ChoiceText: `{Name:"John", Age:30}`},
+    {ChoiceText: `3.141592653589793`},
+    {ChoiceText: `12.566370614359172`},
+    {ChoiceText: `6.283185307179586`},
+    {ChoiceText: `9.42477796076938`},
 }, 3)
 
+@ImageQuestionItem(domain.Question{
+    QuestionTitle: "What is the spectral radius of a graph?",
+    QuestionText: `https://media.springernature.com/lw1200/springer-static/image/art%3A10.1007%2Fs00373-021-02369-8/MediaObjects/373_2021_2369_Fig3_HTML.png`,
+}, []domain.Choice{
+    {ChoiceText: "Option A"},
+    {ChoiceText: "Option B"},
+    {ChoiceText: "Option C"},
+    {ChoiceText: "Option D"},
+}, 4)
     } else {
         for i, question := range props.Questions {
             @QuestionItem(question, nil, i+1)
@@ -73,7 +78,7 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
     }){
         @card.Header(){
             @card.Title(){
-                <span class="font-bold">Q.{ fmt.Sprint(number) } \ </span>
+                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
                 <span class="latex-content">{question.QuestionTitle}</span>
             }
         }
@@ -84,7 +89,7 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
         @card.Footer(){
             <div class="grid grid-cols-2 gap-3 w-full">
             for i, choice := range choices {
-                @ChoiseItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
             }
             </div>
         }
@@ -92,7 +97,7 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
 }
 
 
-templ ChoiseItem(choice domain.Choice, qIndex int, cIndex string) {
+templ ChoiceItem(choice domain.Choice, qIndex int, cIndex string) {
     @label.Label(label.Props{
         For:   fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
         Class: "block cursor-pointer h-full",
@@ -128,22 +133,157 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
     }){
         @card.Header(){
             @card.Title(){
-                <span class="font-bold">Q.{ fmt.Sprint(number) } \ </span>
+                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
                 <span class="latex-content">{question.QuestionTitle}</span>
             }
         }
         @card.Content(){
-            <div class="w-full rounded-md overflow-x-auto">
-                <pre><code class="language-go">{question.QuestionText}</code></pre>
-            </div>
+                <div class="w-full rounded-md overflow-x-auto">
+                    <pre><code class="language-rust">{question.QuestionText}</code></pre>
+                </div>
         }
 
         @card.Footer(){
             <div class="grid grid-cols-2 gap-3 w-full">
             for i, choice := range choices {
-                @ChoiseItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+            }
+            </div>
+        }
+        @card.Footer(card.FooterProps{
+            Class: "flex justify-end",
+        }){
+
+        @EditDialog()
+        @DeleteDialog()
+        
+        }
+    }
+}
+
+templ ImageQuestionItem(question domain.Question, choices []domain.Choice, number int) {
+    @card.Card(card.Props{
+        Class: "mb-6",
+    }){
+        @card.Header(){
+            @card.Title(){
+                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+                <span class="latex-content">{question.QuestionTitle}</span>
+            }
+        }
+        @card.Content(){
+        <div class="w-full rounded-md overflow-x-auto">
+	@aspectratio.AspectRatio(aspectratio.Props{
+		Ratio: aspectratio.RatioWide,
+		Class: "rounded-md overflow-hidden",
+	}) {
+		<img
+			src="https://onlinelibrary.wiley.com/cms/asset/85e9fa0c-319d-4b19-888a-0833b0c72b02/jgt22801-fig-0003-m.jpg"
+			alt="Example image"
+			class="h-full w-full object-cover "
+		/>
+	}                </div>
+        }
+
+        @card.Footer(){
+            <div class="grid grid-cols-2 gap-3 w-full">
+            for i, choice := range choices {
+                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
             }
             </div>
         }
     }
+}
+
+templ EditDialog() {
+	@dialog.Dialog(dialog.Props{
+		ID: "edit-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+            Variant: button.VariantLink,
+            Size: button.SizeSm,
+            Class: "text-primary",
+        }){
+            Edit
+        }
+		}
+		@dialog.Content() {
+			@dialog.Title() {
+				Edit Question
+			}
+			@dialog.Description() {
+				Edit question information
+			}
+			@dialog.Content() {
+				@input.Input(input.Props{
+					ID:    "edit-question-title",
+                    Placeholder: "Question Title",
+					Value: "",
+				})
+				@textarea.Textarea(textarea.Props{
+					ID:    "edit-question-text",
+                    Placeholder: "Question Text",
+					Value: "",
+				})
+				@input.Input(input.Props{
+					ID:    "edit-question-choices",
+                    Placeholder: "Question Choices",
+					Value: "",
+				})
+			}
+			@dialog.Footer() {
+				@button.Button(button.Props{
+					Variant: button.VariantDefault,
+					Size:    button.SizeSm,
+				}) {
+					Save
+				}
+				@button.Button(button.Props{
+					Variant: button.VariantLink,
+					Size:    button.SizeSm,
+				}) {
+					Cancel
+				}
+			}
+		}
+	}
+}
+
+templ DeleteDialog() {
+	@dialog.Dialog(dialog.Props{
+		ID: "delete-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+            Variant: button.VariantLink,
+            Size: button.SizeSm,
+            Class: "text-destructive",
+        }){
+            Delete
+        }
+		}
+		@dialog.Content() {
+			@dialog.Title() {
+				Delete Question
+			}
+			@dialog.Description() {
+				Delete question information
+			}
+			@dialog.Footer() {
+				@button.Button(button.Props{
+					Variant: button.VariantDefault,
+					Size:    button.SizeSm,
+				}) {
+					Delete
+				}
+				@button.Button(button.Props{
+					Variant: button.VariantLink,
+					Size:    button.SizeSm,
+				}) {
+					Cancel
+				}
+			}
+		}
+	}
 }
