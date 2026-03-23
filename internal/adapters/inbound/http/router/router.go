@@ -2,7 +2,9 @@ package router
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"uot-exam/internal/adapters/inbound/http/handler"
@@ -29,13 +31,13 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 
 	gin.DisableConsoleColor()
 	// Logging to a file.
-	gin.DefaultWriter = &lumberjack.Logger{
+	gin.DefaultWriter = io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   viperConfig.GinLogger.Filename,
 		MaxSize:    viperConfig.Lumberjack.MaxSize,
 		MaxBackups: viperConfig.Lumberjack.MaxBackups,
 		MaxAge:     viperConfig.Lumberjack.MaxAge,
 		Compress:   viperConfig.Lumberjack.Compress,
-	}
+	})
 
 	// useing gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()

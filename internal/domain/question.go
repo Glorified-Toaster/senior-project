@@ -11,6 +11,8 @@ type Question struct {
 	ExamID        uuid.UUID  `json:"exam_id"`
 	QuestionTitle string     `json:"question_title"`
 	QuestionText  string     `json:"question_text"`
+	QuestionType  string     `json:"question_type"`
+	QuestionImage string     `json:"question_image"`
 	Marks         int        `json:"marks"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`

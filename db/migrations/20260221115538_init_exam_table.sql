@@ -15,6 +15,8 @@ CREATE TYPE exam_status_type AS ENUM ('DRAFT', 'PUBLISHED', 'CLOSED');
 
 CREATE TYPE attempt_status_type AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'GRADED', 'CANCELLED');
 
+CREATE TYPE question_type_type AS ENUM ('TEXT', 'CODE', 'IMAGE');
+
 -- =============================
 -- AUDIT TRIGGER FUNCTION
 -- =============================
@@ -141,7 +143,10 @@ CREATE INDEX idx_enrollments_exam ON enrollments(exam_id);
 CREATE TABLE questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
+    question_title TEXT NOT NULL,
     question_text TEXT NOT NULL,
+    question_type question_type_type NOT NULL DEFAULT 'TEXT',
+    question_image TEXT,
     marks INT NOT NULL DEFAULT 1 CHECK (marks > 0),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -234,6 +239,7 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TYPE IF EXISTS attempt_status_type CASCADE;
 DROP TYPE IF EXISTS exam_status_type CASCADE;
 DROP TYPE IF EXISTS user_role_type CASCADE;
+DROP TYPE IF EXISTS question_type_type CASCADE;
 
 DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
 

@@ -9,7 +9,9 @@ import "uot-exam/web/templates/components/aspectratio"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/textarea"
+import "uot-exam/web/templates/components/separator"
 
 type QuestionListProps struct {
 	Questions []domain.Question
@@ -28,7 +30,6 @@ templ QuestionList(props QuestionListProps) {
             {ChoiceText: `\( y = mx + b \)`},
             {ChoiceText: `\( \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \)`},
         }, 1)
-
         @QuestionItem(domain.Question{
             QuestionTitle: "What is the spectral radius of a graph?",
             QuestionText: `\[ \rho(G) = \max\{|\lambda_i| : \lambda_i \text{ eigenvalue of } A(G)\} \]`,
@@ -96,7 +97,7 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
         @card.Footer(card.FooterProps{
             Class: "flex justify-end",
         }){
-            @EditDialog()
+            @EditDialog(question)
             @DeleteDialog()        
         }
 
@@ -161,7 +162,7 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
             Class: "flex justify-end",
         }){
 
-        @EditDialog()
+        @EditDialog(question)
         @DeleteDialog()
         
         }
@@ -202,14 +203,13 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
         @card.Footer(card.FooterProps{
             Class: "flex justify-end",
         }){
-
-        @EditDialog()
+        @EditDialog(question)
         @DeleteDialog()        
-        } 
+        }
     }
 }
 
-templ EditDialog() {
+templ EditDialog(question domain.Question) {
 	@dialog.Dialog(dialog.Props{
 		ID: "edit-dialog",
 	}) {
@@ -223,38 +223,40 @@ templ EditDialog() {
         }
 		}
 		@dialog.Content() {
-			@dialog.Title() {
-				Edit Question
-			}
-			@dialog.Description() {
-				Edit question information
-			}
-			@dialog.Content() {
-				@input.Input(input.Props{
-					ID:    "edit-question-title",
-                    Placeholder: "Question Title",
-					Value: "",
-				})
-				@textarea.Textarea(textarea.Props{
-					ID:    "edit-question-text",
-                    Placeholder: "Question Text",
-					Value: "",
-				})
-				@input.Input(input.Props{
-					ID:    "edit-question-choices",
-                    Placeholder: "Question Choices",
-					Value: "",
-				})
-			}
+            @dialog.Header(){
+                @dialog.Title() {
+                    Edit Question
+                }
+                @dialog.Description() {
+                    Edit question information
+                }
+            }
+<form id="edit-question-form" 
+    hx-post={fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID)} 
+    hx-target="#edit-dialog" 
+    hx-swap="outerHTML">
+
+    switch question.QuestionType {
+        case "TEXT":
+            @TextQuestionForm(question)
+        case "CODE":
+            @CodeQuestionForm(question)
+        case "IMAGE":
+            @ImageQuestionForm(question)
+    }
+
+</form>
 			@dialog.Footer() {
 				@button.Button(button.Props{
 					Variant: button.VariantDefault,
 					Size:    button.SizeSm,
+                    Type: "submit",
+                    Form: "edit-question-form",
 				}) {
 					Save
 				}
 				@button.Button(button.Props{
-					Variant: button.VariantLink,
+					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 				}) {
 					Cancel
@@ -286,19 +288,162 @@ templ DeleteDialog() {
 			}
 			@dialog.Footer() {
 				@button.Button(button.Props{
-					Variant: button.VariantDefault,
+					Variant: button.VariantDestructive,
 					Size:    button.SizeSm,
 				}) {
 					Delete
 				}
-				@button.Button(button.Props{
-					Variant: button.VariantLink,
-					Size:    button.SizeSm,
-                    Class: "flex item-center",
-				}) {
-					Cancel
-				}
+            @dialog.Close(){
+                @button.Button(button.Props{
+                    Variant: button.VariantOutline,
+                    Size:    button.SizeSm,
+                }) {
+                    Cancel
+                }
+            }
 			}
 		}
 	}
+}
+
+
+templ TextQuestionForm(question domain.Question) {
+<div class="space-y-4 flex flex-col">
+<div class="grid grid-cols-3 gap-4">
+    <div>
+    @form.Label(form.LabelProps{
+        For: "question-title",
+        Class: "mb-2",
+    }){
+        Question Title
+    }
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-title",
+            Name: "question-title",
+            Placeholder: "Enter Question Title...",
+            Value: question.QuestionTitle,
+        })
+    }
+    </div>
+    <div>
+    @form.Label(form.LabelProps{
+        For: "question-marks",
+        Class: "mb-2",
+    }){
+        Question Marks
+    }
+    @form.Item(){
+        @input.Input(input.Props{
+            Type: input.TypeNumber,
+            ID: "question-marks",
+            Name: "question-marks",
+            Placeholder: "Enter Question Marks...",
+            Value: fmt.Sprintf("%d", question.Marks),
+            Attributes: templ.Attributes{
+                "min": "1",
+            },
+        })
+    }
+    </div>
+    <div>
+    @form.Label(form.LabelProps{
+        For: "question-text",
+        Class: "mb-2",
+    }){
+        Question Text
+    }
+    @form.Item(){
+        @textarea.Textarea(textarea.Props{
+            ID: "question-text",
+            Name: "question-text",
+            Placeholder: "Enter Question Text...",
+            Value: question.QuestionText,
+        })
+    }
+    </div>
+</div>
+    <div class="space-y-4 flex flex-col">
+		@separator.Separator(separator.Props{
+			Orientation: separator.OrientationVertical,
+			Class:       "mx-4",
+		})
+    </div>
+    <div class="space-y-4 flex flex-col">
+        @form.Label(form.LabelProps{
+            For: "question-choices",
+            Class: "mb-2",
+        }){
+            Question Choices
+        }
+        @form.Item(){
+            @input.Input(input.Props{
+                ID: "question-choices",
+                Name: "question-choices",
+                Placeholder: "Enter Question Choices...",
+                Value: "p",
+            })
+        }
+    </div>
+</div>
+}
+
+templ CodeQuestionForm(question domain.Question) {
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-title",
+            Name: "question-title",
+            Value: question.QuestionTitle,
+        })
+    }
+    @form.Item(){
+        @textarea.Textarea(textarea.Props{
+            ID: "question-text",
+            Name: "question-text",
+            Value: question.QuestionText,
+        })
+    }
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-marks",
+            Name: "question-marks",
+            Value: fmt.Sprintf("%d", question.Marks),
+        })
+    }
+}
+
+templ ImageQuestionForm(question domain.Question) {
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-title",
+            Name: "question-title",
+            Value: question.QuestionTitle,
+        })
+    }
+
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-image",
+            Name: "question-image",
+            Value: question.QuestionImage,
+            Type: "file",
+            Required: true,
+            FileAccept: "image/*",
+        })
+    }
+
+    @form.Item(){
+        @textarea.Textarea(textarea.Props{
+            ID: "question-text",
+            Name: "question-text",
+            Value: question.QuestionText,
+        })
+    }
+    @form.Item(){
+        @input.Input(input.Props{
+            ID: "question-marks",
+            Name: "question-marks",
+            Value: fmt.Sprintf("%d", question.Marks),
+        })
+    }
 }
