@@ -161,20 +161,18 @@ func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
 func parseUsername(ctx *gin.Context) (string, string, uuid.UUID) {
 	usernameVal, exists := ctx.Get("username")
 	if !exists {
-		ctx.Redirect(http.StatusSeeOther, "/admin/login")
 		return "", "", uuid.Nil
 	}
 	username := usernameVal.(string)
+
 	fullnameVal, exists := ctx.Get("fullname")
 	if !exists {
-		ctx.Redirect(http.StatusSeeOther, "/admin/login")
-		fmt.Println("fullname not found")
 		return "", "", uuid.Nil
 	}
 	fullname := fullnameVal.(string)
+
 	userIDVal, exists := ctx.Get("userID")
 	if !exists {
-		ctx.Redirect(http.StatusSeeOther, "/admin/login")
 		return "", "", uuid.Nil
 	}
 	userID := uuid.Must(uuid.Parse(userIDVal.(string)))
@@ -472,13 +470,26 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		title := ctx.PostForm("title")
 		subjectIDStr := ctx.PostForm("subject_id")
-		createdByStr := ctx.PostForm("created_by")
+		// Get userID from context (set by AuthenticationMiddleware)
+		userIDVal, exists := ctx.Get("userID")
+		if !exists {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Session expired. Please log out and log in again.", toast.VariantError)
+			return
+		}
+
+		createdBy, err := uuid.Parse(userIDVal.(string))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Exam Failed", "Invalid session user ID", toast.VariantError)
+			return
+		}
 		description := ctx.PostForm("description")
 		durationStr := ctx.PostForm("duration")
 		totalMarksStr := ctx.PostForm("total_marks")
 		passScoreStr := ctx.PostForm("pass_marks")
 
-		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) || helpers.IsTrimmedEmpty(createdByStr) {
+		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) {
 			helpers.Toast(ctx, "Create Exam Failed", "Missing required fields", toast.VariantError)
 			return
 		}
@@ -486,19 +497,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		subjectID, err := uuid.Parse(subjectIDStr)
 		if err != nil {
 			helpers.Toast(ctx, "Create Exam Failed", "Invalid subject ID", toast.VariantError)
-			return
-		}
-
-		createdBy, err := uuid.Parse(createdByStr)
-		if err != nil {
-			helpers.Toast(ctx, "Create Exam Failed", "Invalid creator ID", toast.VariantError)
-			return
-		}
-
-		// Verify if the user exists (prevents foreign key violation due to stale sessions)
-		if _, err := h.App.GetUserByID(ctx, createdBy); err != nil {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Exam Failed", "Session expired or user not found. Please log out and log in again.", toast.VariantError)
 			return
 		}
 

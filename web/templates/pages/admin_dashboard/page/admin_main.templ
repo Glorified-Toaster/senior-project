@@ -11,6 +11,7 @@ import "uot-exam/web/templates/components/chart"
 import "uot-exam/internal/domain"
 import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/card"
 
 type AdminDashboardParam struct {
 	Users           []domain.User
@@ -63,15 +64,7 @@ templ AdminMainPage(params AdminDashboardParam) {
 						Icon:        icon.BadgeQuestionMark(icon.Props{Class: "h-10 w-10"}),
 					})
 				</div>
-				@components.ExamTable(components.ExamTableProps{
-					Title:         "Recent Exams",
-					Exams:         params.Exams,
-					TotalCount:    0,
-					Limit:         4,
-					Offset:        0,
-					BaseURL:       "/admin/dashboard/exams",
-					ShowAllButton: true,
-				})
+				@ExamGridTableCard(params.Exams)
 				@components.UserTable(components.UserTableProps{
 					Users:         params.Users,
 					Title:         "Recent Users",
@@ -84,4 +77,24 @@ templ AdminMainPage(params AdminDashboardParam) {
 			</div>
 		}
 	</div>
+}
+
+templ ExamGridTableCard(exams []domain.Exam) {
+	@card.Card(card.Props{
+		Class: "w-full",
+	}) {
+		@card.Header() {
+			@card.Title() {
+				<span class="text-2xl font-bold">
+					Recent Exams
+				</span>
+			}
+			@card.Description() {
+				<span class="text-sm text-muted-foreground">Overview of recent exams on the platform.</span>
+			}
+		}
+		@card.Content() {
+			@components.ExamTableGrid(exams)
+		}
+	}
 }

@@ -30,7 +30,7 @@ templ AllExamsPage(params AllExamsPageParam) {
 		@dialog.Script()
 		@toast.Script()
 		@chart.Script()
-		@components.Sidebar("", []navbar.BreadPath{
+		@components.Sidebar("/admin/dashboard/exams", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/dashboard/exams", Path: "Exams"},
 		}, params.Username, params.FullName) {
@@ -44,17 +44,7 @@ templ AllExamsPage(params AllExamsPageParam) {
 						<p class="text-slate-500 mt-1">Overview of all exams on the platform.</p>
 					</div>
 				</div>
-				@components.ExamTable(components.ExamTableProps{
-					Title:      "All Exams",
-					Exams:      params.Exams,
-					TotalCount: params.TotalExams,
-					Limit:      params.Limit,
-					Offset:     params.Offset,
-					BaseURL:    "/admin/dashboard/exams",
-					Search:     true,
-					SearchAPI:  "/admin/dashboard/exams/search",
-					CreateExam: true,
-				})
+				@components.ExamTableGrid(params.Exams)
 			</div>
 		}
 	</div>

@@ -77,8 +77,6 @@ func (r *Router) SetupRoutes() {
 	{
 		publicRoutes.POST("/login", r.userHandler.Login())
 		publicRoutes.GET("/test", r.userHandler.TestPage())
-		publicRoutes.POST("/users/search", r.userHandler.SearchUsers())
-		publicRoutes.POST("/users/new", r.userHandler.Create())
 		publicRoutes.GET("/admin/login", r.userHandler.AdminLogin())
 	}
 
@@ -86,6 +84,8 @@ func (r *Router) SetupRoutes() {
 	adminRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
 	adminRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin))
 	{
+		adminRoutes.POST("/users/search", r.userHandler.SearchUsers())
+		adminRoutes.POST("/users/new", r.userHandler.Create())
 		dashboardRoutes := adminRoutes.Group("/dashboard")
 		{
 			dashboardRoutes.GET("/", r.userHandler.AdminDashboardMainRender())

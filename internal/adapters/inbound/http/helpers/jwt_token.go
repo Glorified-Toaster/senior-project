@@ -48,7 +48,7 @@ func (j *JWTAuth) GenerateToken(user domain.User) (string, error) {
 		return "", fmt.Errorf("jwt auth config is not initialized")
 	}
 
-	tokenExpiry := time.Now().Add(time.Hour * 24)
+	tokenExpiry := time.Now().Add(time.Hour * 12)
 
 	claims := Claims{
 		FullName: user.FullName,

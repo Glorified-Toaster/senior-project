@@ -108,6 +108,23 @@ WHERE deleted_at IS NULL;
 -- name: CountDeletedUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NOT NULL;
+-- name: CountSearchUsers :one
+SELECT count(*) FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND (
+        username ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
+    );
+
+-- name: CountSearchDeletedUsers :one
+SELECT count(*) FROM users
+WHERE 
+    deleted_at IS NOT NULL 
+    AND (
+        username ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
+    );
 
 -- name: ListAllInstructors :many
 SELECT * FROM users 

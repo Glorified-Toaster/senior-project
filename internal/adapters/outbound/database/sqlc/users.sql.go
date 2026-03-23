@@ -35,6 +35,40 @@ func (q *Queries) CountInstructors(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countSearchDeletedUsers = `-- name: CountSearchDeletedUsers :one
+SELECT count(*) FROM users
+WHERE 
+    deleted_at IS NOT NULL 
+    AND (
+        username ILIKE '%' || $1::text || '%'
+        OR full_name ILIKE '%' || $1::text || '%'
+    )
+`
+
+func (q *Queries) CountSearchDeletedUsers(ctx context.Context, search string) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchDeletedUsers, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countSearchUsers = `-- name: CountSearchUsers :one
+SELECT count(*) FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND (
+        username ILIKE '%' || $1::text || '%'
+        OR full_name ILIKE '%' || $1::text || '%'
+    )
+`
+
+func (q *Queries) CountSearchUsers(ctx context.Context, search string) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchUsers, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NULL

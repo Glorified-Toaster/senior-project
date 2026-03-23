@@ -93,6 +93,13 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
             }
             </div>
         }
+        @card.Footer(card.FooterProps{
+            Class: "flex justify-end",
+        }){
+            @EditDialog()
+            @DeleteDialog()        
+        }
+
     }
 }
 
@@ -192,6 +199,13 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
             }
             </div>
         }
+        @card.Footer(card.FooterProps{
+            Class: "flex justify-end",
+        }){
+
+        @EditDialog()
+        @DeleteDialog()        
+        } 
     }
 }
 
@@ -280,6 +294,7 @@ templ DeleteDialog() {
 				@button.Button(button.Props{
 					Variant: button.VariantLink,
 					Size:    button.SizeSm,
+                    Class: "flex item-center",
 				}) {
 					Cancel
 				}
