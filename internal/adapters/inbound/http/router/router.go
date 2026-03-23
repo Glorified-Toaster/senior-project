@@ -107,6 +107,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/exam/:id", r.userHandler.EditExamPageRender())
 			dashboardRoutes.POST("/exam/edit/:id", r.userHandler.EditExamInfo())
 			dashboardRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
+			dashboardRoutes.POST("/exam/preview/question-text", r.userHandler.PreviewQuestionText())
 		}
 	}
 

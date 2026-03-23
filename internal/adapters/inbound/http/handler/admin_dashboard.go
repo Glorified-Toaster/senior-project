@@ -755,3 +755,16 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		helpers.Toast(ctx, "Edit Exam Success", "Exam updated successfully", toast.VariantSuccess)
 	}
 }
+
+func (h *UserHandler) PreviewQuestionText() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		questionText := ctx.PostForm("question_text")
+		if helpers.IsTrimmedEmpty(questionText) {
+			questionText = `\[LaTeX Preview\]`
+			render.Render(ctx, components.QuestionPreview(questionText))
+			return
+		}
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.QuestionPreview(questionText))
+	}
+}

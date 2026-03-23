@@ -11,7 +11,6 @@ import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/textarea"
-import "uot-exam/web/templates/components/separator"
 
 type QuestionListProps struct {
 	Questions []domain.Question
@@ -209,6 +208,7 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
     }
 }
 
+
 templ EditDialog(question domain.Question) {
 	@dialog.Dialog(dialog.Props{
 		ID: "edit-dialog",
@@ -308,84 +308,119 @@ templ DeleteDialog() {
 
 
 templ TextQuestionForm(question domain.Question) {
-<div class="space-y-4 flex flex-col">
-<div class="grid grid-cols-3 gap-4">
-    <div>
-    @form.Label(form.LabelProps{
-        For: "question-title",
-        Class: "mb-2",
-    }){
-        Question Title
-    }
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-title",
-            Name: "question-title",
-            Placeholder: "Enter Question Title...",
-            Value: question.QuestionTitle,
-        })
-    }
-    </div>
-    <div>
-    @form.Label(form.LabelProps{
-        For: "question-marks",
-        Class: "mb-2",
-    }){
-        Question Marks
-    }
-    @form.Item(){
-        @input.Input(input.Props{
-            Type: input.TypeNumber,
-            ID: "question-marks",
-            Name: "question-marks",
-            Placeholder: "Enter Question Marks...",
-            Value: fmt.Sprintf("%d", question.Marks),
-            Attributes: templ.Attributes{
-                "min": "1",
-            },
-        })
-    }
-    </div>
-    <div>
-    @form.Label(form.LabelProps{
-        For: "question-text",
-        Class: "mb-2",
-    }){
-        Question Text
-    }
-    @form.Item(){
-        @textarea.Textarea(textarea.Props{
-            ID: "question-text",
-            Name: "question-text",
-            Placeholder: "Enter Question Text...",
-            Value: question.QuestionText,
-        })
-    }
-    </div>
-</div>
-    <div class="space-y-4 flex flex-col">
-		@separator.Separator(separator.Props{
-			Orientation: separator.OrientationVertical,
-			Class:       "mx-4",
-		})
-    </div>
-    <div class="space-y-4 flex flex-col">
-        @form.Label(form.LabelProps{
-            For: "question-choices",
-            Class: "mb-2",
-        }){
-            Question Choices
+    <div class="space-y-4 flex flex-col gap-4">
+    <div class="flex-1">
+    @card.Card(){
+        @card.Header(){
+            @card.Title(){
+                Question Details
+            }
         }
-        @form.Item(){
-            @input.Input(input.Props{
-                ID: "question-choices",
-                Name: "question-choices",
-                Placeholder: "Enter Question Choices...",
-                Value: "p",
-            })
+        @card.Content(){
+            @form.Item(){
+                @form.Label(form.LabelProps{
+                    For: "question-title",
+                    Class: "text-sm font-medium mb-2",
+                }){
+                    Question Title
+                }
+                @input.Input(input.Props{
+                    ID: "question-title",
+                    Name: "question-title",
+                    Value: question.QuestionTitle,
+                    Required: true,
+                })
+            }
+
+            @form.Item(){
+                @form.Label(form.LabelProps{
+                    For: "question-marks",
+                    Class: "text-sm font-medium mb-2",
+                }){
+                    Question Marks
+                }
+
+                @input.Input(input.Props{
+                    Type: input.TypeNumber,
+                    ID: "question-marks",
+                    Name: "question-marks",
+                    Value: fmt.Sprintf("%d", question.Marks),
+                    Required: true,
+                    Attributes: templ.Attributes{
+                        "min" : "1",
+                    },
+                })
+            }
+
+            @form.Item(){
+                @form.Label(form.LabelProps{
+                    For: "question-text",
+                    Class: "text-sm font-medium mb-2",
+                }){
+                    Question Text
+                }
+
+                @textarea.Textarea(textarea.Props{
+                    ID: "question-text",
+                    Name: "question-text",
+                    Value: question.QuestionText,
+                    Attributes: templ.Attributes{
+                        "hx-post": "/preview/question-text",
+                        "hx-trigger": "keyup changed delay:300ms",
+                        "hx-target": "#question-preview",
+                        "hx-swap": "innerHTML",
+                    },
+                })
+            }
+
         }
+    }
     </div>
-</div>
+    <div class="flex-1">
+    if question.QuestionText != "" {
+    @card.Card(){
+        @card.Header(){
+            @card.Title(){
+                Preview
+            }
+        }
+        @card.Content(){
+            @QuestionPreview(question.QuestionText)
+        }
+    }
+    }
+    </div>
+    </div>
+}
+
+templ QuestionPreview(questionText string) {
+    <div id="question-preview" class="latex-content">{questionText}</div>
+}
+
+templ ChoicesQuestionForm(question domain.Question) {
+    @card.Card(){
+        @card.Header(){
+            @card.Title(){
+                Question Choices
+            }
+        }
+        @card.Content(){
+            @form.Item(){
+                @form.Label(form.LabelProps{
+                    For: "question-choices",
+                    Class: "text-sm font-medium mb-2",
+                }){
+                    Question Choices
+                }
+                @input.Input(input.Props{
+                    ID: "question-choices",
+                    Name: "question-choices",
+                    Value: "fdfdf",
+                    Required: true,
+                })
+            }
+        }
+    }
 }
 
 templ CodeQuestionForm(question domain.Question) {

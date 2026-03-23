@@ -479,7 +479,7 @@ templ QuestionsTab(param EditExamPageParam) {
 			@card.Title() {
 				<div class="flex items-center gap-2 justify-between w-full">
 				Questions
-				@AddQuestionButton(param)
+				@AddDialog()
 			</div>
 			@card.Description() {
 				create questions for your exam here.
@@ -494,88 +494,154 @@ templ QuestionsTab(param EditExamPageParam) {
 		}
 	}
 }
-
-templ AddQuestionButton(param EditExamPageParam) {
-	@dialog.Dialog(){
-		@dialog.Trigger(){
+templ AddDialog() {
+	@dialog.Dialog(dialog.Props{}) {
+		@dialog.Trigger() {
 			@button.Button(button.Props{
 				Type: button.TypeButton,
-				Variant: button.VariantDefault,
-				Attributes: templ.Attributes{
-					"hx-post": "/admin/dashboard/exam/question/add/" + param.Exam.ID.String(),
-					"hx-target": "#toast-container",
-					"hx-swap": "none",
-				},
 			}) {
 				Add Question
 			}
 		}
-
-		@dialog.Content(){
-			@dialog.Header(){
-				@dialog.Title(){
+		@dialog.Content() {
+			@dialog.Header() {
+				@dialog.Title() {
 					Add Question
 				}
-				@dialog.Description(){
-					create questions for your exam here.
+				@dialog.Description() {
+					Add a new question to the exam.
 				}
 			}
-				@AddQuestionDialog(param)
+			@AddQuestionForm()
+			@dialog.Footer() {
+				@button.Button(button.Props{
+					Type: button.TypeSubmit,
+					Form: "add_question_form",
+				}) {
+					Add Question
+				}
+			@dialog.Close(){
+				@button.Button(button.Props{
+					Type: button.TypeButton,
+					Variant: button.VariantOutline,
+				}) {
+					Cancel
+				}
+			}
+
+			}
 		}
 	}
-	}
+}
 
-	templ AddQuestionDialog(param EditExamPageParam) {
-			@tabs.Tabs(tabs.Props{
-		ID: "add-question-tabs",
-	}) {
-		@tabs.List(tabs.ListProps{
-			Class: "w-full max-w-full",
-		}) {
-			@tabs.Trigger(tabs.TriggerProps{
-				Value: "Text",
-				IsActive: true,
-                TabsID:   "add-question-tabs",
-                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
-			}) {
-				Text
-			}
+templ AddQuestionForm() {
+	<form id="add_question_form" 
+		hx-post="/admin/dashboard/exam/add-question" 
+		hx-target="#toast-container" 
+		hx-swap="none" 
+		class="space-y-4">
 
-			@tabs.Trigger(tabs.TriggerProps{
-				Value: "Code",
-                TabsID:   "add-question-tabs",
-                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+		<div>
+			@label.Label(label.Props{
+				For: "question_title",
+				Class: "flex items-center gap-2 mb-2 mt-4",
 			}) {
-				Code	
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Title
 			}
-
-			@tabs.Trigger(tabs.TriggerProps{
-				Value:    "Image",
-                TabsID:   "add-question-tabs",
-                Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
-			}) {
-				Image
-			}
-		}
-		<div class="w-full mt-2">
-			@tabs.Content(tabs.ContentProps{
-				Value:    "Text",
-                TabsID:   "add-question-tabs",
-			}) {
-				@components.TextQuestionForm(domain.Question{})
-			}
-			@tabs.Content(tabs.ContentProps{
-				Value:    "Image",
-                TabsID:   "add-question-tabs",
-			}) {
-				@components.ImageQuestionForm(domain.Question{})
-			}
-			@tabs.Content(tabs.ContentProps{
-				Value:    "Code",
-                TabsID:   "add-question-tabs",
-			}) {
-                // TODO: Implement StudentsTab
-			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Question Title",
+				ID: "question_title",
+				Name: "question_title",
+				Class: "mb-4",
+			})
 		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_marks",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Marks
+			}
+			@input.Input(input.Props{
+				Type: input.TypeNumber,
+				ID: "question_marks",
+				Name: "question_marks",
+				Class: "mb-4",
+				Value: "1",
+				Attributes: templ.Attributes{
+					"min": "1",
+				},
+			})
+		</div>
+
+		<div>
+			@label.Label(label.Props{
+				For: "question_text",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.MessageSquareText(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Text
+			}
+			@textarea.Textarea(textarea.Props{
+				Placeholder: "Question Text",
+				ID: "question_text",
+				Name: "question_text",
+				Rows: 3,
+				Class: "mb-4",
+    			Attributes: templ.Attributes{
+        "hx-post": "/admin/dashboard/exam/preview/question-text",
+        "hx-trigger": "keyup changed delay:300ms",
+        "hx-target": "#question-preview",
+        "hx-swap": "innerHTML",
+    },			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_preview",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Eye(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Preview
+			}
+		@QuestionPreview(`\[\text{LaTeX Preview}\]`)
+		</div>
+	</form>
+<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === "question-preview") {
+        renderMathInElement(event.detail.target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+});
+</script>
+}
+
+templ QuestionPreview(questionText string) {
+	@card.Card(card.Props{
+		Class: "mb-6",
+	}){
+		@card.Content(){
+			<span class="latex-content" id="question-preview">
+				{ questionText }
+			</span>
+		}
 	}
-	}
+}
