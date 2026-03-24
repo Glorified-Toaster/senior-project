@@ -13,11 +13,10 @@ import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/internal/domain"
 
-
 type AllSubjectsPageParam struct {
-	FullName string
-	Username string
-	Subjects []domain.Subject
+	FullName   string
+	Username   string
+	Subjects   []domain.Subject
 	TotalCount int64
 	Limit      int32
 	Offset     int32
@@ -35,7 +34,7 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 		@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/dashboard/subjects", Path: "Subjects"},
-		}, param.Username, param.FullName ) {
+		}, param.Username, param.FullName) {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
@@ -45,23 +44,22 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 						</h1>
 						<p class="text-slate-500 mt-1">Overview of all subjects on the platform.</p>
 					</div>
-                    
 				</div>
-                <div class="flex items-center gap-2 w-full">
-                    @icon.Search(icon.Props{Class: "h-4 w-4"})
-								@input.Input(input.Props{
-									Type: input.TypeSearch,
-									Name: "search",
-									Placeholder: "Search subjects...",
-									Attributes: templ.Attributes{
-										"hx-post": "/admin/dashboard/subjects/search",
-										"hx-trigger": "keyup changed delay:300ms, search",
-										"hx-target": "#subjects-table-container",
-										"hx-swap": "outerHTML",
-									},			
-								})
+				<div class="flex items-center gap-2 w-full">
+					@icon.Search(icon.Props{Class: "h-4 w-4"})
+					@input.Input(input.Props{
+						Type:        input.TypeSearch,
+						Name:        "search",
+						Placeholder: "Search subjects...",
+						Attributes: templ.Attributes{
+							"hx-post":    "/admin/dashboard/subjects/search",
+							"hx-trigger": "keyup changed delay:300ms, search",
+							"hx-target":  "#subjects-table-container",
+							"hx-swap":    "outerHTML",
+						},
+					})
 					@components.DialogAddSubject()
-                </div>
+				</div>
 				@components.SubjectTableContainer(components.SubjectTableContainerProps{
 					Subjects:   param.Subjects,
 					TotalCount: param.TotalCount,
@@ -74,5 +72,3 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 		}
 	</div>
 }
-
-

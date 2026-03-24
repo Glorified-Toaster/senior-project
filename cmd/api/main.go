@@ -83,7 +83,7 @@ func main() {
 	txManager := database.NewPostgresTxManager(pool.Pool)
 	app := application.NewApplication(userRepo, subjectRepo, examRepo, txManager, pool, zlog)
 
-	//populateDB(app)
+	populateDB(app)
 	//mockExam(app)
 	//populateSubjects(query)
 	//populateExams(query)

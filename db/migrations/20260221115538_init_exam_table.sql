@@ -180,6 +180,28 @@ BEFORE UPDATE ON choices
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
+CREATE OR REPLACE FUNCTION check_choices_count()
+RETURNS TRIGGER AS $$
+DECLARE
+    choice_count INT;
+BEGIN
+    SELECT COUNT(*) INTO choice_count 
+    FROM choices 
+    WHERE question_id = NEW.question_id;
+    
+    IF choice_count >= 4 THEN
+        RAISE EXCEPTION 'Maximum 4 choices allowed per question';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_choices_count
+BEFORE INSERT ON choices
+FOR EACH ROW
+EXECUTE FUNCTION check_choices_count();
+
 CREATE UNIQUE INDEX one_correct_choice_per_question
 ON choices (question_id)
 WHERE is_correct = true;
@@ -235,6 +257,8 @@ DROP TABLE IF EXISTS enrollments CASCADE;
 DROP TABLE IF EXISTS subject_instructors CASCADE;
 DROP TABLE IF EXISTS subjects CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+DROP TRIGGER IF EXISTS check_choices_count ON choices;
 
 DROP TYPE IF EXISTS attempt_status_type CASCADE;
 DROP TYPE IF EXISTS exam_status_type CASCADE;

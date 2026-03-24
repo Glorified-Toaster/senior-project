@@ -13,7 +13,6 @@ import "time"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/dialog"
 
-
 type UserTableProps struct {
 	Users         []domain.User
 	Title         string
@@ -23,11 +22,11 @@ type UserTableProps struct {
 	Offset        int32
 	BaseURL       string
 	ShowAllButton bool
-	Search bool
-	SearchAPI string
-	AddUser bool
+	Search        bool
+	SearchAPI     string
+	AddUser       bool
 	DeletedButton bool
-	AddAPI string
+	AddAPI        string
 }
 
 templ UserTable(props UserTableProps) {
@@ -37,34 +36,33 @@ templ UserTable(props UserTableProps) {
 				<div class="flex items-center gap-2">
 					@icon.Users(icon.Props{Class: "h-7 w-7"})
 					<span class="text-2xl font-bold">
-					{ props.Title }
+						{ props.Title }
 					</span>
 				</div>
-					<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2">
 					if props.Search {
 						<div>
-								@input.Input(input.Props{
-									Type: input.TypeSearch,
-									Name: "search",
-									Placeholder: "Search users...",
-									Attributes: templ.Attributes{
-										"hx-post": props.SearchAPI,
-										"hx-trigger": "keyup changed delay:300ms, search",
-										"hx-target": "#users-table-container",
-										"hx-swap": "outerHTML",
-									},			
-								})
-							</div>
-						}
-
+							@input.Input(input.Props{
+								Type:        input.TypeSearch,
+								Name:        "search",
+								Placeholder: "Search users...",
+								Attributes: templ.Attributes{
+									"hx-post":    props.SearchAPI,
+									"hx-trigger": "keyup changed delay:300ms, search",
+									"hx-target":  "#users-table-container",
+									"hx-swap":    "outerHTML",
+								},
+							})
+						</div>
+					}
 					if props.AddUser {
 						@button.Button(button.Props{
 							Href: props.AddAPI,
 						}) {
 							Add User
 						}
-					}			
-					</div>
+					}
+				</div>
 			</div>
 		}
 		@card.Content(card.ContentProps{Class: "p-4"}) {
@@ -75,11 +73,11 @@ templ UserTable(props UserTableProps) {
 					Class: "w-full",
 				}) {
 					All Users
-					}
 				}
 			}
 		}
 	}
+}
 
 templ UserTableContainer(props UserTableProps) {
 	<div id="users-table-container">
@@ -197,13 +195,13 @@ templ UserTableRows(users []domain.User) {
 						</span>
 					}
 				}
-				<td class="px-10 py-4 text-right">	
+				<td class="px-10 py-4 text-right">
 					<div class="flex justify-end items-center gap-2">
 						<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 							@dialog.Trigger(dialog.TriggerProps{For: fmt.Sprintf("edit-user-%s", user.ID.String())}) {
 								@button.Button(button.Props{
-									Variant: button.VariantGhost,
-									Class:   "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100",
+									Variant:    button.VariantGhost,
+									Class:      "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100",
 									Attributes: templ.Attributes{"title": "Edit User"},
 								}) {
 									@icon.Pencil(icon.Props{Class: "w-3.5 h-3.5 text-primary"})
@@ -212,8 +210,8 @@ templ UserTableRows(users []domain.User) {
 							if user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
 								@dialog.Trigger(dialog.TriggerProps{For: fmt.Sprintf("delete-user-%s", user.ID.String())}) {
 									@button.Button(button.Props{
-										Variant: button.VariantGhost,
-										Class:   "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100",
+										Variant:    button.VariantGhost,
+										Class:      "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100",
 										Attributes: templ.Attributes{"title": "Delete User"},
 									}) {
 										@icon.Trash(icon.Props{Class: "w-3.5 h-3.5 text-red-500"})
@@ -221,25 +219,31 @@ templ UserTableRows(users []domain.User) {
 								}
 							}
 						</div>
-
 						@dialog.Dialog(dialog.Props{
 							ID: fmt.Sprintf("edit-user-%s", user.ID.String()),
 						}) {
 							@dialog.Content(dialog.ContentProps{HideCloseButton: true}) {
 								@dialog.Header() {
-									@dialog.Title() { Edit User }
-									@dialog.Description() { Edit user information. }
+									@dialog.Title() {
+										Edit User 
+									}
+									@dialog.Description() {
+										Edit user information. 
+									}
 								}
 								Potato
 							}
 						}
-
 						if user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
 							@dialog.Dialog(dialog.Props{ID: fmt.Sprintf("delete-user-%s", user.ID.String())}) {
 								@dialog.Content(dialog.ContentProps{HideCloseButton: true, DisableAutoFocus: true}) {
 									@dialog.Header() {
-										@dialog.Title() { Delete User }
-										@dialog.Description() { Delete user information. }
+										@dialog.Title() {
+											Delete User 
+										}
+										@dialog.Description() {
+											Delete user information. 
+										}
 									}
 									@dialog.Footer() {
 										@button.Button(button.Props{

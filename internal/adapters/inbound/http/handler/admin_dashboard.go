@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
 	"uot-exam/web/templates/components/toast"
@@ -537,7 +538,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			PassScore:       int32(passScore),
 			Status:          domain.ExamStatusDraft,
 		})
-
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Exam Failed", "Failed to create exam : "+err.Error(), toast.VariantError)
@@ -635,7 +635,6 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 			BaseURL:    "/admin/dashboard/subjects",
 		}))
 		helpers.Toast(ctx, "Create Subject Success", "Subject created successfully", toast.VariantSuccess)
-
 	}
 }
 
@@ -745,7 +744,6 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 			TotalMarks:      int32(totalMarks),
 			Status:          domain.ExamStatus(statusStr),
 		})
-
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Edit Exam Failed", "Failed to update exam: "+err.Error(), toast.VariantError)
@@ -759,12 +757,14 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 func (h *UserHandler) PreviewQuestionText() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		questionText := ctx.PostForm("question_text")
+		questionTitle := ctx.PostForm("question_title")
+		if helpers.IsTrimmedEmpty(questionTitle) {
+			questionTitle = `\[\text{Question Title}\]`
+		}
 		if helpers.IsTrimmedEmpty(questionText) {
-			questionText = `\[LaTeX Preview\]`
-			render.Render(ctx, components.QuestionPreview(questionText))
-			return
+			questionText = `\[\text{Question Text}\]`
 		}
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, components.QuestionPreview(questionText))
+		render.Render(ctx, components.QuestionPreview(questionTitle, questionText))
 	}
 }

@@ -23,6 +23,8 @@ import (
  "uot-exam/web/templates/components/badge"
  "uot-exam/web/templates/components/selectbox"
  "uot-exam/web/templates/components/dialog"
+	"uot-exam/web/templates/components/radio"
+	"fmt"
 )
 
 type EditExamPageParam struct {
@@ -512,7 +514,41 @@ templ AddDialog() {
 					Add a new question to the exam.
 				}
 			}
-			@AddQuestionForm()
+			@tabs.Tabs(tabs.Props{
+				ID: "add_question_tabs",
+			}) {
+				@tabs.List(tabs.ListProps{
+					Class: "w-full max-w-full",
+				}) {
+					@tabs.Trigger(tabs.TriggerProps{
+						Value: "questions",
+						IsActive: true,
+						TabsID:   "add_question_tabs",
+						Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Question
+					}
+					@tabs.Trigger(tabs.TriggerProps{
+						Value: "choices",
+						TabsID:   "add_question_tabs",
+						Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Choices
+					}
+				}
+				@tabs.Content(tabs.ContentProps{
+					Value:    "questions",
+					TabsID:   "add_question_tabs",
+				}) {
+					@AddQuestionForm()
+				}
+				@tabs.Content(tabs.ContentProps{
+					Value:    "choices",
+					TabsID:   "add_question_tabs",
+				}) {
+					@ChoicesTab()
+				}
+			}
 			@dialog.Footer() {
 				@button.Button(button.Props{
 					Type: button.TypeSubmit,
@@ -557,6 +593,12 @@ templ AddQuestionForm() {
 				ID: "question_title",
 				Name: "question_title",
 				Class: "mb-4",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/preview/question-text",
+					"hx-trigger": "keyup changed delay:300ms",
+					"hx-target": "#question-preview",
+					"hx-swap": "innerHTML",
+				},
 			})
 		</div>
 		<div>
@@ -614,7 +656,7 @@ templ AddQuestionForm() {
 				})
 				Question Preview
 			}
-		@QuestionPreview(`\[\text{LaTeX Preview}\]`)
+		@QuestionPreview(`\[\text{Question Title}\]`, `\[\text{Question Text}\]`)
 		</div>
 	</form>
 <script>
@@ -634,12 +676,100 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
 </script>
 }
 
-templ QuestionPreview(questionText string) {
+templ ChoicesTab() {
+	<div class="flex flex-col space-y-4">
+		@label.Label(label.Props{
+			For: "question_choices",
+			Class: "flex items-center gap-2 mb-4 mt-4",
+		}) {
+			@icon.List(icon.Props{
+				Class: "h-4 w-4",
+			})
+			Question Choices
+		}
+		
+		<div id="choices-container" class="space-y-3">
+			for i := 1; i <= 4; i++ {
+				@choiceItemCheckbox(i, i == 1)
+			}
+		</div>
+		<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === "question-choice-preview") {
+        renderMathInElement(event.detail.target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+});
+</script>
+	</div>
+}
+
+templ choiceItemCheckbox(index int, isCorrect bool) {
+	<div class="group flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900" data-index={ strconv.Itoa(index) }>
+		<div class="flex-1 flex items-center gap-2">
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Choice " + strconv.Itoa(index),
+				Name: "choice_" + strconv.Itoa(index),
+				Class: "mb-0",
+				Form: "add_question_form",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/preview/question-choice",
+					"hx-trigger": "keyup changed delay:300ms",
+					"hx-target": "#question-choice-preview",
+					"hx-swap": "innerHTML",
+				},
+			})			
+		</div>
+		
+		<div class="flex items-center gap-2 shrink-0">
+			@radio.Radio(radio.Props{
+				ID: "correct_choice_" + strconv.Itoa(index),
+				Name: "correct_choice",
+				Value: strconv.Itoa(index),
+				Checked: isCorrect,
+				Form: "add_question_form",
+				Class: "mb-0",
+				Attributes: templ.Attributes{
+					"class": "h-4 w-4 cursor-pointer rounded",
+					"onchange": "setCorrectChoice(this)",
+				},
+			})
+			<label 
+				for={ "correct_choice_" + strconv.Itoa(index) }
+				class="text-sm cursor-pointer"
+			>
+				Correct
+			</label>
+		</div>
+	</div>
+	<div class="flex justify-center">
+		@card.Card(card.Props{
+		Class: "mb-6",
+	}){
+		@card.Content(){
+			<span class="latex-content" id="question-choice-preview">
+				{fmt.Sprintf(`$\text{Choice %d}$`, index)}
+			</span>
+		}
+	}
+	</div>
+}
+
+templ QuestionPreview(questionTitle, questionText string) {
 	@card.Card(card.Props{
 		Class: "mb-6",
 	}){
 		@card.Content(){
 			<span class="latex-content" id="question-preview">
+				{ questionTitle }
 				{ questionText }
 			</span>
 		}

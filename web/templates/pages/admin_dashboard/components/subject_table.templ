@@ -32,15 +32,15 @@ templ SubjectTableGrid(subjects []domain.Subject) {
 
 templ ExamTableGrid(exams []domain.Exam) {
 	<div id="exams-table-container">
-	if len(exams) == 0 {
-		@EmptyState("No exams found", "We couldn't find any exams matching your search. Try adjusting your keywords or filters.", false, true) 
-	} else {
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-			for _, exam := range exams {
-				@ExamCard(exam)
-			}
-		</div>
-	}
+		if len(exams) == 0 {
+			@EmptyState("No exams found", "We couldn't find any exams matching your search. Try adjusting your keywords or filters.", false, true)
+		} else {
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+				for _, exam := range exams {
+					@ExamCard(exam)
+				}
+			</div>
+		}
 	</div>
 }
 
@@ -52,37 +52,37 @@ templ ExamCard(exam domain.Exam) {
 			@card.Header() {
 				@card.Title() {
 					<span class="text-2xl font-bold">
-						{exam.Title}
+						{ exam.Title }
 					</span>
 				}
 				@card.Description() {
 					if exam.Description != nil {
-						<span class="text-sm text-muted-foreground">{ truncateText(*exam.Description, 30)}</span>
+						<span class="text-sm text-muted-foreground">{ truncateText(*exam.Description, 30) }</span>
 					} else {
 						<span class="text-sm text-slate-400 italic">No description provided</span>
 					}
 					<br/>
 					@badge.Badge(badge.Props{
-					Variant: badge.VariantOutline,
-					Class: "mt-2",
-				}) {
-					@icon.Clock(icon.Props{Class: "h-4 w-4"})
-					{exam.DurationMinutes} min
-				} 
+						Variant: badge.VariantOutline,
+						Class:   "mt-2",
+					}) {
+						@icon.Clock(icon.Props{Class: "h-4 w-4"})
+						{ exam.DurationMinutes } min
+					}
 					@badge.Badge(badge.Props{
-					Variant: badge.VariantOutline,
-					Class: "mt-2",
-				}) {
-					@icon.Users(icon.Props{Class: "h-4 w-4"})
-					{10}
-				}
-				@badge.Badge(badge.Props{
-					Variant: badge.VariantOutline,
-					Class: "mt-2",
-				}) {
-					@icon.CircleQuestionMark(icon.Props{Class: "h-4 w-4"})
-					{30}
-				} 
+						Variant: badge.VariantOutline,
+						Class:   "mt-2",
+					}) {
+						@icon.Users(icon.Props{Class: "h-4 w-4"})
+						{ 10 }
+					}
+					@badge.Badge(badge.Props{
+						Variant: badge.VariantOutline,
+						Class:   "mt-2",
+					}) {
+						@icon.CircleQuestionMark(icon.Props{Class: "h-4 w-4"})
+						{ 30 }
+					}
 				}
 			}
 			@card.Footer(card.FooterProps{
@@ -90,25 +90,24 @@ templ ExamCard(exam domain.Exam) {
 			}) {
 				@badge.Badge(badge.Props{
 					Variant: badge.VariantSecondary,
-					Class: "mt-2",
+					Class:   "mt-2",
 				}) {
-					{exam.Status}
+					{ exam.Status }
 				}
-
 				@button.Button(button.Props{
 					Variant: button.VariantGhost,
-					Href: "/admin/dashboard/exam/" + exam.ID.String(),
-				}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
+					Href:    "/admin/dashboard/exam/" + exam.ID.String(),
+				}) {
+					@icon.ArrowRight(icon.Props{Class: "h-4 w-4"})
+				}
 			}
 		}
 	</div>
 }
 
-
 templ SubjectTableContainer(props SubjectTableContainerProps) {
 	<div id="subjects-table-container">
 		@SubjectTableGrid(props.Subjects)
-
 		if props.TotalCount > int64(props.Limit) {
 			<div id="pagination-container" class="mt-4">
 				@pagination.Pagination(pagination.Props{
@@ -124,8 +123,6 @@ templ SubjectTableContainer(props SubjectTableContainerProps) {
 	</div>
 }
 
-
-
 templ SubjectCard(subject domain.Subject) {
 	<div class="w-full max-w-sm">
 		@card.Card(card.Props{
@@ -134,12 +131,12 @@ templ SubjectCard(subject domain.Subject) {
 			@card.Header() {
 				@card.Title() {
 					<span class="text-2xl font-bold">
-						{subject.Title}
+						{ subject.Title }
 					</span>
 				}
 				@card.Description() {
 					if subject.Description != nil {
-						<span class="text-sm text-muted-foreground">{ truncateText(*subject.Description, 30)}</span>
+						<span class="text-sm text-muted-foreground">{ truncateText(*subject.Description, 30) }</span>
 					} else {
 						<span class="text-sm text-slate-400 italic">No description provided</span>
 					}
@@ -149,10 +146,13 @@ templ SubjectCard(subject domain.Subject) {
 				Class: "flex items-center justify-end",
 			}) {
 				<div class="flex items-center justify-between">
-					<span class="text-sm text-muted-foreground">@button.Button(button.Props{
-						Variant: button.VariantGhost,
-						Href: "/admin/dashboard/subject/" + subject.ID.String(),
-					}) { @icon.ArrowRight(icon.Props{Class: "h-4 w-4"})}
+					<span class="text-sm text-muted-foreground">
+						@button.Button(button.Props{
+							Variant: button.VariantGhost,
+							Href:    "/admin/dashboard/subject/" + subject.ID.String(),
+						}) {
+							@icon.ArrowRight(icon.Props{Class: "h-4 w-4"})
+						}
 					</span>
 				</div>
 			}
@@ -174,18 +174,17 @@ templ EmptyState(title string, description string, addSubject bool, addExam bool
 					@icon.Search(icon.Props{Class: "h-8 w-8 text-slate-400"})
 				</div>
 				<span class="text-2xl font-bold">
-					{title}
+					{ title }
 				</span>
 			}
 			@card.Content(card.ContentProps{
 				Class: "flex flex-col items-center justify-center",
 			}) {
-				<span class="text-sm text-muted-foreground">{description}</span>
+				<span class="text-sm text-muted-foreground">{ description }</span>
 			}
 			@card.Footer(card.FooterProps{
 				Class: "flex items-center justify-center",
 			}) {
-
 				if addSubject {
 					@DialogAddSubject()
 				} else if addExam {
@@ -196,16 +195,13 @@ templ EmptyState(title string, description string, addSubject bool, addExam bool
 	}
 }
 
-
-
 func truncateText(s string, max int) string {
-    runes := []rune(s)
-    if len(runes) <= max {
-        return s
-    }
-    return string(runes[:max]) + "..."
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max]) + "..."
 }
-
 
 templ DialogAddSubject() {
 	@dialog.Dialog(dialog.Props{
@@ -229,48 +225,50 @@ templ DialogAddSubject() {
 					Add a new subject to the platform.
 				}
 			}
-			<form id="add-subject-form" hx-post="/admin/dashboard/subjects/create"
+			<form
+				id="add-subject-form"
+				hx-post="/admin/dashboard/subjects/create"
 				hx-target="#subjects-table-container"
-				hx-swap="outerHTML">
-			<div class="space-y-4">
-				<div class="space-y-2 mb-4">
-					@form.Label(form.LabelProps{For: "title"}) {
-						Title
-					}
-					@input.Input(input.Props{
-						ID:          "title",
-						Name: "title",
-						Placeholder: "Enter subject title",
-					})
+				hx-swap="outerHTML"
+			>
+				<div class="space-y-4">
+					<div class="space-y-2 mb-4">
+						@form.Label(form.LabelProps{For: "title"}) {
+							Title
+						}
+						@input.Input(input.Props{
+							ID:          "title",
+							Name:        "title",
+							Placeholder: "Enter subject title",
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@form.Label(form.LabelProps{For: "description"}) {
+							Description
+						}
+						@input.Input(input.Props{
+							ID:          "description",
+							Name:        "description",
+							Placeholder: "Enter subject description",
+						})
+					</div>
 				</div>
-				<div class="space-y-2 mb-4">
-					@form.Label(form.LabelProps{For: "description"}) {
-						Description
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
 					}
-					@input.Input(input.Props{
-						ID:          "description",
-						Name: "description", 
-						Placeholder: "Enter subject description",
-					})
-				</div>
-			</div>
-			
-			@dialog.Footer() {
-				@dialog.Close() {
-					@button.Button(button.Props{
-						Variant: button.VariantOutline,
-					}) {
-						Cancel
+					@button.Button(
+						button.Props{
+							Variant: button.VariantDefault,
+							Type:    button.TypeSubmit,
+						}) {
+						Add Subject
 					}
 				}
-				@button.Button(
-					button.Props{
-						Variant: button.VariantDefault,
-						Type: button.TypeSubmit,
-					}) {
-					Add Subject
-				}
-			}
 			</form>
 		}
 	}

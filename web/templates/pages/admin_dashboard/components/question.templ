@@ -14,200 +14,191 @@ import "uot-exam/web/templates/components/textarea"
 
 type QuestionListProps struct {
 	Questions []domain.Question
-    Choices []domain.Choice
+	Choices   []domain.Choice
 }
 
 templ QuestionList(props QuestionListProps) {
-    if len(props.Questions) == 0 {
-        // Sample data for empty list
-        @QuestionItem(domain.Question{
-            QuestionTitle: "Solve the following differential equations:",
-            QuestionText: `\[ L(G) = D(G) - A(G) = \begin{pmatrix} \deg(v_1) & -a_{12} & \cdots & -a_{1n} \\ -a_{21} & \deg(v_2) & \cdots & -a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ -a_{n1} & -a_{n2} & \cdots & \deg(v_n) \end{pmatrix} \]`,
-        }, []domain.Choice{
-            {ChoiceText: `\( c^2 = a^2 + b^2 \)`},
-            {ChoiceText: `\( m = \frac{y_2 - y_1}{x_2 - x_1} \)`},
-            {ChoiceText: `\( y = mx + b \)`},
-            {ChoiceText: `\( \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \)`},
-        }, 1)
-        @QuestionItem(domain.Question{
-            QuestionTitle: "What is the spectral radius of a graph?",
-            QuestionText: `\[ \rho(G) = \max\{|\lambda_i| : \lambda_i \text{ eigenvalue of } A(G)\} \]`,
-        }, []domain.Choice{
-            {ChoiceText: "Option A"},
-            {ChoiceText: "Option B"},
-            {ChoiceText: "Option C"},
-            {ChoiceText: "Option D"},
-            {ChoiceText: "Option E"},
-            {ChoiceText: "Option F"},
-        }, 2)
-
-@QuestionCodeItem(domain.Question{
-    QuestionTitle: "give the output of the following code",
-    QuestionText: `trait Area { fn area(&self) -> f64; }
+	if len(props.Questions) == 0 {
+		// Sample data for empty list
+		@QuestionItem(domain.Question{
+			QuestionTitle: "Solve the following differential equations:",
+			QuestionText:  `\[ L(G) = D(G) - A(G) = \begin{pmatrix} \deg(v_1) & -a_{12} & \cdots & -a_{1n} \\ -a_{21} & \deg(v_2) & \cdots & -a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ -a_{n1} & -a_{n2} & \cdots & \deg(v_n) \end{pmatrix} \]`,
+		}, []domain.Choice{
+			{ChoiceText: `\( c^2 = a^2 + b^2 \)`},
+			{ChoiceText: `\( m = \frac{y_2 - y_1}{x_2 - x_1} \)`},
+			{ChoiceText: `\( y = mx + b \)`},
+			{ChoiceText: `\( \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \)`},
+		}, 1)
+		@QuestionItem(domain.Question{
+			QuestionTitle: "What is the spectral radius of a graph?",
+			QuestionText:  `\[ \rho(G) = \max\{|\lambda_i| : \lambda_i \text{ eigenvalue of } A(G)\} \]`,
+		}, []domain.Choice{
+			{ChoiceText: "Option A"},
+			{ChoiceText: "Option B"},
+			{ChoiceText: "Option C"},
+			{ChoiceText: "Option D"},
+			{ChoiceText: "Option E"},
+			{ChoiceText: "Option F"},
+		}, 2)
+		@QuestionCodeItem(domain.Question{
+			QuestionTitle: "give the output of the following code",
+			QuestionText: `trait Area { fn area(&self) -> f64; }
 struct Circle { r: f64 }
 impl Area for Circle {
     fn area(&self) -> f64 { std::f64::consts::PI * self.r * self.r }
 }
 fn print_area<T: Area>(shape: &T) { println!("{}", shape.area()); }`,
-}, []domain.Choice{
-    {ChoiceText: `3.141592653589793`},
-    {ChoiceText: `12.566370614359172`},
-    {ChoiceText: `6.283185307179586`},
-    {ChoiceText: `9.42477796076938`},
-}, 3)
-
-@ImageQuestionItem(domain.Question{
-    QuestionTitle: "What is the spectral radius of a graph?",
-    QuestionText: `https://media.springernature.com/lw1200/springer-static/image/art%3A10.1007%2Fs00373-021-02369-8/MediaObjects/373_2021_2369_Fig3_HTML.png`,
-}, []domain.Choice{
-    {ChoiceText: "Option A"},
-    {ChoiceText: "Option B"},
-    {ChoiceText: "Option C"},
-    {ChoiceText: "Option D"},
-}, 4)
-    } else {
-        for i, question := range props.Questions {
-            @QuestionItem(question, nil, i+1)
-        }
-    }
+		}, []domain.Choice{
+			{ChoiceText: `3.141592653589793`},
+			{ChoiceText: `12.566370614359172`},
+			{ChoiceText: `6.283185307179586`},
+			{ChoiceText: `9.42477796076938`},
+		}, 3)
+		@ImageQuestionItem(domain.Question{
+			QuestionTitle: "What is the spectral radius of a graph?",
+			QuestionText:  `https://media.springernature.com/lw1200/springer-static/image/art%3A10.1007%2Fs00373-021-02369-8/MediaObjects/373_2021_2369_Fig3_HTML.png`,
+		}, []domain.Choice{
+			{ChoiceText: "Option A"},
+			{ChoiceText: "Option B"},
+			{ChoiceText: "Option C"},
+			{ChoiceText: "Option D"},
+		}, 4)
+	} else {
+		for i, question := range props.Questions {
+			@QuestionItem(question, nil, i+1)
+		}
+	}
 }
 
 templ QuestionItem(question domain.Question, choices []domain.Choice, number int) {
-    @card.Card(card.Props{
-        Class: "mb-6",
-    }){
-        @card.Header(){
-            @card.Title(){
-                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-                <span class="latex-content">{question.QuestionTitle}</span>
-            }
-        }
-        @card.Content(){
-                <span class="latex-content">{question.QuestionText}</span>
-        }
-
-        @card.Footer(){
-            <div class="grid grid-cols-2 gap-3 w-full">
-            for i, choice := range choices {
-                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
-            }
-            </div>
-        }
-        @card.Footer(card.FooterProps{
-            Class: "flex justify-end",
-        }){
-            @EditDialog(question)
-            @DeleteDialog()        
-        }
-
-    }
+	@card.Card(card.Props{
+		Class: "mb-6",
+	}) {
+		@card.Header() {
+			@card.Title() {
+				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+				<span class="latex-content">{ question.QuestionTitle }</span>
+			}
+		}
+		@card.Content() {
+			<span class="latex-content">{ question.QuestionText }</span>
+		}
+		@card.Footer() {
+			<div class="grid grid-cols-2 gap-3 w-full">
+				for i, choice := range choices {
+					@ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+				}
+			</div>
+		}
+		@card.Footer(card.FooterProps{
+			Class: "flex justify-end",
+		}) {
+			@EditDialog(question)
+			@DeleteDialog()
+		}
+	}
 }
 
-
 templ ChoiceItem(choice domain.Choice, qIndex int, cIndex string) {
-    @label.Label(label.Props{
-        For:   fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
-        Class: "block cursor-pointer h-full",
-    }) {
-        @card.Card(card.Props{
-            Class: "hover:border-primary/50 has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:border-primary transition-all h-full",
-        }) {
-            @card.Content(card.ContentProps{
-                Class: "p-3 flex items-center gap-3 h-full",
-            }) {
-                @radio.Radio(radio.Props{
-                    ID:    fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
-                    Name:  fmt.Sprintf("question-%d-options", qIndex),
-                    Value: cIndex,
-                    Class: "peer hidden",
-                })
-                <div class="bg-muted peer-checked:bg-primary peer-checked:text-white transition-all text-muted-foreground w-8 h-8 flex items-center justify-center rounded-sm shrink-0">
-                    <span>{ cIndex }</span>
-                </div>
-                <div class="flex-1">
-                    <p class="text-md leading-tight font-medium">
-                        { choice.ChoiceText }
-                    </p>
-                </div>
-            }
-        }
-    }
+	@label.Label(label.Props{
+		For:   fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
+		Class: "block cursor-pointer h-full",
+	}) {
+		@card.Card(card.Props{
+			Class: "hover:border-primary/50 has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:border-primary transition-all h-full",
+		}) {
+			@card.Content(card.ContentProps{
+				Class: "p-3 flex items-center gap-3 h-full",
+			}) {
+				@radio.Radio(radio.Props{
+					ID:    fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
+					Name:  fmt.Sprintf("question-%d-options", qIndex),
+					Value: cIndex,
+					Class: "peer hidden",
+				})
+				<div class="bg-muted peer-checked:bg-primary peer-checked:text-white transition-all text-muted-foreground w-8 h-8 flex items-center justify-center rounded-sm shrink-0">
+					<span>{ cIndex }</span>
+				</div>
+				<div class="flex-1">
+					<p class="text-md leading-tight font-medium">
+						{ choice.ChoiceText }
+					</p>
+				</div>
+			}
+		}
+	}
 }
 
 templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number int) {
-        @card.Card(card.Props{
-        Class: "mb-6",
-    }){
-        @card.Header(){
-            @card.Title(){
-                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-                <span class="latex-content">{question.QuestionTitle}</span>
-            }
-        }
-        @card.Content(){
-                <div class="w-full rounded-md overflow-x-auto">
-                    <pre><code class="language-rust">{question.QuestionText}</code></pre>
-                </div>
-        }
-
-        @card.Footer(){
-            <div class="grid grid-cols-2 gap-3 w-full">
-            for i, choice := range choices {
-                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
-            }
-            </div>
-        }
-        @card.Footer(card.FooterProps{
-            Class: "flex justify-end",
-        }){
-
-        @EditDialog(question)
-        @DeleteDialog()
-        
-        }
-    }
+	@card.Card(card.Props{
+		Class: "mb-6",
+	}) {
+		@card.Header() {
+			@card.Title() {
+				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+				<span class="latex-content">{ question.QuestionTitle }</span>
+			}
+		}
+		@card.Content() {
+			<div class="w-full rounded-md overflow-x-auto">
+				<pre><code class="language-rust">{ question.QuestionText }</code></pre>
+			</div>
+		}
+		@card.Footer() {
+			<div class="grid grid-cols-2 gap-3 w-full">
+				for i, choice := range choices {
+					@ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+				}
+			</div>
+		}
+		@card.Footer(card.FooterProps{
+			Class: "flex justify-end",
+		}) {
+			@EditDialog(question)
+			@DeleteDialog()
+		}
+	}
 }
 
 templ ImageQuestionItem(question domain.Question, choices []domain.Choice, number int) {
-    @card.Card(card.Props{
-        Class: "mb-6",
-    }){
-        @card.Header(){
-            @card.Title(){
-                <span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-                <span class="latex-content">{question.QuestionTitle}</span>
-            }
-        }
-        @card.Content(){
-        <div class="w-full rounded-md overflow-x-auto">
-	@aspectratio.AspectRatio(aspectratio.Props{
-		Ratio: aspectratio.RatioWide,
-		Class: "rounded-md overflow-hidden",
+	@card.Card(card.Props{
+		Class: "mb-6",
 	}) {
-		<img
-			src="https://onlinelibrary.wiley.com/cms/asset/85e9fa0c-319d-4b19-888a-0833b0c72b02/jgt22801-fig-0003-m.jpg"
-			alt="Example image"
-			class="h-full w-full object-cover "
-		/>
-	}                </div>
-        }
-
-        @card.Footer(){
-            <div class="grid grid-cols-2 gap-3 w-full">
-            for i, choice := range choices {
-                @ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
-            }
-            </div>
-        }
-        @card.Footer(card.FooterProps{
-            Class: "flex justify-end",
-        }){
-        @EditDialog(question)
-        @DeleteDialog()        
-        }
-    }
+		@card.Header() {
+			@card.Title() {
+				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+				<span class="latex-content">{ question.QuestionTitle }</span>
+			}
+		}
+		@card.Content() {
+			<div class="w-full rounded-md overflow-x-auto">
+				@aspectratio.AspectRatio(aspectratio.Props{
+					Ratio: aspectratio.RatioWide,
+					Class: "rounded-md overflow-hidden",
+				}) {
+					<img
+						src="https://onlinelibrary.wiley.com/cms/asset/85e9fa0c-319d-4b19-888a-0833b0c72b02/jgt22801-fig-0003-m.jpg"
+						alt="Example image"
+						class="h-full w-full object-cover "
+					/>
+				}
+			</div>
+		}
+		@card.Footer() {
+			<div class="grid grid-cols-2 gap-3 w-full">
+				for i, choice := range choices {
+					@ChoiceItem(choice, number, fmt.Sprintf("%c", 'A'+i))
+				}
+			</div>
+		}
+		@card.Footer(card.FooterProps{
+			Class: "flex justify-end",
+		}) {
+			@EditDialog(question)
+			@DeleteDialog()
+		}
+	}
 }
-
 
 templ EditDialog(question domain.Question) {
 	@dialog.Dialog(dialog.Props{
@@ -215,43 +206,43 @@ templ EditDialog(question domain.Question) {
 	}) {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
-            Variant: button.VariantLink,
-            Size: button.SizeSm,
-            Class: "text-primary",
-        }){
-            Edit
-        }
+				Variant: button.VariantLink,
+				Size:    button.SizeSm,
+				Class:   "text-primary",
+			}) {
+				Edit
+			}
 		}
 		@dialog.Content() {
-            @dialog.Header(){
-                @dialog.Title() {
-                    Edit Question
-                }
-                @dialog.Description() {
-                    Edit question information
-                }
-            }
-<form id="edit-question-form" 
-    hx-post={fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID)} 
-    hx-target="#edit-dialog" 
-    hx-swap="outerHTML">
-
-    switch question.QuestionType {
-        case "TEXT":
-            @TextQuestionForm(question)
-        case "CODE":
-            @CodeQuestionForm(question)
-        case "IMAGE":
-            @ImageQuestionForm(question)
-    }
-
-</form>
+			@dialog.Header() {
+				@dialog.Title() {
+					Edit Question
+				}
+				@dialog.Description() {
+					Edit question information
+				}
+			}
+			<form
+				id="edit-question-form"
+				hx-post={ fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID) }
+				hx-target="#edit-dialog"
+				hx-swap="outerHTML"
+			>
+				switch question.QuestionType {
+					case "TEXT":
+						@TextQuestionForm(question)
+					case "CODE":
+						@CodeQuestionForm(question)
+					case "IMAGE":
+						@ImageQuestionForm(question)
+				}
+			</form>
 			@dialog.Footer() {
 				@button.Button(button.Props{
 					Variant: button.VariantDefault,
 					Size:    button.SizeSm,
-                    Type: "submit",
-                    Form: "edit-question-form",
+					Type:    "submit",
+					Form:    "edit-question-form",
 				}) {
 					Save
 				}
@@ -272,12 +263,12 @@ templ DeleteDialog() {
 	}) {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
-            Variant: button.VariantLink,
-            Size: button.SizeSm,
-            Class: "text-destructive",
-        }){
-            Delete
-        }
+				Variant: button.VariantLink,
+				Size:    button.SizeSm,
+				Class:   "text-destructive",
+			}) {
+				Delete
+			}
 		}
 		@dialog.Content() {
 			@dialog.Title() {
@@ -293,192 +284,184 @@ templ DeleteDialog() {
 				}) {
 					Delete
 				}
-            @dialog.Close(){
-                @button.Button(button.Props{
-                    Variant: button.VariantOutline,
-                    Size:    button.SizeSm,
-                }) {
-                    Cancel
-                }
-            }
+				@dialog.Close() {
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,
+						Size:    button.SizeSm,
+					}) {
+						Cancel
+					}
+				}
 			}
 		}
 	}
 }
 
-
 templ TextQuestionForm(question domain.Question) {
-    <div class="space-y-4 flex flex-col gap-4">
-    <div class="flex-1">
-    @card.Card(){
-        @card.Header(){
-            @card.Title(){
-                Question Details
-            }
-        }
-        @card.Content(){
-            @form.Item(){
-                @form.Label(form.LabelProps{
-                    For: "question-title",
-                    Class: "text-sm font-medium mb-2",
-                }){
-                    Question Title
-                }
-                @input.Input(input.Props{
-                    ID: "question-title",
-                    Name: "question-title",
-                    Value: question.QuestionTitle,
-                    Required: true,
-                })
-            }
-
-            @form.Item(){
-                @form.Label(form.LabelProps{
-                    For: "question-marks",
-                    Class: "text-sm font-medium mb-2",
-                }){
-                    Question Marks
-                }
-
-                @input.Input(input.Props{
-                    Type: input.TypeNumber,
-                    ID: "question-marks",
-                    Name: "question-marks",
-                    Value: fmt.Sprintf("%d", question.Marks),
-                    Required: true,
-                    Attributes: templ.Attributes{
-                        "min" : "1",
-                    },
-                })
-            }
-
-            @form.Item(){
-                @form.Label(form.LabelProps{
-                    For: "question-text",
-                    Class: "text-sm font-medium mb-2",
-                }){
-                    Question Text
-                }
-
-                @textarea.Textarea(textarea.Props{
-                    ID: "question-text",
-                    Name: "question-text",
-                    Value: question.QuestionText,
-                    Attributes: templ.Attributes{
-                        "hx-post": "/preview/question-text",
-                        "hx-trigger": "keyup changed delay:300ms",
-                        "hx-target": "#question-preview",
-                        "hx-swap": "innerHTML",
-                    },
-                })
-            }
-
-        }
-    }
-    </div>
-    <div class="flex-1">
-    if question.QuestionText != "" {
-    @card.Card(){
-        @card.Header(){
-            @card.Title(){
-                Preview
-            }
-        }
-        @card.Content(){
-            @QuestionPreview(question.QuestionText)
-        }
-    }
-    }
-    </div>
-    </div>
+	<div class="space-y-4 flex flex-col gap-4">
+		<div class="flex-1">
+			@card.Card() {
+				@card.Header() {
+					@card.Title() {
+						Question Details
+					}
+				}
+				@card.Content() {
+					@form.Item() {
+						@form.Label(form.LabelProps{
+							For:   "question-title",
+							Class: "text-sm font-medium mb-2",
+						}) {
+							Question Title
+						}
+						@input.Input(input.Props{
+							ID:       "question-title",
+							Name:     "question-title",
+							Value:    question.QuestionTitle,
+							Required: true,
+						})
+					}
+					@form.Item() {
+						@form.Label(form.LabelProps{
+							For:   "question-marks",
+							Class: "text-sm font-medium mb-2",
+						}) {
+							Question Marks
+						}
+						@input.Input(input.Props{
+							Type:     input.TypeNumber,
+							ID:       "question-marks",
+							Name:     "question-marks",
+							Value:    fmt.Sprintf("%d", question.Marks),
+							Required: true,
+							Attributes: templ.Attributes{
+								"min": "1",
+							},
+						})
+					}
+					@form.Item() {
+						@form.Label(form.LabelProps{
+							For:   "question-text",
+							Class: "text-sm font-medium mb-2",
+						}) {
+							Question Text
+						}
+						@textarea.Textarea(textarea.Props{
+							ID:    "question-text",
+							Name:  "question-text",
+							Value: question.QuestionText,
+							Attributes: templ.Attributes{
+								"hx-post":    "/preview/question-text",
+								"hx-trigger": "keyup changed delay:300ms",
+								"hx-target":  "#question-preview",
+								"hx-swap":    "innerHTML",
+							},
+						})
+					}
+				}
+			}
+		</div>
+		<div class="flex-1">
+			if question.QuestionText != "" {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Preview
+						}
+					}
+					@card.Content() {
+						@QuestionPreview(question.QuestionTitle, question.QuestionText)
+					}
+				}
+			}
+		</div>
+	</div>
 }
 
-templ QuestionPreview(questionText string) {
-    <div id="question-preview" class="latex-content">{questionText}</div>
+templ QuestionPreview(questionTitle, questionText string) {
+	<div id="question-preview" class="latex-content">{ questionTitle } { questionText }</div>
 }
 
 templ ChoicesQuestionForm(question domain.Question) {
-    @card.Card(){
-        @card.Header(){
-            @card.Title(){
-                Question Choices
-            }
-        }
-        @card.Content(){
-            @form.Item(){
-                @form.Label(form.LabelProps{
-                    For: "question-choices",
-                    Class: "text-sm font-medium mb-2",
-                }){
-                    Question Choices
-                }
-                @input.Input(input.Props{
-                    ID: "question-choices",
-                    Name: "question-choices",
-                    Value: "fdfdf",
-                    Required: true,
-                })
-            }
-        }
-    }
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				Question Choices
+			}
+		}
+		@card.Content() {
+			@form.Item() {
+				@form.Label(form.LabelProps{
+					For:   "question-choices",
+					Class: "text-sm font-medium mb-2",
+				}) {
+					Question Choices
+				}
+				@input.Input(input.Props{
+					ID:       "question-choices",
+					Name:     "question-choices",
+					Value:    "fdfdf",
+					Required: true,
+				})
+			}
+		}
+	}
 }
 
 templ CodeQuestionForm(question domain.Question) {
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-title",
-            Name: "question-title",
-            Value: question.QuestionTitle,
-        })
-    }
-    @form.Item(){
-        @textarea.Textarea(textarea.Props{
-            ID: "question-text",
-            Name: "question-text",
-            Value: question.QuestionText,
-        })
-    }
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-marks",
-            Name: "question-marks",
-            Value: fmt.Sprintf("%d", question.Marks),
-        })
-    }
+	@form.Item() {
+		@input.Input(input.Props{
+			ID:    "question-title",
+			Name:  "question-title",
+			Value: question.QuestionTitle,
+		})
+	}
+	@form.Item() {
+		@textarea.Textarea(textarea.Props{
+			ID:    "question-text",
+			Name:  "question-text",
+			Value: question.QuestionText,
+		})
+	}
+	@form.Item() {
+		@input.Input(input.Props{
+			ID:    "question-marks",
+			Name:  "question-marks",
+			Value: fmt.Sprintf("%d", question.Marks),
+		})
+	}
 }
 
 templ ImageQuestionForm(question domain.Question) {
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-title",
-            Name: "question-title",
-            Value: question.QuestionTitle,
-        })
-    }
-
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-image",
-            Name: "question-image",
-            Value: question.QuestionImage,
-            Type: "file",
-            Required: true,
-            FileAccept: "image/*",
-        })
-    }
-
-    @form.Item(){
-        @textarea.Textarea(textarea.Props{
-            ID: "question-text",
-            Name: "question-text",
-            Value: question.QuestionText,
-        })
-    }
-    @form.Item(){
-        @input.Input(input.Props{
-            ID: "question-marks",
-            Name: "question-marks",
-            Value: fmt.Sprintf("%d", question.Marks),
-        })
-    }
+	@form.Item() {
+		@input.Input(input.Props{
+			ID:    "question-title",
+			Name:  "question-title",
+			Value: question.QuestionTitle,
+		})
+	}
+	@form.Item() {
+		@input.Input(input.Props{
+			ID:         "question-image",
+			Name:       "question-image",
+			Value:      question.QuestionImage,
+			Type:       "file",
+			Required:   true,
+			FileAccept: "image/*",
+		})
+	}
+	@form.Item() {
+		@textarea.Textarea(textarea.Props{
+			ID:    "question-text",
+			Name:  "question-text",
+			Value: question.QuestionText,
+		})
+	}
+	@form.Item() {
+		@input.Input(input.Props{
+			ID:    "question-marks",
+			Name:  "question-marks",
+			Value: fmt.Sprintf("%d", question.Marks),
+		})
+	}
 }

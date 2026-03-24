@@ -110,9 +110,9 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 						}
 						@sidebar.MenuItem() {
 							@sidebar.MenuButton(sidebar.MenuButtonProps{
-								Href: "/admin/dashboard/subjects",
+								Href:    "/admin/dashboard/subjects",
 								Tooltip: "Subjects",
-								Class: activeClass(currentPath , "/admin/dashboard/subjects"),
+								Class:   activeClass(currentPath, "/admin/dashboard/subjects"),
 							}) {
 								@icon.Bookmark(icon.Props{Class: "size-4"})
 								<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Subjects</span>
