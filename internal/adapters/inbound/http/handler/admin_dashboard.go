@@ -687,14 +687,28 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			return
 		}
 
+		questions, err := h.App.ListQuestionsByExam(ctx.Request.Context(), examIDUUID)
+		if err != nil {
+			questions = []domain.Question{}
+		}
+
+		var choices []domain.Choice
+
+		for i := range questions {
+			choices, err = h.App.ListChoicesByQuestion(ctx.Request.Context(), questions[i].ID)
+			if err != nil {
+				choices = []domain.Choice{}
+			}
+			questions[i].Choices = choices
+		}
+
 		username, fullname, _ := parseUsername(ctx)
 		render.Render(ctx, pages.BasePage("Edit Exam", page.EditExamPage(page.EditExamPageParam{
 			Exam:      exam,
 			Subject:   subject,
 			Username:  username,
 			FullName:  fullname,
-			Questions: []domain.Question{},
-			Choices:   []domain.Choice{},
+			Questions: questions,
 		})))
 	}
 }
@@ -766,5 +780,99 @@ func (h *UserHandler) PreviewQuestionText() gin.HandlerFunc {
 		}
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.QuestionPreview(questionTitle, questionText))
+	}
+}
+
+func (h *UserHandler) PreviewQuestionChoice() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		triggerName := ctx.GetHeader("HX-Trigger-Name")
+
+		if triggerName == "" {
+			ctx.Status(http.StatusBadRequest)
+			return
+		}
+
+		inputValue := ctx.PostForm(triggerName)
+
+		if helpers.IsTrimmedEmpty(inputValue) {
+			displayTitle := strings.Replace(triggerName, "choice_", "Choice ", 1)
+			inputValue = fmt.Sprintf(`$\text{%s}$`, displayTitle)
+		}
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, page.QuestionChoicesPreview(inputValue))
+	}
+}
+
+func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		questionTitle := ctx.PostForm("question_title")
+		questionText := ctx.PostForm("question_text")
+		questionType := ctx.PostForm("question_type")
+		questionMarks := ctx.PostForm("question_marks")
+		choices := ctx.PostFormArray("choices")
+		correctChoice := ctx.PostForm("correct_choice")
+
+		fmt.Println("choices", choices)
+
+		examID := ctx.Param("id")
+		if helpers.IsTrimmedEmpty(examID) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Exam ID cannot be empty", toast.VariantError)
+			return
+		}
+
+		if helpers.IsTrimmedEmpty(questionTitle) || helpers.IsTrimmedEmpty(questionText) ||
+			helpers.IsTrimmedEmpty(questionType) || helpers.IsTrimmedEmpty(questionMarks) || len(choices) == 0 ||
+			helpers.IsTrimmedEmpty(correctChoice) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "All fields are required", toast.VariantError)
+			return
+		}
+
+		questionMarksInt, err := strconv.Atoi(questionMarks)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Invalid question marks", toast.VariantError)
+			return
+		}
+
+		parsedUUID, err := uuid.Parse(examID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+
+		question, err := h.App.CreateQuestion(ctx, ports.CreateQuestionParams{
+			ExamID:        parsedUUID,
+			QuestionTitle: questionTitle,
+			QuestionText:  questionText,
+			QuestionType:  domain.QuestionType(questionType),
+			Marks:         questionMarksInt,
+		})
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Failed to create question: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		for _, choice := range choices {
+			_, err = h.App.CreateChoice(ctx, ports.CreateChoiceParams{
+				QuestionID: question.ID,
+				ChoiceText: choice,
+				IsCorrect:  choice == correctChoice,
+			})
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Create Question Failed", "Failed to create choice: "+err.Error(), toast.VariantError)
+				return
+			}
+		}
+
+		helpers.Toast(ctx, "Create Question Success", "Question created successfully", toast.VariantSuccess)
 	}
 }

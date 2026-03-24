@@ -14,58 +14,17 @@ import "uot-exam/web/templates/components/textarea"
 
 type QuestionListProps struct {
 	Questions []domain.Question
-	Choices   []domain.Choice
 }
 
 templ QuestionList(props QuestionListProps) {
-	if len(props.Questions) == 0 {
-		// Sample data for empty list
-		@QuestionItem(domain.Question{
-			QuestionTitle: "Solve the following differential equations:",
-			QuestionText:  `\[ L(G) = D(G) - A(G) = \begin{pmatrix} \deg(v_1) & -a_{12} & \cdots & -a_{1n} \\ -a_{21} & \deg(v_2) & \cdots & -a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ -a_{n1} & -a_{n2} & \cdots & \deg(v_n) \end{pmatrix} \]`,
-		}, []domain.Choice{
-			{ChoiceText: `\( c^2 = a^2 + b^2 \)`},
-			{ChoiceText: `\( m = \frac{y_2 - y_1}{x_2 - x_1} \)`},
-			{ChoiceText: `\( y = mx + b \)`},
-			{ChoiceText: `\( \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \)`},
-		}, 1)
-		@QuestionItem(domain.Question{
-			QuestionTitle: "What is the spectral radius of a graph?",
-			QuestionText:  `\[ \rho(G) = \max\{|\lambda_i| : \lambda_i \text{ eigenvalue of } A(G)\} \]`,
-		}, []domain.Choice{
-			{ChoiceText: "Option A"},
-			{ChoiceText: "Option B"},
-			{ChoiceText: "Option C"},
-			{ChoiceText: "Option D"},
-			{ChoiceText: "Option E"},
-			{ChoiceText: "Option F"},
-		}, 2)
-		@QuestionCodeItem(domain.Question{
-			QuestionTitle: "give the output of the following code",
-			QuestionText: `trait Area { fn area(&self) -> f64; }
-struct Circle { r: f64 }
-impl Area for Circle {
-    fn area(&self) -> f64 { std::f64::consts::PI * self.r * self.r }
-}
-fn print_area<T: Area>(shape: &T) { println!("{}", shape.area()); }`,
-		}, []domain.Choice{
-			{ChoiceText: `3.141592653589793`},
-			{ChoiceText: `12.566370614359172`},
-			{ChoiceText: `6.283185307179586`},
-			{ChoiceText: `9.42477796076938`},
-		}, 3)
-		@ImageQuestionItem(domain.Question{
-			QuestionTitle: "What is the spectral radius of a graph?",
-			QuestionText:  `https://media.springernature.com/lw1200/springer-static/image/art%3A10.1007%2Fs00373-021-02369-8/MediaObjects/373_2021_2369_Fig3_HTML.png`,
-		}, []domain.Choice{
-			{ChoiceText: "Option A"},
-			{ChoiceText: "Option B"},
-			{ChoiceText: "Option C"},
-			{ChoiceText: "Option D"},
-		}, 4)
-	} else {
-		for i, question := range props.Questions {
-			@QuestionItem(question, nil, i+1)
+	for i, question := range props.Questions {
+		switch question.QuestionType {
+			case string(domain.QuestionTypeText):
+				@QuestionItem(question, question.Choices, i+1)
+			case string(domain.QuestionTypeCode):
+				@QuestionCodeItem(question, question.Choices, i+1)
+			case string(domain.QuestionTypeImage):
+				@ImageQuestionItem(question, question.Choices, i+1)
 		}
 	}
 }
@@ -380,32 +339,6 @@ templ TextQuestionForm(question domain.Question) {
 
 templ QuestionPreview(questionTitle, questionText string) {
 	<div id="question-preview" class="latex-content">{ questionTitle } { questionText }</div>
-}
-
-templ ChoicesQuestionForm(question domain.Question) {
-	@card.Card() {
-		@card.Header() {
-			@card.Title() {
-				Question Choices
-			}
-		}
-		@card.Content() {
-			@form.Item() {
-				@form.Label(form.LabelProps{
-					For:   "question-choices",
-					Class: "text-sm font-medium mb-2",
-				}) {
-					Question Choices
-				}
-				@input.Input(input.Props{
-					ID:       "question-choices",
-					Name:     "question-choices",
-					Value:    "fdfdf",
-					Required: true,
-				})
-			}
-		}
-	}
 }
 
 templ CodeQuestionForm(question domain.Question) {

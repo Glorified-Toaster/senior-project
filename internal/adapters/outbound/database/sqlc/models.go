@@ -99,6 +99,49 @@ func (ns NullExamStatusType) Value() (driver.Value, error) {
 	return string(ns.ExamStatusType), nil
 }
 
+type QuestionTypeType string
+
+const (
+	QuestionTypeTypeTEXT  QuestionTypeType = "TEXT"
+	QuestionTypeTypeCODE  QuestionTypeType = "CODE"
+	QuestionTypeTypeIMAGE QuestionTypeType = "IMAGE"
+)
+
+func (e *QuestionTypeType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = QuestionTypeType(s)
+	case string:
+		*e = QuestionTypeType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for QuestionTypeType: %T", src)
+	}
+	return nil
+}
+
+type NullQuestionTypeType struct {
+	QuestionTypeType QuestionTypeType `json:"question_type_type"`
+	Valid            bool             `json:"valid"` // Valid is true if QuestionTypeType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullQuestionTypeType) Scan(value interface{}) error {
+	if value == nil {
+		ns.QuestionTypeType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.QuestionTypeType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullQuestionTypeType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.QuestionTypeType), nil
+}
+
 type UserRoleType string
 
 const (
@@ -188,13 +231,16 @@ type ExamAttempt struct {
 }
 
 type Question struct {
-	ID           uuid.UUID          `json:"id"`
-	ExamID       uuid.NullUUID      `json:"exam_id"`
-	QuestionText string             `json:"question_text"`
-	Marks        int32              `json:"marks"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	ID            uuid.UUID          `json:"id"`
+	ExamID        uuid.NullUUID      `json:"exam_id"`
+	QuestionTitle string             `json:"question_title"`
+	QuestionText  string             `json:"question_text"`
+	QuestionType  QuestionTypeType   `json:"question_type"`
+	QuestionImage *string            `json:"question_image"`
+	Marks         int32              `json:"marks"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type StudentAnswer struct {

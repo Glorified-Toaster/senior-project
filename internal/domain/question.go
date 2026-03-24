@@ -14,7 +14,16 @@ type Question struct {
 	QuestionType  string     `json:"question_type"`
 	QuestionImage string     `json:"question_image"`
 	Marks         int        `json:"marks"`
+	Choices       []Choice   `json:"choices"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 	DeletedAt     *time.Time `json:"deleted_at"`
 }
+
+type QuestionType string
+
+const (
+	QuestionTypeText  QuestionType = "TEXT"
+	QuestionTypeImage QuestionType = "IMAGE"
+	QuestionTypeCode  QuestionType = "CODE"
+)

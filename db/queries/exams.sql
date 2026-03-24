@@ -27,25 +27,6 @@ SELECT * FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 O
 -- name: CountExams :one
 SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL;
 
-
--- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_text, marks)
-VALUES ($1, $2, $3)
-RETURNING *;
-
--- name: ListQuestionsByExam :many
-SELECT * FROM questions WHERE exam_id = $1 ORDER BY created_at ASC;
-
-
--- name: CreateChoice :one
-INSERT INTO choices (question_id, choice_text, is_correct)
-VALUES ($1, $2, $3)
-RETURNING *;
-
--- name: ListChoicesByQuestion :many
-SELECT * FROM choices WHERE question_id = $1;
-
-
 -- name: StartExamAttempt :one
 INSERT INTO exam_attempts (exam_id, student_id)
 VALUES ($1, $2)

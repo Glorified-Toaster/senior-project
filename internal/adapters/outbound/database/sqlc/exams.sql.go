@@ -23,33 +23,6 @@ func (q *Queries) CountExams(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const createChoice = `-- name: CreateChoice :one
-INSERT INTO choices (question_id, choice_text, is_correct)
-VALUES ($1, $2, $3)
-RETURNING id, question_id, choice_text, is_correct, created_at, updated_at, deleted_at
-`
-
-type CreateChoiceParams struct {
-	QuestionID uuid.NullUUID `json:"question_id"`
-	ChoiceText string        `json:"choice_text"`
-	IsCorrect  bool          `json:"is_correct"`
-}
-
-func (q *Queries) CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error) {
-	row := q.db.QueryRow(ctx, createChoice, arg.QuestionID, arg.ChoiceText, arg.IsCorrect)
-	var i Choice
-	err := row.Scan(
-		&i.ID,
-		&i.QuestionID,
-		&i.ChoiceText,
-		&i.IsCorrect,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
 const createExam = `-- name: CreateExam :one
 INSERT INTO exams (subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
@@ -95,33 +68,6 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		&i.EndTime,
 		&i.Status,
 		&i.CreatedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const createQuestion = `-- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_text, marks)
-VALUES ($1, $2, $3)
-RETURNING id, exam_id, question_text, marks, created_at, updated_at, deleted_at
-`
-
-type CreateQuestionParams struct {
-	ExamID       uuid.NullUUID `json:"exam_id"`
-	QuestionText string        `json:"question_text"`
-	Marks        int32         `json:"marks"`
-}
-
-func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error) {
-	row := q.db.QueryRow(ctx, createQuestion, arg.ExamID, arg.QuestionText, arg.Marks)
-	var i Question
-	err := row.Scan(
-		&i.ID,
-		&i.ExamID,
-		&i.QuestionText,
-		&i.Marks,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -283,38 +229,6 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 	return items, nil
 }
 
-const listChoicesByQuestion = `-- name: ListChoicesByQuestion :many
-SELECT id, question_id, choice_text, is_correct, created_at, updated_at, deleted_at FROM choices WHERE question_id = $1
-`
-
-func (q *Queries) ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error) {
-	rows, err := q.db.Query(ctx, listChoicesByQuestion, questionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Choice
-	for rows.Next() {
-		var i Choice
-		if err := rows.Scan(
-			&i.ID,
-			&i.QuestionID,
-			&i.ChoiceText,
-			&i.IsCorrect,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listExamsBySubject = `-- name: ListExamsBySubject :many
 SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 ORDER BY created_at DESC
 `
@@ -340,38 +254,6 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 			&i.EndTime,
 			&i.Status,
 			&i.CreatedBy,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listQuestionsByExam = `-- name: ListQuestionsByExam :many
-SELECT id, exam_id, question_text, marks, created_at, updated_at, deleted_at FROM questions WHERE exam_id = $1 ORDER BY created_at ASC
-`
-
-func (q *Queries) ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error) {
-	rows, err := q.db.Query(ctx, listQuestionsByExam, examID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Question
-	for rows.Next() {
-		var i Question
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExamID,
-			&i.QuestionText,
-			&i.Marks,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

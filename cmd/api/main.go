@@ -80,10 +80,11 @@ func main() {
 	userRepo := repository.NewUserRepository(query)
 	subjectRepo := repository.NewSubjectRepository(query)
 	examRepo := repository.NewExamRepository(query)
+	questionRepo := repository.NewQuestionRepository(query)
 	txManager := database.NewPostgresTxManager(pool.Pool)
-	app := application.NewApplication(userRepo, subjectRepo, examRepo, txManager, pool, zlog)
+	app := application.NewApplication(userRepo, subjectRepo, examRepo, questionRepo, txManager, pool, zlog)
 
-	populateDB(app)
+	//populateDB(app)
 	//mockExam(app)
 	//populateSubjects(query)
 	//populateExams(query)

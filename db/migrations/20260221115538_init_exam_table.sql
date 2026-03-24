@@ -115,6 +115,7 @@ CREATE TABLE exams (
 );
 
 CREATE INDEX idx_exams_subject ON exams(subject_id);
+CREATE INDEX idx_exams_id ON exams(id);
 CREATE INDEX idx_exams_status ON exams(status);
 CREATE INDEX idx_exams_time_window ON exams(start_time, end_time);
 
@@ -122,6 +123,28 @@ CREATE TRIGGER exams_updated_at
 BEFORE UPDATE ON exams
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+CREATE OR REPLACE FUNCTION validate_exam_creator_role()
+RETURNS TRIGGER AS $$
+DECLARE
+    creator_role user_role_type;
+BEGIN
+    SELECT role INTO creator_role 
+    FROM users 
+    WHERE id = NEW.created_by;
+
+    IF creator_role NOT IN ('INSTRUCTOR', 'ADMIN') THEN
+        RAISE EXCEPTION 'User % is a %, and is not authorized to create or manage exams.', 
+            NEW.created_by, creator_role;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER enforce_exam_creator_role
+BEFORE INSERT OR UPDATE OF created_by ON exams
+FOR EACH ROW
+EXECUTE FUNCTION validate_exam_creator_role();
 
 -- =============================
 -- ENROLLMENTS
@@ -154,6 +177,7 @@ CREATE TABLE questions (
 );
 
 CREATE INDEX idx_questions_exam ON questions(exam_id);
+CREATE INDEX idx_questions_id ON questions(id);
 
 CREATE TRIGGER questions_updated_at
 BEFORE UPDATE ON questions

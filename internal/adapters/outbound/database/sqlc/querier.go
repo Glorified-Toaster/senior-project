@@ -16,12 +16,14 @@ type Querier interface {
 	CountDeletedUsers(ctx context.Context) (int64, error)
 	CountExams(ctx context.Context) (int64, error)
 	CountInstructors(ctx context.Context) (int64, error)
+	CountQuestions(ctx context.Context) (int64, error)
 	CountSearchDeletedUsers(ctx context.Context, search string) (int64, error)
 	CountSearchSubjects(ctx context.Context, title *string) (int64, error)
 	CountSearchUsers(ctx context.Context, search string) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
+	CreateChoices(ctx context.Context, arg CreateChoicesParams) ([]Choice, error)
 	CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error)
 	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
@@ -33,6 +35,7 @@ type Querier interface {
 	EnableUser(ctx context.Context, id uuid.UUID) error
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error)
+	GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, error)
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
@@ -44,12 +47,14 @@ type Querier interface {
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error)
 	ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
+	ListChoicesByQuestionSeeded(ctx context.Context, arg ListChoicesByQuestionSeededParams) ([]Choice, error)
 	ListDeletedSubjects(ctx context.Context, arg ListDeletedSubjectsParams) ([]Subject, error)
 	ListDeletedUsers(ctx context.Context, arg ListDeletedUsersParams) ([]User, error)
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListInstructorsBySubjectIDRow, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
+	RestoreQuestion(ctx context.Context, id uuid.UUID) error
 	RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
@@ -58,11 +63,13 @@ type Querier interface {
 	SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SoftDeleteExam(ctx context.Context, id uuid.UUID) error
+	SoftDeleteQuestion(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error
 	UnassignInstructorFromSubject(ctx context.Context, arg UnassignInstructorFromSubjectParams) (SubjectInstructor, error)
 	UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, error)
+	UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (Question, error)
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
