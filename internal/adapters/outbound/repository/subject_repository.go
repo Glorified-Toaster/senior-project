@@ -295,7 +295,12 @@ func (r *SubjectRepository) DeleteSubjectAndEnrolledInstructors(ctx context.Cont
 		queries = queries.WithTx(tx)
 	}
 
-	err := queries.DeleteSubjectAndInstructors(ctx, subjectID)
+	err := queries.SoftDeleteInstructorsBySubject(ctx, subjectID)
+	if err != nil {
+		return err
+	}
+
+	err = queries.SoftDeleteSubject(ctx, subjectID)
 	if err != nil {
 		return err
 	}

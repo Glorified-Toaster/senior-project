@@ -11,9 +11,18 @@ import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/textarea"
+import "github.com/google/uuid"
+import "strconv"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/tabs"
 
 type QuestionListProps struct {
 	Questions []domain.Question
+}
+
+type EditExamPageParam struct {
+	Exam       domain.Exam
+	Questions  []domain.Question
 }
 
 templ QuestionList(props QuestionListProps) {
@@ -55,39 +64,49 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
 			Class: "flex justify-end",
 		}) {
 			@EditDialog(question)
-			@DeleteDialog()
+			@DeleteDialog(question.ID, question.ExamID)
 		}
 	}
 }
-
 templ ChoiceItem(choice domain.Choice, qIndex int, cIndex string) {
-	@label.Label(label.Props{
-		For:   fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
-		Class: "block cursor-pointer h-full",
-	}) {
-		@card.Card(card.Props{
-			Class: "hover:border-primary/50 has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:border-primary transition-all h-full",
-		}) {
-			@card.Content(card.ContentProps{
-				Class: "p-3 flex items-center gap-3 h-full",
-			}) {
-				@radio.Radio(radio.Props{
-					ID:    fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
-					Name:  fmt.Sprintf("question-%d-options", qIndex),
-					Value: cIndex,
-					Class: "peer hidden",
-				})
-				<div class="bg-muted peer-checked:bg-primary peer-checked:text-white transition-all text-muted-foreground w-8 h-8 flex items-center justify-center rounded-sm shrink-0">
-					<span>{ cIndex }</span>
-				</div>
-				<div class="flex-1">
-					<p class="text-md leading-tight font-medium">
-						{ choice.ChoiceText }
-					</p>
-				</div>
-			}
-		}
-	}
+    @label.Label(label.Props{
+        For:   fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
+        Class: "block cursor-pointer h-full",
+    }) {
+        @card.Card(card.Props{
+            Class: fmt.Sprintf("hover:border-primary/50 has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:border-primary transition-all h-full %s",
+                templ.SafeClass(map[bool]string{
+                    true: "border-green-500",
+                }[choice.IsCorrect]),
+            ),
+        }) {
+            @card.Content(card.ContentProps{
+                Class: "p-3 flex items-center gap-3 h-full",
+            }) {
+                @radio.Radio(radio.Props{
+                    ID:    fmt.Sprintf("q%d-option-%s", qIndex, cIndex),
+                    Name:  fmt.Sprintf("question-%d-options", qIndex),
+                    Value: cIndex,
+                    Class: "peer hidden",
+                })
+                <div class={
+                    "transition-all w-8 h-8 flex items-center justify-center rounded-sm shrink-0",
+                    templ.KV("bg-correct text-white ", choice.IsCorrect),
+                    templ.KV("bg-muted text-muted-foreground peer-checked:bg-primary peer-checked:text-white", !choice.IsCorrect),
+                }>
+                    <span>{ cIndex }</span>
+                </div>
+                <div class="flex-1">
+                    <p class={
+                        "text-md leading-tight font-medium",
+                        templ.KV("text-green-500", choice.IsCorrect),
+                    }>
+                        { choice.ChoiceText }
+                    </p>
+                </div>
+            }
+        }
+    }
 }
 
 templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number int) {
@@ -116,7 +135,7 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
 			Class: "flex justify-end",
 		}) {
 			@EditDialog(question)
-			@DeleteDialog()
+			@DeleteDialog(question.ID, question.ExamID)
 		}
 	}
 }
@@ -156,14 +175,14 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 			Class: "flex justify-end",
 		}) {
 			@EditDialog(question)
-			@DeleteDialog()
+			@DeleteDialog(question.ID, question.ExamID)
 		}
 	}
 }
 
 templ EditDialog(question domain.Question) {
 	@dialog.Dialog(dialog.Props{
-		ID: "edit-dialog",
+		ID: fmt.Sprintf("edit-dialog-%s", question.ID),
 	}) {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
@@ -184,14 +203,14 @@ templ EditDialog(question domain.Question) {
 				}
 			}
 			<form
-				id="edit-question-form"
+				id={ fmt.Sprintf("edit-question-form-%s", question.ID) }
 				hx-post={ fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID) }
-				hx-target="#edit-dialog"
-				hx-swap="outerHTML"
+				hx-target="#toast-container"
+				hx-swap="beforeend"
 			>
 				switch question.QuestionType {
 					case "TEXT":
-						@TextQuestionForm(question)
+	
 					case "CODE":
 						@CodeQuestionForm(question)
 					case "IMAGE":
@@ -218,9 +237,9 @@ templ EditDialog(question domain.Question) {
 	}
 }
 
-templ DeleteDialog() {
+templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
 	@dialog.Dialog(dialog.Props{
-		ID: "delete-dialog",
+		ID: fmt.Sprintf("delete-dialog-%s", questionID),
 	}) {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
@@ -232,6 +251,12 @@ templ DeleteDialog() {
 			}
 		}
 		@dialog.Content() {
+			<form
+				id={ fmt.Sprintf("delete-question-form-%s", questionID) }
+				hx-delete={ fmt.Sprintf("/admin/dashboard/exam/%s/question/delete/%s", examID, questionID) }
+				hx-target="#question-list"
+				hx-swap="innerHTML"
+			>
 			@dialog.Title() {
 				Delete Question
 			}
@@ -242,6 +267,7 @@ templ DeleteDialog() {
 				@button.Button(button.Props{
 					Variant: button.VariantDestructive,
 					Size:    button.SizeSm,
+					Type:    button.TypeSubmit,
 				}) {
 					Delete
 				}
@@ -254,90 +280,11 @@ templ DeleteDialog() {
 					}
 				}
 			}
+			</form>
 		}
 	}
 }
 
-templ TextQuestionForm(question domain.Question) {
-	<div class="space-y-4 flex flex-col gap-4">
-		<div class="flex-1">
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Question Details
-					}
-				}
-				@card.Content() {
-					@form.Item() {
-						@form.Label(form.LabelProps{
-							For:   "question-title",
-							Class: "text-sm font-medium mb-2",
-						}) {
-							Question Title
-						}
-						@input.Input(input.Props{
-							ID:       "question-title",
-							Name:     "question-title",
-							Value:    question.QuestionTitle,
-							Required: true,
-						})
-					}
-					@form.Item() {
-						@form.Label(form.LabelProps{
-							For:   "question-marks",
-							Class: "text-sm font-medium mb-2",
-						}) {
-							Question Marks
-						}
-						@input.Input(input.Props{
-							Type:     input.TypeNumber,
-							ID:       "question-marks",
-							Name:     "question-marks",
-							Value:    fmt.Sprintf("%d", question.Marks),
-							Required: true,
-							Attributes: templ.Attributes{
-								"min": "1",
-							},
-						})
-					}
-					@form.Item() {
-						@form.Label(form.LabelProps{
-							For:   "question-text",
-							Class: "text-sm font-medium mb-2",
-						}) {
-							Question Text
-						}
-						@textarea.Textarea(textarea.Props{
-							ID:    "question-text",
-							Name:  "question-text",
-							Value: question.QuestionText,
-							Attributes: templ.Attributes{
-								"hx-post":    "/preview/question-text",
-								"hx-trigger": "keyup changed delay:300ms",
-								"hx-target":  "#question-preview",
-								"hx-swap":    "innerHTML",
-							},
-						})
-					}
-				}
-			}
-		</div>
-		<div class="flex-1">
-			if question.QuestionText != "" {
-				@card.Card() {
-					@card.Header() {
-						@card.Title() {
-							Preview
-						}
-					}
-					@card.Content() {
-						@QuestionPreview(question.QuestionTitle, question.QuestionText)
-					}
-				}
-			}
-		</div>
-	</div>
-}
 
 templ QuestionPreview(questionTitle, questionText string) {
 	<div id="question-preview" class="latex-content">{ questionTitle }<br/>{ questionText }</div>
@@ -398,5 +345,393 @@ templ ImageQuestionForm(question domain.Question) {
 			Name:  "question-marks",
 			Value: fmt.Sprintf("%d", question.Marks),
 		})
+	}
+}
+
+templ AddDialog(param EditExamPageParam) {
+	@dialog.Dialog(dialog.Props{}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Type: button.TypeButton,
+			}) {
+				Add Question
+			}
+		}
+		@dialog.Content() {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add Question
+				}
+				@dialog.Description() {
+					Add a new question to the exam.
+				}
+			}
+			@tabs.Tabs(tabs.Props{
+				ID: "add_question_tabs",
+			}) {
+				@tabs.List(tabs.ListProps{
+					Class: "w-full max-w-full",
+				}) {
+					@tabs.Trigger(tabs.TriggerProps{
+						Value: "questions",
+						IsActive: true,
+						TabsID:   "add_question_tabs",
+						Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Question
+					}
+					@tabs.Trigger(tabs.TriggerProps{
+						Value: "choices",
+						TabsID:   "add_question_tabs",
+						Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Choices
+					}
+				}
+				@tabs.Content(tabs.ContentProps{
+					Value:    "questions",
+					TabsID:   "add_question_tabs",
+				}) {
+					@AddQuestionForm(param)
+				}
+				@tabs.Content(tabs.ContentProps{
+					Value:    "choices",
+					TabsID:   "add_question_tabs",
+				}) {
+					@ChoicesTab()
+				}
+			}
+			@dialog.Footer() {
+				@button.Button(button.Props{
+					Type: button.TypeSubmit,
+					Form: "add_question_form",
+				}) {
+					Add Question
+				}
+			@dialog.Close(){
+				@button.Button(button.Props{
+					Type: button.TypeButton,
+					Variant: button.VariantOutline,
+				}) {
+					Cancel
+				}
+			}
+
+			}
+		}
+	}
+}
+
+templ AddQuestionForm(param EditExamPageParam) {
+	<form id="add_question_form" 
+		hx-post={ "/admin/dashboard/exam/"+ param.Exam.ID.String() +"/question/create" }
+		hx-target="#question-list" 
+		hx-swap="beforeend"
+		class="space-y-4">
+		@TextQuestionForm()
+	</form>
+<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === "question-preview") {
+        renderMathInElement(event.detail.target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+});
+</script>
+}
+
+templ TextQuestionForm() {
+		<div>
+			@label.Label(label.Props{
+				For: "question_title",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Title
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Question Title",
+				ID: "question_title",
+				Name: "question_title",
+				Class: "mb-4",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/preview/question-text",
+					"hx-trigger": "keyup changed delay:300ms",
+					"hx-target": "#question-preview",
+					"hx-swap": "innerHTML",
+				},
+			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_marks",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Marks
+			}
+			@input.Input(input.Props{
+				Type: input.TypeNumber,
+				ID: "question_marks",
+				Name: "question_marks",
+				Class: "mb-4",
+				Value: "1",
+				Attributes: templ.Attributes{
+					"min": "1",
+				},
+			})
+
+			@label.Label(label.Props{
+				For: "question_type",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Type(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Type
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				ID: "question_type",
+				Name: "question_type",
+				Class: "mb-4",
+				Value: "TEXT",
+				Readonly: true,
+			})
+
+		</div>
+
+		<div>
+			@label.Label(label.Props{
+				For: "question_text",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.MessageSquareText(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Text
+			}
+			@textarea.Textarea(textarea.Props{
+				Placeholder: "Question Text",
+				ID: "question_text",
+				Name: "question_text",
+				Rows: 3,
+				Class: "mb-4",
+    			Attributes: templ.Attributes{
+        "hx-post": "/admin/dashboard/exam/preview/question-text",
+        "hx-trigger": "keyup changed delay:300ms",
+        "hx-target": "#question-preview",
+        "hx-swap": "innerHTML",
+    },			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_preview",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Eye(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Preview
+			}
+			@card.Card(card.Props{
+				Class: "mb-6",
+			}){
+				@card.Content(){
+					@QuestionPreview(`\[\text{Question Title}\]`, `\[\text{Question Text}\]`)
+				}
+			}
+		</div>	
+}
+
+
+templ ChoicesTab() {
+	<div class="flex flex-col space-y-4">
+		@label.Label(label.Props{
+			For: "question_choices",
+			Class: "flex items-center gap-2 mb-4 mt-4",
+		}) {
+			@icon.List(icon.Props{
+				Class: "h-4 w-4",
+			})
+			Question Choices
+		}
+		
+		<div id="choices-container" class="space-y-3">
+			for i := 1; i <= 4; i++ {
+				@choiceItemCheckbox(i, i == 1)
+			}
+		</div>
+		<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === "question-choice-preview") {
+        renderMathInElement(event.detail.target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+});
+</script>
+	</div>
+}
+
+templ choiceItemCheckbox(index int, isCorrect bool) {
+	<div class="group flex items-center gap-3 rounded-md" data-index={ strconv.Itoa(index) }>
+		<div class="flex-1 flex items-center gap-2">
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Choice " + strconv.Itoa(index),
+				Name: "choice_" + strconv.Itoa(index),
+				Class: "mb-0",
+				Form: "add_question_form",
+				Attributes: templ.Attributes{
+					"hx-post": "/admin/dashboard/exam/preview/question-choice",
+					"hx-trigger": "keyup changed delay:300ms",
+					"hx-target": "#question-choice-preview-wrapper-" + strconv.Itoa(index),
+					"hx-swap": "innerHTML",
+				},
+			})			
+		</div>
+		
+		<div class="flex items-center gap-2 shrink-0">
+			@radio.Radio(radio.Props{
+				ID: "correct_choice_" + strconv.Itoa(index),
+				Name: "correct_choice",
+				Value: "choice_" + strconv.Itoa(index),
+				Checked: isCorrect,
+				Form: "add_question_form",
+				Class: "mb-0",
+				Attributes: templ.Attributes{
+					"class": "h-4 w-4 cursor-pointer rounded",
+					"onchange": "setCorrectChoice(this)",
+				},
+			})
+			<label 
+				for={ "correct_choice_" + strconv.Itoa(index) }
+				class="text-sm cursor-pointer"
+			>
+				Correct
+			</label>
+		</div>
+	</div>
+<div class="flex justify-center" id={ "question-choice-preview-wrapper-" + strconv.Itoa(index) }>
+        @QuestionChoicesPreview(fmt.Sprintf(`$\text{Choice %d}$`, index))
+    </div>
+	<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.classList.contains('latex-preview-container') || 
+        event.detail.target.querySelector('.latex-content')) {
+        
+        renderMathInElement(event.detail.target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+});
+	</script>	
+}
+
+templ QuestionChoicesPreview(content string) {
+    @card.Card(card.Props{
+        Class: "mb-6",
+    }){
+        @card.Content(){
+            <span class="latex-content">
+                { content }
+            </span>
+        }
+    }
+}
+
+templ AddViaCSVDialog(param EditExamPageParam) {
+
+	@dialog.Dialog(dialog.Props{
+		ID: "add_via_csv_dialog"}){
+			@dialog.Trigger(){
+				@button.Button(button.Props{
+					Type: button.TypeButton,
+					Variant: button.VariantDefault,
+				}){
+					Add Questions via CSV
+				}
+			}
+			
+			@dialog.Content(dialog.ContentProps{
+				Class: "m-4",
+			}){
+			<form id="add_via_csv_form"
+				hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv" }
+				hx-target="#question-list"
+				hx-swap="innerHTML"
+				enctype="multipart/form-data"
+			>
+
+			@dialog.Header(){
+				@dialog.Title(){
+					Add Questions via CSV
+				}
+				@dialog.Description(){
+					Upload a CSV file to add questions to the exam
+				}
+			}
+			@label.Label(label.Props{
+				For: "file",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}){
+				@icon.File(icon.Props{
+					Class: "h-4 w-4",
+				})
+				CSV File
+			}
+			@input.Input(input.Props{
+				Type: input.TypeFile,
+				ID: "file",
+				Name: "file",
+				FileAccept: ".csv",
+				Class: "mb-4",
+			})
+		
+			@dialog.Footer(){
+				@dialog.Close(){
+					@button.Button(button.Props{
+						Type: button.TypeButton,
+						Variant: button.VariantOutline,
+					}){
+						Cancel
+					}
+
+				}
+				@button.Button(button.Props{
+					Type: button.TypeSubmit,
+					Form: "add_via_csv_form",
+					Variant: button.VariantDefault,
+				}){
+					Add Questions
+				}
+			}
+			</form>
+		}
 	}
 }

@@ -801,7 +801,7 @@ func (h *UserHandler) PreviewQuestionChoice() gin.HandlerFunc {
 		}
 
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, page.QuestionChoicesPreview(inputValue))
+		render.Render(ctx, components.QuestionChoicesPreview(inputValue))
 	}
 }
 
@@ -915,13 +915,12 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			question.Choices = []domain.Choice{}
 		}
 
+		helpers.Toast(ctx, "Create Question Success", "Question created successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
 			Questions: []domain.Question{
 				question,
 			},
 		}))
-
-		helpers.Toast(ctx, "Create Question Success", "Question created successfully", toast.VariantSuccess)
 	}
 }
 
@@ -991,5 +990,58 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 		}
 
 		helpers.Toast(ctx, "Upload Question CSV Success", "Question uploaded successfully", toast.VariantSuccess)
+		render.Render(ctx, components.QuestionList(components.QuestionListProps{
+			Questions: questions,
+		}))
+	}
+}
+
+func (h *UserHandler) DeleteQuestion() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		questionID := ctx.Param("question-id")
+
+		if helpers.IsTrimmedEmpty(questionID) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Delete Question Failed", "Question ID cannot be empty", toast.VariantError)
+			return
+		}
+
+		parsedQuestionUUID, err := uuid.Parse(questionID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Delete Question Failed", "Invalid question ID", toast.VariantError)
+			return
+		}
+
+		err = h.App.DeleteQuestionAndChoices(ctx, parsedQuestionUUID)
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Delete Question Failed", "Failed to delete question: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		examID := ctx.Param("id")
+		parsedExamUUID, _ := uuid.Parse(examID)
+
+		questions, err := h.App.ListQuestionsByExam(ctx, parsedExamUUID)
+		if err != nil {
+			helpers.Toast(ctx, "Delete Question Failed", "Failed to reload questions: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		for i := range questions {
+			questions[i].Choices, err = h.App.ListChoicesByQuestion(ctx, questions[i].ID)
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Delete Question Failed", "Failed to reload questions: "+err.Error(), toast.VariantError)
+				return
+			}
+		}
+
+		helpers.Toast(ctx, "Delete Question Success", "Question deleted successfully", toast.VariantSuccess)
+		render.Render(ctx, components.QuestionList(components.QuestionListProps{
+			Questions: questions,
+		}))
 	}
 }

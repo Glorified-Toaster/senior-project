@@ -17,7 +17,7 @@ templ BasePage(title string, content templ.Component) {
 
 templ headers(scripts ...string) {
 	<script src="/src/htmx.min.js"></script>
-	<link rel="stylesheet" href="/static/css/output.css"/>
+	<link rel="stylesheet" href="/static/css/output.css?v=1774543340"/>
 	for _, script := range scripts {
 		<script src={ script } defer></script>
 	}

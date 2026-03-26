@@ -49,3 +49,11 @@ ORDER BY md5(id::text || $2::text);
 
 -- name: GetQuestionByChecksum :one
 SELECT * FROM questions WHERE deleted_at IS NULL AND checksum = $1;
+
+-- name: DeleteChoicesByQuestion :exec
+UPDATE choices SET deleted_at = NOW() WHERE question_id = $1;
+
+-- name: DeleteQuestionByID :exec
+UPDATE questions SET deleted_at = NOW() WHERE id = $1;
+
+

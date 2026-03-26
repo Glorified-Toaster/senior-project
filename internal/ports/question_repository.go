@@ -13,6 +13,7 @@ type QuestionRepository interface {
 	ListQuestionsByExam(ctx context.Context, arg uuid.UUID) ([]domain.Question, error)
 	ListChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
 	GetQuestionByChecksum(ctx context.Context, arg string) (bool, error)
+	DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error
 }
 
 type CreateQuestionParams struct {

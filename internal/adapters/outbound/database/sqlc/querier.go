@@ -28,8 +28,9 @@ type Querier interface {
 	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) error
+	DeleteQuestionByID(ctx context.Context, id uuid.UUID) error
 	DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, error)
-	DeleteSubjectAndInstructors(ctx context.Context, subjectID uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	DisableUser(ctx context.Context, id uuid.UUID) error
 	EnableUser(ctx context.Context, id uuid.UUID) error
@@ -64,7 +65,9 @@ type Querier interface {
 	SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SoftDeleteExam(ctx context.Context, id uuid.UUID) error
+	SoftDeleteInstructorsBySubject(ctx context.Context, subjectID uuid.UUID) error
 	SoftDeleteQuestion(ctx context.Context, id uuid.UUID) error
+	SoftDeleteSubject(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	StartExamAttempt(ctx context.Context, arg StartExamAttemptParams) (ExamAttempt, error)
 	SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error

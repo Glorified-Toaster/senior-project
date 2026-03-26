@@ -71,6 +71,8 @@ RETURNING *;
 -- name: UnassignInstructorFromSubject :one
 UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1 AND instructor_id = $2 RETURNING *;
 
--- name: DeleteSubjectAndInstructors :exec
+-- name: SoftDeleteInstructorsBySubject :exec
 UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1;
+
+-- name: SoftDeleteSubject :exec
 UPDATE subjects SET deleted_at = NOW() WHERE id = $1;

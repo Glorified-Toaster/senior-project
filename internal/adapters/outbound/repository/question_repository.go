@@ -117,6 +117,25 @@ func (r *QuestionRepository) GetQuestionByChecksum(ctx context.Context, arg stri
 	return true, nil
 }
 
+func (r *QuestionRepository) DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	err := queries.DeleteChoicesByQuestion(ctx, uuid.NullUUID{UUID: arg, Valid: true})
+	if err != nil {
+		return err
+	}
+
+	err = queries.DeleteQuestionByID(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func mapSlice[T, U any](slice []T, mapper func(T) U) []U {
 	result := make([]U, len(slice))
 	for i, v := range slice {

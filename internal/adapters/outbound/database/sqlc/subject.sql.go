@@ -115,15 +115,6 @@ func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, err
 	return i, err
 }
 
-const deleteSubjectAndInstructors = `-- name: DeleteSubjectAndInstructors :exec
-UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1
-`
-
-func (q *Queries) DeleteSubjectAndInstructors(ctx context.Context, subjectID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteSubjectAndInstructors, subjectID)
-	return err
-}
-
 const getSubjectByID = `-- name: GetSubjectByID :one
 SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
 `
@@ -339,6 +330,24 @@ func (q *Queries) SearchSubjects(ctx context.Context, arg SearchSubjectsParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const softDeleteInstructorsBySubject = `-- name: SoftDeleteInstructorsBySubject :exec
+UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1
+`
+
+func (q *Queries) SoftDeleteInstructorsBySubject(ctx context.Context, subjectID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteInstructorsBySubject, subjectID)
+	return err
+}
+
+const softDeleteSubject = `-- name: SoftDeleteSubject :exec
+UPDATE subjects SET deleted_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) SoftDeleteSubject(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteSubject, id)
+	return err
 }
 
 const unassignInstructorFromSubject = `-- name: UnassignInstructorFromSubject :one

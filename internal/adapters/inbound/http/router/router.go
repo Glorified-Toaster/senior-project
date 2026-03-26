@@ -113,7 +113,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/exam/preview/question-choice", r.userHandler.PreviewQuestionChoice())
 			dashboardRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
 			dashboardRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
-			//dashboardRoutes.POST("/exam/:id/question/delete/:questionID", r.userHandler.DeleteQuestion())
+			dashboardRoutes.DELETE("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 			//dashboardRoutes.POST("/exam/:id/question/update/:questionID", r.userHandler.UpdateQuestion())
 		}
 	}

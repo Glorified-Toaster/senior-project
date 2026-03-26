@@ -130,6 +130,24 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 	return i, err
 }
 
+const deleteChoicesByQuestion = `-- name: DeleteChoicesByQuestion :exec
+UPDATE choices SET deleted_at = NOW() WHERE question_id = $1
+`
+
+func (q *Queries) DeleteChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) error {
+	_, err := q.db.Exec(ctx, deleteChoicesByQuestion, questionID)
+	return err
+}
+
+const deleteQuestionByID = `-- name: DeleteQuestionByID :exec
+UPDATE questions SET deleted_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) DeleteQuestionByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteQuestionByID, id)
+	return err
+}
+
 const getQuestionByChecksum = `-- name: GetQuestionByChecksum :one
 SELECT id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND checksum = $1
 `

@@ -57,3 +57,12 @@ func (app *Application) GetQuestionByChecksum(ctx context.Context, arg string) (
 	})
 	return exists, err
 }
+
+func (app *Application) DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error {
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		err = app.questionRepo.DeleteQuestionAndChoices(txCtx, arg)
+		return err
+	})
+	return err
+}
