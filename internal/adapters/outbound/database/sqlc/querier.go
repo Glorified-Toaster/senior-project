@@ -35,6 +35,7 @@ type Querier interface {
 	EnableUser(ctx context.Context, id uuid.UUID) error
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error)
+	GetQuestionByChecksum(ctx context.Context, checksum *string) (Question, error)
 	GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, error)
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)

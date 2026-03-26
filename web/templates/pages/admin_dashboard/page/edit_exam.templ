@@ -480,7 +480,10 @@ templ QuestionsTab(param EditExamPageParam) {
 			@card.Title() {
 				<div class="flex items-center gap-2 justify-between w-full">
 				Questions
-				@AddDialog(param)
+				<div class="flex items-center gap-2">
+					@AddViaCSVDialog(param)
+					@AddDialog(param)
+				</div>
 			</div>
 			@card.Description() {
 				create questions for your exam here.
@@ -571,8 +574,8 @@ templ AddDialog(param EditExamPageParam) {
 templ AddQuestionForm(param EditExamPageParam) {
 	<form id="add_question_form" 
 		hx-post={ "/admin/dashboard/exam/"+ param.Exam.ID.String() +"/question/create" }
-		hx-target="#toast-container" 
-		hx-swap="none" 
+		hx-target="#question-list" 
+		hx-swap="beforeend"
 		class="space-y-4">
 
 		<div>
@@ -734,7 +737,7 @@ templ choiceItemCheckbox(index int, isCorrect bool) {
 			@input.Input(input.Props{
 				Type: input.TypeText,
 				Placeholder: "Choice " + strconv.Itoa(index),
-				Name: "choices",
+				Name: "choice_" + strconv.Itoa(index),
 				Class: "mb-0",
 				Form: "add_question_form",
 				Attributes: templ.Attributes{
@@ -810,6 +813,75 @@ templ QuestionPreview(questionTitle, questionText string) {
 				{ questionTitle }
 				{ questionText }
 			</span>
+		}
+	}
+}
+
+templ AddViaCSVDialog(param EditExamPageParam) {
+
+	@dialog.Dialog(dialog.Props{
+		ID: "add_via_csv_dialog"}){
+			@dialog.Trigger(){
+				@button.Button(button.Props{
+					Type: button.TypeButton,
+					Variant: button.VariantDefault,
+				}){
+					Add Questions via CSV
+				}
+			}
+			
+			@dialog.Content(){
+			<form id="add_via_csv_form"
+				hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv" }
+				hx-target="#toast-container"
+				hx-swap="beforeend"
+				enctype="multipart/form-data"
+			>
+
+			@dialog.Header(){
+				@dialog.Title(){
+					Add Questions via CSV
+				}
+				@dialog.Description(){
+					Upload a CSV file to add questions to the exam
+				}
+			}
+			@label.Label(label.Props{
+				For: "file",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}){
+				@icon.File(icon.Props{
+					Class: "h-4 w-4",
+				})
+				CSV File
+			}
+			@input.Input(input.Props{
+				Type: input.TypeFile,
+				ID: "file",
+				Name: "file",
+				FileAccept: ".csv",
+				Class: "mb-4",
+			})
+		
+			@dialog.Footer(){
+				@dialog.Close(){
+					@button.Button(button.Props{
+						Type: button.TypeButton,
+						Variant: button.VariantOutline,
+					}){
+						Cancel
+					}
+
+				}
+				@button.Button(button.Props{
+					Type: button.TypeSubmit,
+					Form: "add_via_csv_form",
+					Variant: button.VariantDefault,
+				}){
+					Add Questions
+				}
+			}
+			</form>
 		}
 	}
 }

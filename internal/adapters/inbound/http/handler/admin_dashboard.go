@@ -812,10 +812,18 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 		questionText := ctx.PostForm("question_text")
 		questionType := ctx.PostForm("question_type")
 		questionMarks := ctx.PostForm("question_marks")
-		choices := ctx.PostFormArray("choices")
 		correctChoice := ctx.PostForm("correct_choice")
+		choices := []domain.Choice{}
 
-		fmt.Println("choices", choices)
+		for i := 1; i <= 4; i++ {
+			choice := ctx.PostForm("choice_" + strconv.Itoa(i))
+			if !helpers.IsTrimmedEmpty(choice) {
+				choices = append(choices, domain.Choice{
+					ChoiceText: choice,
+					IsCorrect:  fmt.Sprintf("choice_%d", i) == correctChoice,
+				})
+			}
+		}
 
 		examID := ctx.Param("id")
 		if helpers.IsTrimmedEmpty(examID) {
@@ -846,12 +854,40 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			return
 		}
 
+		questionChecksum, err := helpers.BuildQuestionChecksum(examID, domain.Question{
+			QuestionTitle: questionTitle,
+			QuestionText:  questionText,
+			QuestionType:  questionType,
+			Marks:         questionMarksInt,
+			Choices:       choices,
+		})
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", err.Error(), toast.VariantError)
+			return
+		}
+
+		exists, err := h.App.GetQuestionByChecksum(ctx, questionChecksum)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Failed to get question: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		if exists {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create Question Failed", "Question already exists", toast.VariantError)
+			return
+		}
+
 		question, err := h.App.CreateQuestion(ctx, ports.CreateQuestionParams{
 			ExamID:        parsedUUID,
 			QuestionTitle: questionTitle,
 			QuestionText:  questionText,
 			QuestionType:  domain.QuestionType(questionType),
 			Marks:         questionMarksInt,
+			Checksum:      questionChecksum,
 		})
 
 		if err != nil {
@@ -863,8 +899,8 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 		for _, choice := range choices {
 			_, err = h.App.CreateChoice(ctx, ports.CreateChoiceParams{
 				QuestionID: question.ID,
-				ChoiceText: choice,
-				IsCorrect:  choice == correctChoice,
+				ChoiceText: choice.ChoiceText,
+				IsCorrect:  choice.IsCorrect,
 			})
 			if err != nil {
 				ctx.Header("HX-Reswap", "none")
@@ -873,6 +909,87 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			}
 		}
 
+		// Reload question with choices
+		question.Choices, err = h.App.ListChoicesByQuestion(ctx.Request.Context(), question.ID)
+		if err != nil {
+			question.Choices = []domain.Choice{}
+		}
+
+		render.Render(ctx, components.QuestionList(components.QuestionListProps{
+			Questions: []domain.Question{
+				question,
+			},
+		}))
+
 		helpers.Toast(ctx, "Create Question Success", "Question created successfully", toast.VariantSuccess)
+	}
+}
+
+func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		file, examID, parsedUUID, err := helpers.ParseCSVFile(ctx)
+		if err != nil {
+			return
+		}
+
+		questions, err := helpers.MapCSVToStruct(file)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to parse CSV file", toast.VariantError)
+			return
+		}
+
+		for _, question := range questions {
+
+			questionChecksum, err := helpers.BuildQuestionChecksum(examID, question)
+
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to generate question checksum", toast.VariantError)
+				return
+			}
+
+			existingQuestion, err := h.App.GetQuestionByChecksum(ctx, questionChecksum)
+
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to get question: "+err.Error(), toast.VariantError)
+				return
+			}
+
+			if existingQuestion {
+				continue
+			}
+
+			createdQuestion, err := h.App.CreateQuestion(ctx, ports.CreateQuestionParams{
+				ExamID:        parsedUUID,
+				QuestionTitle: question.QuestionTitle,
+				QuestionText:  question.QuestionText,
+				QuestionType:  domain.QuestionType(question.QuestionType),
+				Marks:         question.Marks,
+				Checksum:      questionChecksum,
+			})
+
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to create question: "+err.Error(), toast.VariantError)
+				return
+			}
+			for _, choice := range question.Choices {
+				_, err = h.App.CreateChoice(ctx, ports.CreateChoiceParams{
+					QuestionID: createdQuestion.ID,
+					ChoiceText: choice.ChoiceText,
+					IsCorrect:  choice.IsCorrect,
+				})
+				if err != nil {
+					ctx.Header("HX-Reswap", "none")
+					helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to create choice: "+err.Error(), toast.VariantError)
+					return
+				}
+			}
+		}
+
+		helpers.Toast(ctx, "Upload Question CSV Success", "Question uploaded successfully", toast.VariantSuccess)
 	}
 }

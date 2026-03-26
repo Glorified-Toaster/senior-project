@@ -47,3 +47,13 @@ func (app *Application) ListChoicesByQuestion(ctx context.Context, arg uuid.UUID
 	})
 	return choices, err
 }
+
+func (app *Application) GetQuestionByChecksum(ctx context.Context, arg string) (bool, error) {
+	var exists bool
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exists, err = app.questionRepo.GetQuestionByChecksum(txCtx, arg)
+		return err
+	})
+	return exists, err
+}

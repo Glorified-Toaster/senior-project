@@ -12,6 +12,7 @@ type QuestionRepository interface {
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (domain.Choice, error)
 	ListQuestionsByExam(ctx context.Context, arg uuid.UUID) ([]domain.Question, error)
 	ListChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
+	GetQuestionByChecksum(ctx context.Context, arg string) (bool, error)
 }
 
 type CreateQuestionParams struct {
@@ -20,6 +21,7 @@ type CreateQuestionParams struct {
 	QuestionText  string
 	QuestionType  domain.QuestionType
 	Marks         int
+	Checksum      string
 }
 
 type CreateChoiceParams struct {

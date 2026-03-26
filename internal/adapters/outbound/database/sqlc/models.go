@@ -237,6 +237,7 @@ type Question struct {
 	QuestionText  string             `json:"question_text"`
 	QuestionType  QuestionTypeType   `json:"question_type"`
 	QuestionImage *string            `json:"question_image"`
+	Checksum      *string            `json:"checksum"`
 	Marks         int32              `json:"marks"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`

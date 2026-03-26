@@ -8,6 +8,7 @@ import (
 	"uot-exam/internal/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type QuestionRepository struct {
@@ -30,6 +31,7 @@ func (r *QuestionRepository) Create(ctx context.Context, arg ports.CreateQuestio
 		QuestionText:  arg.QuestionText,
 		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
 		Marks:         int32(arg.Marks),
+		Checksum:      &arg.Checksum,
 	})
 	if err != nil {
 		return domain.Question{}, err
@@ -96,6 +98,23 @@ func mapSqlcQuestionToDomain(question sqlc.Question) domain.Question {
 		UpdatedAt:     question.UpdatedAt.Time,
 		DeletedAt:     &question.DeletedAt.Time,
 	}
+}
+
+func (r *QuestionRepository) GetQuestionByChecksum(ctx context.Context, arg string) (bool, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	_, err := queries.GetQuestionByChecksum(ctx, &arg)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 func mapSlice[T, U any](slice []T, mapper func(T) U) []U {

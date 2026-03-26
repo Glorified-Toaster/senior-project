@@ -1,6 +1,6 @@
 -- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_title, question_text, question_type, marks)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, checksum)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: UpdateQuestion :one
@@ -46,3 +46,6 @@ SELECT * FROM choices
 WHERE deleted_at IS NULL 
   AND question_id = $1 
 ORDER BY md5(id::text || $2::text);
+
+-- name: GetQuestionByChecksum :one
+SELECT * FROM questions WHERE deleted_at IS NULL AND checksum = $1;

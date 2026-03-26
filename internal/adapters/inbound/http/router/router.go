@@ -42,6 +42,8 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	// useing gin.Default() to create a router with default middleware: logger and recovery (crash-free) middleware
 	router := gin.Default()
 
+	router.MaxMultipartMemory = 8 << 20 // 8MB
+
 	store := cookie.NewStore([]byte(viperConfig.GinSession.Secret))
 	router.Use(sessions.Sessions("session_token", store))
 
@@ -110,6 +112,9 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/exam/preview/question-text", r.userHandler.PreviewQuestionText())
 			dashboardRoutes.POST("/exam/preview/question-choice", r.userHandler.PreviewQuestionChoice())
 			dashboardRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
+			dashboardRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
+			//dashboardRoutes.POST("/exam/:id/question/delete/:questionID", r.userHandler.DeleteQuestion())
+			//dashboardRoutes.POST("/exam/:id/question/update/:questionID", r.userHandler.UpdateQuestion())
 		}
 	}
 

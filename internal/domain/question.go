@@ -15,6 +15,7 @@ type Question struct {
 	QuestionImage string     `json:"question_image"`
 	Marks         int        `json:"marks"`
 	Choices       []Choice   `json:"choices"`
+	Checksum      string     `json:"checksum"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 	DeletedAt     *time.Time `json:"deleted_at"`

@@ -17,6 +17,7 @@ type QuestionListProps struct {
 }
 
 templ QuestionList(props QuestionListProps) {
+	<div class="space-y-4" id="question-list">
 	for i, question := range props.Questions {
 		switch question.QuestionType {
 			case string(domain.QuestionTypeText):
@@ -27,6 +28,7 @@ templ QuestionList(props QuestionListProps) {
 				@ImageQuestionItem(question, question.Choices, i+1)
 		}
 	}
+	</div>
 }
 
 templ QuestionItem(question domain.Question, choices []domain.Choice, number int) {
@@ -338,7 +340,7 @@ templ TextQuestionForm(question domain.Question) {
 }
 
 templ QuestionPreview(questionTitle, questionText string) {
-	<div id="question-preview" class="latex-content">{ questionTitle } { questionText }</div>
+	<div id="question-preview" class="latex-content">{ questionTitle }<br/>{ questionText }</div>
 }
 
 templ CodeQuestionForm(question domain.Question) {

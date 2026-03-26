@@ -170,6 +170,7 @@ CREATE TABLE questions (
     question_text TEXT NOT NULL,
     question_type question_type_type NOT NULL DEFAULT 'TEXT',
     question_image TEXT,
+    checksum TEXT,
     marks INT NOT NULL DEFAULT 1 CHECK (marks > 0),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),

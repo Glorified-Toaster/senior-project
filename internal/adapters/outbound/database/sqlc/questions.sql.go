@@ -90,9 +90,9 @@ func (q *Queries) CreateChoices(ctx context.Context, arg CreateChoicesParams) ([
 }
 
 const createQuestion = `-- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_title, question_text, question_type, marks)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, exam_id, question_title, question_text, question_type, question_image, marks, created_at, updated_at, deleted_at
+INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, checksum)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at
 `
 
 type CreateQuestionParams struct {
@@ -101,6 +101,7 @@ type CreateQuestionParams struct {
 	QuestionText  string           `json:"question_text"`
 	QuestionType  QuestionTypeType `json:"question_type"`
 	Marks         int32            `json:"marks"`
+	Checksum      *string          `json:"checksum"`
 }
 
 func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error) {
@@ -110,6 +111,7 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 		arg.QuestionText,
 		arg.QuestionType,
 		arg.Marks,
+		arg.Checksum,
 	)
 	var i Question
 	err := row.Scan(
@@ -119,6 +121,30 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 		&i.QuestionText,
 		&i.QuestionType,
 		&i.QuestionImage,
+		&i.Checksum,
+		&i.Marks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getQuestionByChecksum = `-- name: GetQuestionByChecksum :one
+SELECT id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND checksum = $1
+`
+
+func (q *Queries) GetQuestionByChecksum(ctx context.Context, checksum *string) (Question, error) {
+	row := q.db.QueryRow(ctx, getQuestionByChecksum, checksum)
+	var i Question
+	err := row.Scan(
+		&i.ID,
+		&i.ExamID,
+		&i.QuestionTitle,
+		&i.QuestionText,
+		&i.QuestionType,
+		&i.QuestionImage,
+		&i.Checksum,
 		&i.Marks,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -128,7 +154,7 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 }
 
 const getQuestionByID = `-- name: GetQuestionByID :one
-SELECT id, exam_id, question_title, question_text, question_type, question_image, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND id = $1
+SELECT id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND id = $1
 `
 
 func (q *Queries) GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, error) {
@@ -141,6 +167,7 @@ func (q *Queries) GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, 
 		&i.QuestionText,
 		&i.QuestionType,
 		&i.QuestionImage,
+		&i.Checksum,
 		&i.Marks,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -222,7 +249,7 @@ func (q *Queries) ListChoicesByQuestionSeeded(ctx context.Context, arg ListChoic
 }
 
 const listQuestionsByExam = `-- name: ListQuestionsByExam :many
-SELECT id, exam_id, question_title, question_text, question_type, question_image, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND exam_id = $1 ORDER BY created_at ASC
+SELECT id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at FROM questions WHERE deleted_at IS NULL AND exam_id = $1 ORDER BY created_at ASC
 `
 
 func (q *Queries) ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error) {
@@ -241,6 +268,7 @@ func (q *Queries) ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID)
 			&i.QuestionText,
 			&i.QuestionType,
 			&i.QuestionImage,
+			&i.Checksum,
 			&i.Marks,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -282,7 +310,7 @@ SET
   question_type = $4,
   marks = $5
 WHERE id = $1
-RETURNING id, exam_id, question_title, question_text, question_type, question_image, marks, created_at, updated_at, deleted_at
+RETURNING id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at
 `
 
 type UpdateQuestionParams struct {
@@ -309,6 +337,7 @@ func (q *Queries) UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) 
 		&i.QuestionText,
 		&i.QuestionType,
 		&i.QuestionImage,
+		&i.Checksum,
 		&i.Marks,
 		&i.CreatedAt,
 		&i.UpdatedAt,

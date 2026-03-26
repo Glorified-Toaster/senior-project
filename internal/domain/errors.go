@@ -21,3 +21,9 @@ var (
 	// Role errors
 	ErrInvalidRole = errors.New("invalid role")
 )
+
+type ErrCSVUpload struct {
+	Message string
+}
+
+func (e *ErrCSVUpload) Error() string { return e.Message }
