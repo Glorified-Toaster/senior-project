@@ -470,7 +470,7 @@ templ QuestionsTab(param EditExamPageParam) {
 	Icon: icon.BadgeQuestionMark(icon.Props{
 		Class: "h-10 w-10",
 	}),
-	Value: "5",
+	Value: strconv.Itoa(len(param.Questions)),
 })
 </div>
 	@card.Card() {
@@ -479,6 +479,19 @@ templ QuestionsTab(param EditExamPageParam) {
 				<div class="flex items-center gap-2 justify-between w-full">
 				Questions
 				<div class="flex items-center gap-2">
+					@button.Button(button.Props{
+						Variant: button.VariantSecondary,
+						Size: button.SizeSm,
+						Attributes: templ.Attributes{
+							"hx-get": "/admin/dashboard/exam/" + param.Exam.ID.String() + "/export-csv",
+							"hx-target": "#toast-container",
+						},
+					}) {
+						@icon.Upload(icon.Props{
+							Class: "h-4 w-4",
+						})
+						Export As CSV
+					}
 					@components.AddViaCSVDialog(components.EditExamPageParam{
 						Exam: param.Exam,
 					})

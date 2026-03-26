@@ -210,11 +210,11 @@ templ EditDialog(question domain.Question) {
 			>
 				switch question.QuestionType {
 					case "TEXT":
-	
+						@EditQuestionForm(question)
 					case "CODE":
-						@CodeQuestionForm(question)
+						//@EditCodeQuestionForm(question)
 					case "IMAGE":
-						@ImageQuestionForm(question)
+						//@EditImageQuestionForm(question)
 				}
 			</form>
 			@dialog.Footer() {
@@ -235,6 +235,10 @@ templ EditDialog(question domain.Question) {
 			}
 		}
 	}
+}
+
+templ EditQuestionForm(question domain.Question) {
+	@TextQuestionForm("edit-question-preview")
 }
 
 templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
@@ -286,8 +290,8 @@ templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
 }
 
 
-templ QuestionPreview(questionTitle, questionText string) {
-	<div id="question-preview" class="latex-content">{ questionTitle }<br/>{ questionText }</div>
+templ QuestionPreview(ID , questionTitle, questionText string) {
+	<div id={ID} class="latex-content">{ questionTitle }<br/>{ questionText }</div>
 }
 
 templ CodeQuestionForm(question domain.Question) {
@@ -428,7 +432,7 @@ templ AddQuestionForm(param EditExamPageParam) {
 		hx-target="#question-list" 
 		hx-swap="beforeend"
 		class="space-y-4">
-		@TextQuestionForm()
+		@TextQuestionForm("question-preview")
 	</form>
 <script>
 document.body.addEventListener('htmx:afterSwap', function(event) {
@@ -447,7 +451,7 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
 </script>
 }
 
-templ TextQuestionForm() {
+templ TextQuestionForm(id string) {
 		<div>
 			@label.Label(label.Props{
 				For: "question_title",
@@ -550,7 +554,7 @@ templ TextQuestionForm() {
 				Class: "mb-6",
 			}){
 				@card.Content(){
-					@QuestionPreview(`\[\text{Question Title}\]`, `\[\text{Question Text}\]`)
+					@QuestionPreview(id, `\[\text{Question Title}\]`, `\[\text{Question Text}\]`)
 				}
 			}
 		</div>	
@@ -672,14 +676,18 @@ templ AddViaCSVDialog(param EditExamPageParam) {
 			@dialog.Trigger(){
 				@button.Button(button.Props{
 					Type: button.TypeButton,
-					Variant: button.VariantDefault,
+					Variant: button.VariantSecondary,
+					Size: button.SizeSm,
 				}){
+					@icon.Download(icon.Props{
+						Class: "h-4 w-4",
+					})
 					Add Questions via CSV
 				}
 			}
 			
 			@dialog.Content(dialog.ContentProps{
-				Class: "m-4",
+				Class: "m-10",
 			}){
 			<form id="add_via_csv_form"
 				hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv" }

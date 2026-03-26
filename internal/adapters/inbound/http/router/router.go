@@ -114,6 +114,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
 			dashboardRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
 			dashboardRoutes.DELETE("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+			dashboardRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
 			//dashboardRoutes.POST("/exam/:id/question/update/:questionID", r.userHandler.UpdateQuestion())
 		}
 	}

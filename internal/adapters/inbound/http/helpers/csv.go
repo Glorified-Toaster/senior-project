@@ -1,13 +1,17 @@
 package helpers
 
 import (
+	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 	"uot-exam/internal/domain"
 	"uot-exam/web/templates/components/toast"
 
@@ -104,4 +108,67 @@ func ParseCSVFile(ctx *gin.Context) (file *multipart.FileHeader, examID string, 
 	}
 
 	return file, examID, parsedUUID, nil
+}
+
+func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
+
+	if len(questions) == 0 {
+		ctx.Header("HX-Reswap", "none")
+		Toast(ctx, "Export Exam CSV Failed", "No questions found", toast.VariantError)
+		return
+	}
+
+	file := &bytes.Buffer{}
+	csvWriter := csv.NewWriter(file)
+
+	csvWriter.Write([]string{
+		"Question Title",
+		"Marks",
+		"Question Type",
+		"Question Text",
+		"Choice 1",
+		"Choice 2",
+		"Choice 3",
+		"Choice 4",
+		"Correct Choice",
+	})
+
+	for _, question := range questions {
+		correctChoice := ""
+		choices := make([]string, 4)
+
+		for i, choice := range question.Choices {
+			if i >= 4 {
+				break
+			}
+			choices[i] = choice.ChoiceText
+			if choice.IsCorrect {
+				correctChoice = choice.ChoiceText
+			}
+		}
+
+		csvWriter.Write([]string{
+			question.QuestionTitle,
+			strconv.Itoa(question.Marks),
+			question.QuestionType,
+			question.QuestionText,
+			choices[0],
+			choices[1],
+			choices[2],
+			choices[3],
+			correctChoice,
+		})
+	}
+
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	fileName := fmt.Sprintf("report-%d.csv", time.Now().Unix())
+	ctx.Header("Content-Description", "File Transfer")
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	ctx.Header("Content-Type", "text/csv")
+	ctx.Data(http.StatusOK, "text/csv", file.Bytes())
 }
