@@ -1,6 +1,6 @@
 -- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, checksum)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, question_image, checksum)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: UpdateQuestion :one
@@ -9,7 +9,8 @@ SET
   question_title = $2,
   question_text = $3,
   question_type = $4,
-  marks = $5
+  marks = $5,
+  question_image = $6
 WHERE id = $1
 RETURNING *;
 
@@ -56,4 +57,5 @@ UPDATE choices SET deleted_at = NOW() WHERE question_id = $1;
 -- name: DeleteQuestionByID :exec
 UPDATE questions SET deleted_at = NOW() WHERE id = $1;
 
-
+-- name: SetQuestionImagePath :exec
+UPDATE questions SET question_image = $2 WHERE deleted_at IS NULL AND question_type = 'IMAGE' AND id = $1;

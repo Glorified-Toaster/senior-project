@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"mime/multipart"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
 
@@ -65,4 +66,23 @@ func (app *Application) DeleteQuestionAndChoices(ctx context.Context, arg uuid.U
 		return err
 	})
 	return err
+}
+
+func (app *Application) UpdateQuestion(ctx context.Context, arg ports.UpdateQuestionParams) (domain.Question, error) {
+	var question domain.Question
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		question, err = app.questionRepo.Update(txCtx, arg)
+		return err
+	})
+	return question, err
+}
+
+func (app *Application) UploadQuestionImage(questionImage *multipart.FileHeader, hashedFilename string) (string, error) {
+	file, err := questionImage.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	return app.localDisk.UploadFile(file, hashedFilename)
 }

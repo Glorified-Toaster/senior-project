@@ -3,8 +3,10 @@ package helpers
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 	"uot-exam/internal/domain"
 )
 
@@ -20,9 +22,18 @@ func BuildQuestionChecksum(examID string, q domain.Question) (string, error) {
 	b.WriteString(q.QuestionTitle)
 	b.WriteString(q.QuestionText)
 	b.WriteString(q.QuestionType)
+	b.WriteString(q.QuestionImage)
 	b.WriteString(strconv.Itoa(q.Marks))
 	for _, c := range q.Choices {
 		b.WriteString(c.ChoiceText)
 	}
 	return StringToMD5Hash([]byte(b.String()))
+}
+
+func HashFileName(filename string) string {
+	extension := filepath.Ext(filename)
+	name := strings.TrimSuffix(filename, extension)
+	timestamp := time.Now().UnixNano()
+	hashedName, _ := StringToMD5Hash([]byte(name + strconv.FormatInt(timestamp, 10)))
+	return hashedName + extension
 }

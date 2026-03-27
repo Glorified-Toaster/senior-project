@@ -14,6 +14,16 @@ type QuestionRepository interface {
 	ListChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
 	GetQuestionByChecksum(ctx context.Context, arg string) (bool, error)
 	DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error
+	Update(ctx context.Context, arg UpdateQuestionParams) (domain.Question, error)
+}
+
+type UpdateQuestionParams struct {
+	ID            uuid.UUID
+	QuestionTitle string
+	QuestionText  string
+	QuestionType  domain.QuestionType
+	Marks         int
+	ImageURL      string
 }
 
 type CreateQuestionParams struct {
@@ -22,6 +32,7 @@ type CreateQuestionParams struct {
 	QuestionText  string
 	QuestionType  domain.QuestionType
 	Marks         int
+	ImageURL      string
 	Checksum      string
 }
 

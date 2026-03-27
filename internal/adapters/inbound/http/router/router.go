@@ -114,11 +114,12 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
 			dashboardRoutes.POST("/exam/preview/question-text", r.userHandler.PreviewQuestionText())
 			dashboardRoutes.POST("/exam/preview/question-choice", r.userHandler.PreviewQuestionChoice())
+			dashboardRoutes.POST("/exam/preview/question-form", r.userHandler.GetQuestionForm())
 			dashboardRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
 			dashboardRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
 			dashboardRoutes.DELETE("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 			dashboardRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
-			//dashboardRoutes.POST("/exam/:id/question/update/:questionID", r.userHandler.UpdateQuestion())
+			dashboardRoutes.POST("/questions/edit/:id", r.userHandler.UpdateQuestion())
 		}
 	}
 

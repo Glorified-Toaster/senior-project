@@ -783,6 +783,23 @@ func (h *UserHandler) PreviewQuestionText() gin.HandlerFunc {
 	}
 }
 
+func (h *UserHandler) GetQuestionForm() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		questionType := ctx.PostForm("question_type")
+		ctx.Header("Content-Type", "text/html")
+		switch domain.QuestionType(questionType) {
+		case domain.QuestionTypeText:
+			render.Render(ctx, components.TextQuestionForm(domain.Question{}, "question-preview"))
+		case domain.QuestionTypeCode:
+			render.Render(ctx, components.CodeQuestionForm(domain.Question{}))
+		case domain.QuestionTypeImage:
+			render.Render(ctx, components.ImageQuestionForm(domain.Question{}))
+		default:
+			render.Render(ctx, components.TextQuestionForm(domain.Question{}, "question-preview"))
+		}
+	}
+}
+
 func (h *UserHandler) PreviewQuestionChoice() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
@@ -813,6 +830,27 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 		questionType := ctx.PostForm("question_type")
 		questionMarks := ctx.PostForm("question_marks")
 		correctChoice := ctx.PostForm("correct_choice")
+
+		var questionImageURL string
+		if questionType == string(domain.QuestionTypeImage) {
+			questionImage, err := ctx.FormFile("question_image")
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Create Question Failed", "Failed to get question image", toast.VariantError)
+				return
+			}
+
+			helpers.ValidateImage(ctx, questionImage)
+
+			hashedFileName := helpers.HashFileName(questionImage.Filename)
+			questionImageURL, err = h.App.UploadQuestionImage(questionImage, hashedFileName)
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Create Question Failed", "Failed to upload question image", toast.VariantError)
+				return
+			}
+		}
+
 		choices := []domain.Choice{}
 
 		for i := 1; i <= 4; i++ {
@@ -887,6 +925,7 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			QuestionText:  questionText,
 			QuestionType:  domain.QuestionType(questionType),
 			Marks:         questionMarksInt,
+			ImageURL:      questionImageURL,
 			Checksum:      questionChecksum,
 		})
 
@@ -967,6 +1006,7 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 				QuestionText:  question.QuestionText,
 				QuestionType:  domain.QuestionType(question.QuestionType),
 				Marks:         question.Marks,
+				ImageURL:      "",
 				Checksum:      questionChecksum,
 			})
 
@@ -1087,5 +1127,57 @@ func (h *UserHandler) ExportExamCSV() gin.HandlerFunc {
 		}
 
 		helpers.ExportExamCSV(ctx, questions)
+	}
+}
+func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "INVALID_REQUEST", "INVALID_REQUEST", "Invalid question ID", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid question ID"})
+			return
+		}
+
+		questionTitle := ctx.PostForm("question_title")
+		questionText := ctx.PostForm("question_text")
+		questionType := ctx.PostForm("question_type")
+		questionMarks := ctx.PostForm("question_marks")
+
+		var questionImageURL string
+		questionImage, err := ctx.FormFile("question_image")
+		if err == nil {
+			helpers.ValidateImage(ctx, questionImage)
+			hashedFileName := helpers.HashFileName(questionImage.Filename)
+			questionImageURL, err = h.App.UploadQuestionImage(questionImage, hashedFileName)
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Update Question Failed", "Failed to upload question image", toast.VariantError)
+				return
+			}
+		}
+
+		questionMarksInt, _ := strconv.Atoi(questionMarks)
+		if questionMarksInt <= 0 {
+			questionMarksInt = 1
+		}
+
+		_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
+			ID:            id,
+			QuestionTitle: questionTitle,
+			QuestionText:  questionText,
+			QuestionType:  domain.QuestionType(questionType),
+			Marks:         questionMarksInt,
+			ImageURL:      questionImageURL,
+		})
+
+		if err != nil {
+			h.logger.LogErrorWithLevel("error", "DATABASE_ERROR", "UPDATE_FAILED", "Failed to update question", err)
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Question Failed", "Failed to update question", toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Refresh", "true")
+		helpers.Toast(ctx, "Success", "Question updated successfully", toast.VariantSuccess)
 	}
 }

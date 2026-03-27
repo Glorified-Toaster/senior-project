@@ -31,6 +31,7 @@ func (r *QuestionRepository) Create(ctx context.Context, arg ports.CreateQuestio
 		QuestionText:  arg.QuestionText,
 		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
 		Marks:         int32(arg.Marks),
+		QuestionImage: &arg.ImageURL,
 		Checksum:      &arg.Checksum,
 	})
 	if err != nil {
@@ -87,12 +88,17 @@ func (r *QuestionRepository) ListQuestionsByExam(ctx context.Context, arg uuid.U
 }
 
 func mapSqlcQuestionToDomain(question sqlc.Question) domain.Question {
+	var imageURL string
+	if question.QuestionImage != nil {
+		imageURL = *question.QuestionImage
+	}
 	return domain.Question{
 		ID:            question.ID,
 		ExamID:        question.ExamID.UUID,
 		QuestionTitle: question.QuestionTitle,
 		QuestionText:  question.QuestionText,
 		QuestionType:  string(question.QuestionType),
+		QuestionImage: imageURL,
 		Marks:         int(question.Marks),
 		CreatedAt:     question.CreatedAt.Time,
 		UpdatedAt:     question.UpdatedAt.Time,
@@ -154,4 +160,25 @@ func mapSqlcChoiceToDomain(choice sqlc.Choice) domain.Choice {
 		UpdatedAt:  choice.UpdatedAt.Time,
 		DeletedAt:  &choice.DeletedAt.Time,
 	}
+}
+
+func (r *QuestionRepository) Update(ctx context.Context, arg ports.UpdateQuestionParams) (domain.Question, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	question, err := queries.UpdateQuestion(ctx, sqlc.UpdateQuestionParams{
+		ID:            arg.ID,
+		QuestionTitle: arg.QuestionTitle,
+		QuestionText:  arg.QuestionText,
+		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
+		Marks:         int32(arg.Marks),
+		QuestionImage: &arg.ImageURL,
+	})
+	if err != nil {
+		return domain.Question{}, err
+	}
+
+	return mapSqlcQuestionToDomain(question), nil
 }

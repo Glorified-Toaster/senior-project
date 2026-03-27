@@ -90,8 +90,8 @@ func (q *Queries) CreateChoices(ctx context.Context, arg CreateChoicesParams) ([
 }
 
 const createQuestion = `-- name: CreateQuestion :one
-INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, checksum)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO questions (exam_id, question_title, question_text, question_type, marks, question_image, checksum)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at
 `
 
@@ -101,6 +101,7 @@ type CreateQuestionParams struct {
 	QuestionText  string           `json:"question_text"`
 	QuestionType  QuestionTypeType `json:"question_type"`
 	Marks         int32            `json:"marks"`
+	QuestionImage *string          `json:"question_image"`
 	Checksum      *string          `json:"checksum"`
 }
 
@@ -111,6 +112,7 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 		arg.QuestionText,
 		arg.QuestionType,
 		arg.Marks,
+		arg.QuestionImage,
 		arg.Checksum,
 	)
 	var i Question
@@ -311,6 +313,20 @@ func (q *Queries) RestoreQuestion(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const setQuestionImagePath = `-- name: SetQuestionImagePath :exec
+UPDATE questions SET question_image = $2 WHERE deleted_at IS NULL AND question_type = 'IMAGE' AND id = $1
+`
+
+type SetQuestionImagePathParams struct {
+	ID            uuid.UUID `json:"id"`
+	QuestionImage *string   `json:"question_image"`
+}
+
+func (q *Queries) SetQuestionImagePath(ctx context.Context, arg SetQuestionImagePathParams) error {
+	_, err := q.db.Exec(ctx, setQuestionImagePath, arg.ID, arg.QuestionImage)
+	return err
+}
+
 const softDeleteQuestion = `-- name: SoftDeleteQuestion :exec
 UPDATE questions SET deleted_at = NOW() WHERE id = $1
 `
@@ -326,7 +342,8 @@ SET
   question_title = $2,
   question_text = $3,
   question_type = $4,
-  marks = $5
+  marks = $5,
+  question_image = $6
 WHERE id = $1
 RETURNING id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at
 `
@@ -337,6 +354,7 @@ type UpdateQuestionParams struct {
 	QuestionText  string           `json:"question_text"`
 	QuestionType  QuestionTypeType `json:"question_type"`
 	Marks         int32            `json:"marks"`
+	QuestionImage *string          `json:"question_image"`
 }
 
 func (q *Queries) UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (Question, error) {
@@ -346,6 +364,7 @@ func (q *Queries) UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) 
 		arg.QuestionText,
 		arg.QuestionType,
 		arg.Marks,
+		arg.QuestionImage,
 	)
 	var i Question
 	err := row.Scan(

@@ -19,6 +19,7 @@ import (
 	"uot-exam/internal/adapters/outbound/database/sqlc"
 	"uot-exam/internal/adapters/outbound/logger"
 	"uot-exam/internal/adapters/outbound/repository"
+	"uot-exam/internal/adapters/outbound/storage"
 	"uot-exam/internal/application"
 	"uot-exam/internal/ports"
 
@@ -82,7 +83,8 @@ func main() {
 	examRepo := repository.NewExamRepository(query)
 	questionRepo := repository.NewQuestionRepository(query)
 	txManager := database.NewPostgresTxManager(pool.Pool)
-	app := application.NewApplication(userRepo, subjectRepo, examRepo, questionRepo, txManager, pool, zlog)
+	localDisk := storage.NewLocalDiskAdapter()
+	app := application.NewApplication(userRepo, subjectRepo, examRepo, questionRepo, localDisk, txManager, pool, zlog)
 
 	//populateDB(app)
 	//mockExam(app)

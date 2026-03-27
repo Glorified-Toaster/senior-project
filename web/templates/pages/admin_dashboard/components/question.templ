@@ -9,12 +9,13 @@ import "uot-exam/web/templates/components/aspectratio"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/input"
-import "uot-exam/web/templates/components/form"
+import "uot-exam/web/templates/utils"
 import "uot-exam/web/templates/components/textarea"
 import "github.com/google/uuid"
 import "strconv"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/selectbox"
 
 type QuestionListProps struct {
 	Questions []domain.Question
@@ -152,13 +153,14 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 		}
 		@card.Content() {
 			<div class="w-full rounded-md overflow-x-auto">
+				<span class="latex-content">{ question.QuestionText }</span>
 				@aspectratio.AspectRatio(aspectratio.Props{
 					Ratio: aspectratio.RatioWide,
 					Class: "rounded-md overflow-hidden",
 				}) {
 					<img
-						src="https://onlinelibrary.wiley.com/cms/asset/85e9fa0c-319d-4b19-888a-0833b0c72b02/jgt22801-fig-0003-m.jpg"
-						alt="Example image"
+						src={ question.QuestionImage }
+						alt="Question Image"
 						class="h-full w-full object-cover "
 					/>
 				}
@@ -207,14 +209,17 @@ templ EditDialog(question domain.Question) {
 				hx-post={ fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID) }
 				hx-target="#toast-container"
 				hx-swap="beforeend"
+				enctype="multipart/form-data"
+				hx-encoding="multipart/form-data"
 			>
+				<input type="hidden" name="question_type" value={ string(question.QuestionType) } />
 				switch question.QuestionType {
 					case "TEXT":
 						@EditQuestionForm(question)
 					case "CODE":
-						//@EditCodeQuestionForm(question)
+						@CodeQuestionForm(question)
 					case "IMAGE":
-						//@EditImageQuestionForm(question)
+						@ImageQuestionForm(question)
 				}
 			</form>
 			@dialog.Footer() {
@@ -222,7 +227,7 @@ templ EditDialog(question domain.Question) {
 					Variant: button.VariantDefault,
 					Size:    button.SizeSm,
 					Type:    "submit",
-					Form:    "edit-question-form",
+					Form:    fmt.Sprintf("edit-question-form-%s", question.ID),
 				}) {
 					Save
 				}
@@ -238,7 +243,7 @@ templ EditDialog(question domain.Question) {
 }
 
 templ EditQuestionForm(question domain.Question) {
-	@TextQuestionForm("edit-question-preview")
+	@TextQuestionForm(question, "edit-question-preview")
 }
 
 templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
@@ -295,61 +300,148 @@ templ QuestionPreview(ID , questionTitle, questionText string) {
 }
 
 templ CodeQuestionForm(question domain.Question) {
-	@form.Item() {
-		@input.Input(input.Props{
-			ID:    "question-title",
-			Name:  "question-title",
-			Value: question.QuestionTitle,
-		})
-	}
-	@form.Item() {
-		@textarea.Textarea(textarea.Props{
-			ID:    "question-text",
-			Name:  "question-text",
-			Value: question.QuestionText,
-		})
-	}
-	@form.Item() {
-		@input.Input(input.Props{
-			ID:    "question-marks",
-			Name:  "question-marks",
-			Value: fmt.Sprintf("%d", question.Marks),
-		})
-	}
+		<div>
+			@label.Label(label.Props{
+				For: "question_title",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Title
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Question Title",
+				ID: "question_title",
+				Name: "question_title",
+				Value: question.QuestionTitle,
+				Class: "mb-4",
+			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_marks",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Marks
+			}
+			@input.Input(input.Props{
+				Type: input.TypeNumber,
+				ID: "question_marks",
+				Name: "question_marks",
+				Class: "mb-4",
+				Value: strconv.Itoa(utils.IfElse(question.Marks > 0, question.Marks, 1)),
+				Attributes: templ.Attributes{
+					"min": "1",
+				},
+			})
+		</div>
+
+		<div>
+			@label.Label(label.Props{
+				For: "question_text",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Code(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Code Content
+			}
+			@textarea.Textarea(textarea.Props{
+				Placeholder: "Enter code here...",
+				ID: "question_text",
+				Name: "question_text",
+				Rows: 8,
+				Value: question.QuestionText,
+				Class: "mb-4 font-mono",
+			})
+		</div>
 }
 
 templ ImageQuestionForm(question domain.Question) {
-	@form.Item() {
-		@input.Input(input.Props{
-			ID:    "question-title",
-			Name:  "question-title",
-			Value: question.QuestionTitle,
-		})
-	}
-	@form.Item() {
-		@input.Input(input.Props{
-			ID:         "question-image",
-			Name:       "question-image",
-			Value:      question.QuestionImage,
-			Type:       "file",
-			Required:   true,
-			FileAccept: "image/*",
-		})
-	}
-	@form.Item() {
-		@textarea.Textarea(textarea.Props{
-			ID:    "question-text",
-			Name:  "question-text",
-			Value: question.QuestionText,
-		})
-	}
-	@form.Item() {
-		@input.Input(input.Props{
-			ID:    "question-marks",
-			Name:  "question-marks",
-			Value: fmt.Sprintf("%d", question.Marks),
-		})
-	}
+		<div>
+			@label.Label(label.Props{
+				For: "question_title",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Pen(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Title
+			}
+			@input.Input(input.Props{
+				Type: input.TypeText,
+				Placeholder: "Question Title",
+				ID: "question_title",
+				Name: "question_title",
+				Value: question.QuestionTitle,
+				Class: "mb-4",
+			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_marks",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Marks
+			}
+			@input.Input(input.Props{
+				Type: input.TypeNumber,
+				ID: "question_marks",
+				Name: "question_marks",
+				Class: "mb-4",
+				Value: strconv.Itoa(utils.IfElse(question.Marks > 0, question.Marks, 1)),
+				Attributes: templ.Attributes{
+					"min": "1",
+				},
+			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_image",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Image(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Image
+			}
+			@input.Input(input.Props{
+				ID:         "question_image",
+				Name:       "question_image",
+				Value:      question.QuestionImage,
+				Type:       input.TypeFile,
+				Required:   true,
+				FileAccept: "image/*",
+				Class:      "mb-4",
+			})
+		</div>
+		<div>
+			@label.Label(label.Props{
+				For: "question_text",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.MessageSquareText(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Description (Optional)
+			}
+			@textarea.Textarea(textarea.Props{
+				Placeholder: "Enter image description...",
+				ID: "question_text",
+				Name: "question_text",
+				Rows: 3,
+				Value: question.QuestionText,
+				Class: "mb-4",
+			})
+		</div>
 }
 
 templ AddDialog(param EditExamPageParam) {
@@ -434,9 +526,75 @@ templ AddQuestionForm(param EditExamPageParam) {
 		hx-post={ "/admin/dashboard/exam/"+ param.Exam.ID.String() +"/question/create" }
 		hx-target="#question-list" 
 		hx-swap="beforeend"
+		enctype="multipart/form-data"
+		hx-encoding="multipart/form-data"
 		class="space-y-4">
-		@TextQuestionForm("question-preview")
+		<div class="space-y-4">
+			@label.Label(label.Props{
+				For: "question_type_select",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.Type(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Question Type
+			}
+			@selectbox.SelectBox() {
+				@selectbox.Trigger(selectbox.TriggerProps{
+					Name: "question_type",
+					Attributes: templ.Attributes{
+                        "id": "question_type_select",
+						"hx-post": "/admin/dashboard/exam/preview/question-form",
+						"hx-target": "#question-form-container",
+						"hx-swap": "innerHTML",
+                        "hx-trigger": "change",
+					},
+				}) {
+					@selectbox.Value(selectbox.ValueProps{
+						Placeholder: "Select Question Type",
+					})
+				}
+				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+					@selectbox.Group() {
+						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeText), Selected: true}) { Text }
+						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeImage)}) { Image }
+						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeCode)}) { Code }
+					}
+				}
+			}
+		</div>
+		<div id="question-form-container">
+			@TextQuestionForm(domain.Question{}, "question-preview")
+		</div>
 	</form>
+<script>
+(function() {
+    function initSelectBoxHTMX() {
+        const trigger = document.getElementById('question_type_select');
+        if (!trigger) return;
+        
+        const hiddenInput = trigger.querySelector('input[type="hidden"]');
+        if (!hiddenInput) return;
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                    htmx.trigger(trigger, 'change');
+                }
+            });
+        });
+
+        observer.observe(hiddenInput, { attributes: true });
+    }
+
+    initSelectBoxHTMX();
+    document.body.addEventListener('htmx:afterSwap', (e) => {
+        if (e.detail.target.id === 'add_question_form' || e.detail.target.contains(document.getElementById('question_type_select'))) {
+            initSelectBoxHTMX();
+        }
+    });
+})();
+</script>
 <script>
 document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === "question-preview") {
@@ -454,7 +612,7 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
 </script>
 }
 
-templ TextQuestionForm(id string) {
+templ TextQuestionForm(question domain.Question, id string) {
 		<div>
 			@label.Label(label.Props{
 				For: "question_title",
@@ -470,6 +628,7 @@ templ TextQuestionForm(id string) {
 				Placeholder: "Question Title",
 				ID: "question_title",
 				Name: "question_title",
+				Value: question.QuestionTitle,
 				Class: "mb-4",
 				Attributes: templ.Attributes{
 					"hx-post": "/admin/dashboard/exam/preview/question-text",
@@ -499,25 +658,6 @@ templ TextQuestionForm(id string) {
 					"min": "1",
 				},
 			})
-
-			@label.Label(label.Props{
-				For: "question_type",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.Type(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Question Type
-			}
-			@input.Input(input.Props{
-				Type: input.TypeText,
-				ID: "question_type",
-				Name: "question_type",
-				Class: "mb-4",
-				Value: "TEXT",
-				Readonly: true,
-			})
-
 		</div>
 
 		<div>
@@ -535,6 +675,7 @@ templ TextQuestionForm(id string) {
 				ID: "question_text",
 				Name: "question_text",
 				Rows: 3,
+				Value: question.QuestionText,
 				Class: "mb-4",
     			Attributes: templ.Attributes{
         "hx-post": "/admin/dashboard/exam/preview/question-text",

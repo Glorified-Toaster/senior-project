@@ -44,6 +44,11 @@ func MapCSVToStruct(file *multipart.FileHeader) ([]domain.Question, error) {
 		if slices.Contains(record, "") {
 			continue
 		}
+
+		if record[2] == string(domain.QuestionTypeImage) {
+			continue
+		}
+
 		marks, err := strconv.Atoi(record[1])
 		if err != nil {
 			return nil, err
@@ -112,10 +117,6 @@ func ParseCSVFile(ctx *gin.Context) (file *multipart.FileHeader, examID string, 
 
 func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
-	if len(questions) == 0 {
-		return
-	}
-
 	file := &bytes.Buffer{}
 	csvWriter := csv.NewWriter(file)
 
@@ -132,6 +133,9 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 	})
 
 	for _, question := range questions {
+		if question.QuestionType == string(domain.QuestionTypeImage) {
+			continue
+		}
 		correctChoice := ""
 		choices := make([]string, 4)
 

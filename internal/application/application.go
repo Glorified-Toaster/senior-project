@@ -12,6 +12,7 @@ type Application struct {
 	examRepo     ports.ExamRepository
 	questionRepo ports.QuestionRepository
 	txManager    ports.TransactionManager
+	localDisk    ports.LocalDiskAdapter
 	db           *database.PostgresAdapter
 	log          *logger.Logger
 }
@@ -20,6 +21,7 @@ func NewApplication(userRepo ports.UserRepository,
 	subjectRepo ports.SubjectRepository,
 	examRepo ports.ExamRepository,
 	questionRepo ports.QuestionRepository,
+	localDisk ports.LocalDiskAdapter,
 	txManager ports.TransactionManager,
 	db *database.PostgresAdapter,
 	log *logger.Logger) *Application {
@@ -28,6 +30,7 @@ func NewApplication(userRepo ports.UserRepository,
 		subjectRepo:  subjectRepo,
 		examRepo:     examRepo,
 		questionRepo: questionRepo,
+		localDisk:    localDisk,
 		txManager:    txManager,
 		db:           db,
 		log:          log,

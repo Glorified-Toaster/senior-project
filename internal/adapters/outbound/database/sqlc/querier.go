@@ -64,6 +64,7 @@ type Querier interface {
 	SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exam, error)
 	SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
+	SetQuestionImagePath(ctx context.Context, arg SetQuestionImagePathParams) error
 	SoftDeleteExam(ctx context.Context, id uuid.UUID) error
 	SoftDeleteInstructorsBySubject(ctx context.Context, subjectID uuid.UUID) error
 	SoftDeleteQuestion(ctx context.Context, id uuid.UUID) error
