@@ -482,10 +482,7 @@ templ QuestionsTab(param EditExamPageParam) {
 					@button.Button(button.Props{
 						Variant: button.VariantSecondary,
 						Size: button.SizeSm,
-						Attributes: templ.Attributes{
-							"hx-get": "/admin/dashboard/exam/" + param.Exam.ID.String() + "/export-csv",
-							"hx-target": "#toast-container",
-						},
+						Href: "/admin/dashboard/exam/" + param.Exam.ID.String() + "/export-csv",
 					}) {
 						@icon.Upload(icon.Props{
 							Class: "h-4 w-4",

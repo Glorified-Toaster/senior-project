@@ -15,6 +15,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/spf13/viper v1.21.0
+	github.com/thinkerou/favicon v0.2.0
 	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.48.0

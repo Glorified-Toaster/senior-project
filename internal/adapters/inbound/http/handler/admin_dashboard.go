@@ -989,6 +989,22 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 			}
 		}
 
+		questions, err = h.App.ListQuestionsByExam(ctx, parsedUUID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to reload questions: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		for i := range questions {
+			questions[i].Choices, err = h.App.ListChoicesByQuestion(ctx, questions[i].ID)
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to reload questions: "+err.Error(), toast.VariantError)
+				return
+			}
+		}
+
 		helpers.Toast(ctx, "Upload Question CSV Success", "Question uploaded successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
 			Questions: questions,
@@ -1050,14 +1066,10 @@ func (h *UserHandler) ExportExamCSV() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		examID := ctx.Param("id")
 		if helpers.IsTrimmedEmpty(examID) {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Export Exam CSV Failed", "Exam ID cannot be empty", toast.VariantError)
 			return
 		}
 		parsedExamUUID, err := uuid.Parse(examID)
 		if err != nil {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Export Exam CSV Failed", "Invalid exam ID", toast.VariantError)
 			return
 		}
 
@@ -1075,7 +1087,5 @@ func (h *UserHandler) ExportExamCSV() gin.HandlerFunc {
 		}
 
 		helpers.ExportExamCSV(ctx, questions)
-
-		helpers.Toast(ctx, "Export Exam CSV Success", "Exam CSV exported successfully", toast.VariantSuccess)
 	}
 }

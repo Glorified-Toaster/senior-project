@@ -113,8 +113,6 @@ func ParseCSVFile(ctx *gin.Context) (file *multipart.FileHeader, examID string, 
 func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
 	if len(questions) == 0 {
-		ctx.Header("HX-Reswap", "none")
-		Toast(ctx, "Export Exam CSV Failed", "No questions found", toast.VariantError)
 		return
 	}
 

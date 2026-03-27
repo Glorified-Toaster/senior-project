@@ -230,7 +230,7 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 }
 
 const listExamsBySubject = `-- name: ListExamsBySubject :many
-SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 ORDER BY created_at DESC
+SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC
 `
 
 func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error) {

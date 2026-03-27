@@ -16,6 +16,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/thinkerou/favicon"
 	csrf "github.com/utrack/gin-csrf"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -60,6 +61,8 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	router.Static("/images", "./web/static/images")
 	router.Static("/static", "./web/static")
 	router.LoadHTMLGlob("web/static/*.html")
+
+	router.Use(favicon.New("./web/static/images/favicon.ico"))
 
 	return &Router{
 		router:         router,
