@@ -6,3 +6,4 @@ logs/**/*.log
 main
 node_modules/
 **/*_templ.go
+web/static/uploads/*
