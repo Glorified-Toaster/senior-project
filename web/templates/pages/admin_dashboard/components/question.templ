@@ -219,7 +219,7 @@ templ EditDialog(question domain.Question) {
 					case "CODE":
 						@CodeQuestionForm(question)
 					case "IMAGE":
-						@ImageQuestionForm(question)
+						@ImageQuestionForm(question , false)
 				}
 			</form>
 			@dialog.Footer() {
@@ -362,7 +362,7 @@ templ CodeQuestionForm(question domain.Question) {
 		</div>
 }
 
-templ ImageQuestionForm(question domain.Question) {
+templ ImageQuestionForm(question domain.Question , imgReq bool) {
 		<div>
 			@label.Label(label.Props{
 				For: "question_title",
@@ -413,6 +413,7 @@ templ ImageQuestionForm(question domain.Question) {
 				})
 				Question Image
 			}
+			if imgReq {
 			@input.Input(input.Props{
 				ID:         "question_image",
 				Name:       "question_image",
@@ -422,6 +423,16 @@ templ ImageQuestionForm(question domain.Question) {
 				FileAccept: "image/*",
 				Class:      "mb-4",
 			})
+			} else {
+			@input.Input(input.Props{
+				ID:         "question_image",
+				Name:       "question_image",
+				Value:      question.QuestionImage,
+				Type:       input.TypeFile,
+				FileAccept: "image/*",
+				Class:      "mb-4",
+			})
+			}
 		</div>
 		<div>
 			@label.Label(label.Props{
@@ -556,9 +567,15 @@ templ AddQuestionForm(param EditExamPageParam) {
 				}
 				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
 					@selectbox.Group() {
+						<div class="p-1">
 						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeText), Selected: true}) { Text }
+						</div>
+						<div class="p-1">
 						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeImage)}) { Image }
+						</div>
+						<div class="p-1">
 						@selectbox.Item(selectbox.ItemProps{Value: string(domain.QuestionTypeCode)}) { Code }
+						</div>
 					}
 				}
 			}

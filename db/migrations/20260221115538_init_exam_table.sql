@@ -67,6 +67,10 @@ CREATE TABLE subjects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
+    duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
+    total_marks INT NOT NULL CHECK (total_marks > 0),
+    pass_score INT NOT NULL CHECK (pass_score > 0),
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL

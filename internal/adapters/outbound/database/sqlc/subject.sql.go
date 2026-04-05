@@ -75,7 +75,7 @@ func (q *Queries) CountSubjects(ctx context.Context) (int64, error) {
 const createSubject = `-- name: CreateSubject :one
 INSERT INTO subjects (title, description)
 VALUES ($1, $2)
-RETURNING id, title, description, created_at, updated_at, deleted_at
+RETURNING id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at
 `
 
 type CreateSubjectParams struct {
@@ -90,6 +90,9 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (S
 		&i.ID,
 		&i.Title,
 		&i.Description,
+		&i.DurationMinutes,
+		&i.TotalMarks,
+		&i.PassScore,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -98,7 +101,7 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (S
 }
 
 const deleteSubject = `-- name: DeleteSubject :one
-UPDATE subjects SET deleted_at = NOW() WHERE id = $1 RETURNING id, title, description, created_at, updated_at, deleted_at
+UPDATE subjects SET deleted_at = NOW() WHERE id = $1 RETURNING id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, error) {
@@ -108,6 +111,9 @@ func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, err
 		&i.ID,
 		&i.Title,
 		&i.Description,
+		&i.DurationMinutes,
+		&i.TotalMarks,
+		&i.PassScore,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -116,7 +122,7 @@ func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, err
 }
 
 const getSubjectByID = `-- name: GetSubjectByID :one
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
+SELECT id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at FROM subjects WHERE id = $1
 `
 
 func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error) {
@@ -126,6 +132,9 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.ID,
 		&i.Title,
 		&i.Description,
+		&i.DurationMinutes,
+		&i.TotalMarks,
+		&i.PassScore,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -134,7 +143,7 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const listAllSubjects = `-- name: ListAllSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
+SELECT id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at FROM subjects 
 WHERE deleted_at IS NULL
 ORDER BY updated_at DESC
 LIMIT $1 OFFSET $2
@@ -158,6 +167,9 @@ func (q *Queries) ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams
 			&i.ID,
 			&i.Title,
 			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.PassScore,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -173,7 +185,7 @@ func (q *Queries) ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams
 }
 
 const listDeletedSubjects = `-- name: ListDeletedSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NOT NULL LIMIT $1 OFFSET $2
+SELECT id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NOT NULL LIMIT $1 OFFSET $2
 `
 
 type ListDeletedSubjectsParams struct {
@@ -194,6 +206,9 @@ func (q *Queries) ListDeletedSubjects(ctx context.Context, arg ListDeletedSubjec
 			&i.ID,
 			&i.Title,
 			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.PassScore,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -274,7 +289,7 @@ func (q *Queries) ListInstructorsBySubjectID(ctx context.Context, subjectID uuid
 }
 
 const restoreSubject = `-- name: RestoreSubject :one
-UPDATE subjects SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, created_at, updated_at, deleted_at
+UPDATE subjects SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, error) {
@@ -284,6 +299,9 @@ func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.ID,
 		&i.Title,
 		&i.Description,
+		&i.DurationMinutes,
+		&i.TotalMarks,
+		&i.PassScore,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -292,7 +310,7 @@ func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const searchSubjects = `-- name: SearchSubjects :many
-SELECT id, title, description, created_at, updated_at, deleted_at FROM subjects 
+SELECT id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at FROM subjects 
 WHERE title ILIKE '%' || $1 || '%'
 AND deleted_at IS NULL
 ORDER BY updated_at DESC
@@ -318,6 +336,9 @@ func (q *Queries) SearchSubjects(ctx context.Context, arg SearchSubjectsParams) 
 			&i.ID,
 			&i.Title,
 			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.PassScore,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -373,7 +394,7 @@ func (q *Queries) UnassignInstructorFromSubject(ctx context.Context, arg Unassig
 }
 
 const updateSubject = `-- name: UpdateSubject :one
-UPDATE subjects SET title = $2, description = $3, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, title, description, created_at, updated_at, deleted_at
+UPDATE subjects SET title = $2, description = $3, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, title, description, duration_minutes, total_marks, pass_score, created_at, updated_at, deleted_at
 `
 
 type UpdateSubjectParams struct {
@@ -389,6 +410,9 @@ func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (S
 		&i.ID,
 		&i.Title,
 		&i.Description,
+		&i.DurationMinutes,
+		&i.TotalMarks,
+		&i.PassScore,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

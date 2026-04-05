@@ -254,12 +254,15 @@ type StudentAnswer struct {
 }
 
 type Subject struct {
-	ID          uuid.UUID          `json:"id"`
-	Title       string             `json:"title"`
-	Description *string            `json:"description"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	ID              uuid.UUID          `json:"id"`
+	Title           string             `json:"title"`
+	Description     *string            `json:"description"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	TotalMarks      int32              `json:"total_marks"`
+	PassScore       int32              `json:"pass_score"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type SubjectInstructor struct {

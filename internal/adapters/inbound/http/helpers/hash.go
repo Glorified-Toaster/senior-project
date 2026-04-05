@@ -22,7 +22,6 @@ func BuildQuestionChecksum(examID string, q domain.Question) (string, error) {
 	b.WriteString(q.QuestionTitle)
 	b.WriteString(q.QuestionText)
 	b.WriteString(q.QuestionType)
-	b.WriteString(q.QuestionImage)
 	b.WriteString(strconv.Itoa(q.Marks))
 	for _, c := range q.Choices {
 		b.WriteString(c.ChoiceText)

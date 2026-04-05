@@ -793,7 +793,7 @@ func (h *UserHandler) GetQuestionForm() gin.HandlerFunc {
 		case domain.QuestionTypeCode:
 			render.Render(ctx, components.CodeQuestionForm(domain.Question{}))
 		case domain.QuestionTypeImage:
-			render.Render(ctx, components.ImageQuestionForm(domain.Question{}))
+			render.Render(ctx, components.ImageQuestionForm(domain.Question{}, true))
 		default:
 			render.Render(ctx, components.TextQuestionForm(domain.Question{}, "question-preview"))
 		}
@@ -1133,8 +1133,8 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			h.logger.LogErrorWithLevel("warn", "INVALID_REQUEST", "INVALID_REQUEST", "Invalid question ID", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid question ID"})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Question Failed", "Invalid question ID", toast.VariantError)
 			return
 		}
 
@@ -1161,18 +1161,27 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			questionMarksInt = 1
 		}
 
-		_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
-			ID:            id,
-			QuestionTitle: questionTitle,
-			QuestionText:  questionText,
-			QuestionType:  domain.QuestionType(questionType),
-			Marks:         questionMarksInt,
-			ImageURL:      questionImageURL,
-		})
+		if questionImage != nil {
+			_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
+				ID:            id,
+				QuestionTitle: questionTitle,
+				QuestionText:  questionText,
+				QuestionType:  domain.QuestionType(questionType),
+				Marks:         questionMarksInt,
+				ImageURL:      questionImageURL,
+			})
+		} else {
+			_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
+				ID:            id,
+				QuestionTitle: questionTitle,
+				QuestionText:  questionText,
+				QuestionType:  domain.QuestionType(questionType),
+				Marks:         questionMarksInt,
+			})
+
+		}
 
 		if err != nil {
-			h.logger.LogErrorWithLevel("error", "DATABASE_ERROR", "UPDATE_FAILED", "Failed to update question", err)
-			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Update Question Failed", "Failed to update question", toast.VariantError)
 			return
 		}
