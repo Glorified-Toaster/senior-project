@@ -142,6 +142,48 @@ func (ns NullQuestionTypeType) Value() (driver.Value, error) {
 	return string(ns.QuestionTypeType), nil
 }
 
+type SubjectStatusType string
+
+const (
+	SubjectStatusTypeACTIVE   SubjectStatusType = "ACTIVE"
+	SubjectStatusTypeINACTIVE SubjectStatusType = "INACTIVE"
+)
+
+func (e *SubjectStatusType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SubjectStatusType(s)
+	case string:
+		*e = SubjectStatusType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SubjectStatusType: %T", src)
+	}
+	return nil
+}
+
+type NullSubjectStatusType struct {
+	SubjectStatusType SubjectStatusType `json:"subject_status_type"`
+	Valid             bool              `json:"valid"` // Valid is true if SubjectStatusType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSubjectStatusType) Scan(value interface{}) error {
+	if value == nil {
+		ns.SubjectStatusType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SubjectStatusType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSubjectStatusType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SubjectStatusType), nil
+}
+
 type UserRoleType string
 
 const (
@@ -203,20 +245,17 @@ type Enrollment struct {
 }
 
 type Exam struct {
-	ID              uuid.UUID          `json:"id"`
-	SubjectID       uuid.NullUUID      `json:"subject_id"`
-	Title           string             `json:"title"`
-	Description     *string            `json:"description"`
-	DurationMinutes int32              `json:"duration_minutes"`
-	TotalMarks      int32              `json:"total_marks"`
-	PassScore       int32              `json:"pass_score"`
-	StartTime       pgtype.Timestamptz `json:"start_time"`
-	EndTime         pgtype.Timestamptz `json:"end_time"`
-	Status          ExamStatusType     `json:"status"`
-	CreatedBy       uuid.NullUUID      `json:"created_by"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	ID          uuid.UUID          `json:"id"`
+	SubjectID   uuid.NullUUID      `json:"subject_id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	TotalMarks  int32              `json:"total_marks"`
+	PassScore   int32              `json:"pass_score"`
+	Status      ExamStatusType     `json:"status"`
+	CreatedBy   uuid.NullUUID      `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type ExamAttempt struct {
@@ -260,6 +299,7 @@ type Subject struct {
 	DurationMinutes int32              `json:"duration_minutes"`
 	TotalMarks      int32              `json:"total_marks"`
 	PassScore       int32              `json:"pass_score"`
+	Status          SubjectStatusType  `json:"status"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`

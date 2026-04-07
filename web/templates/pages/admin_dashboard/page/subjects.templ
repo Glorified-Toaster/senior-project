@@ -12,6 +12,8 @@ import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/timepicker"
+import "uot-exam/web/templates/components/selectbox"
 
 type AllSubjectsPageParam struct {
 	FullName   string
@@ -29,8 +31,10 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 		@dropdown.Script()
 		@popover.Script()
 		@dialog.Script()
+		@selectbox.Script()
 		@toast.Script()
 		@chart.Script()
+		@timepicker.Script()
 		@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/dashboard/subjects", Path: "Subjects"},

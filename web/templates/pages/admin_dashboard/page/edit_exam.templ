@@ -267,27 +267,6 @@ templ ExamInformationTab(param EditExamPageParam) {
 			
 			<div>
 			@label.Label(label.Props{
-				For: "exam_duration",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.Clock(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Exam Duration 
-			}
-			@input.Input(input.Props{
-				Type: input.TypeNumber,
-				ID: "exam_duration",
-				Name: "exam_duration",
-				Value: strconv.Itoa(int(param.Exam.DurationMinutes)),
-				Class: "mb-4",
-				Attributes: templ.Attributes{
-					"min": "0",
-				},
-			})
-			</div>
-			<div>
-			@label.Label(label.Props{
 				For: "exam_subject_uuid",
 				Class: "flex items-center gap-2 mb-2 mt-4",
 			}) {

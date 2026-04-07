@@ -1,6 +1,6 @@
 -- name: CreateSubject :one
-INSERT INTO subjects (title, description)
-VALUES ($1, $2)
+INSERT INTO subjects (title, description, duration_minutes, total_marks, pass_score, status)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetSubjectByID :one
@@ -26,7 +26,16 @@ WHERE title ILIKE '%' || sqlc.arg(title) || '%'
 AND deleted_at IS NULL;
 
 -- name: UpdateSubject :one
-UPDATE subjects SET title = $2, description = $3, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING *;
+UPDATE subjects 
+SET title = $2, 
+    description = $3, 
+    duration_minutes = $4, 
+    total_marks = $5, 
+    pass_score = $6, 
+    status = $7, 
+    updated_at = NOW() 
+WHERE id = $1 AND deleted_at IS NULL 
+RETURNING *;
 
 -- name: DeleteSubject :one
 UPDATE subjects SET deleted_at = NOW() WHERE id = $1 RETURNING *;

@@ -35,12 +35,16 @@ func (r *SubjectRepository) ListAllSubjects(ctx context.Context, limit int32, of
 	var domainSubjects []domain.Subject
 	for _, subject := range subjects {
 		domainSubjects = append(domainSubjects, domain.Subject{
-			ID:          subject.ID,
-			Title:       subject.Title,
-			Description: subject.Description,
-			CreatedAt:   subject.CreatedAt.Time,
-			UpdatedAt:   subject.UpdatedAt.Time,
-			DeletedAt:   toTimePtr(subject.DeletedAt),
+			ID:              subject.ID,
+			Title:           subject.Title,
+			Description:     subject.Description,
+			DurationMinutes: subject.DurationMinutes,
+			TotalMarks:      subject.TotalMarks,
+			PassScore:       subject.PassScore,
+			Status:          domain.SubjectStatus(subject.Status),
+			CreatedAt:       subject.CreatedAt.Time,
+			UpdatedAt:       subject.UpdatedAt.Time,
+			DeletedAt:       toTimePtr(subject.DeletedAt),
 		})
 	}
 
@@ -59,12 +63,16 @@ func (r *SubjectRepository) GetSubjectByID(ctx context.Context, id string) (doma
 	}
 
 	return domain.Subject{
-		ID:          subject.ID,
-		Title:       subject.Title,
-		Description: subject.Description,
-		CreatedAt:   subject.CreatedAt.Time,
-		UpdatedAt:   subject.UpdatedAt.Time,
-		DeletedAt:   toTimePtr(subject.DeletedAt),
+		ID:              subject.ID,
+		Title:           subject.Title,
+		Description:     subject.Description,
+		DurationMinutes: subject.DurationMinutes,
+		TotalMarks:      subject.TotalMarks,
+		PassScore:       subject.PassScore,
+		Status:          domain.SubjectStatus(subject.Status),
+		CreatedAt:       subject.CreatedAt.Time,
+		UpdatedAt:       subject.UpdatedAt.Time,
+		DeletedAt:       toTimePtr(subject.DeletedAt),
 	}, nil
 }
 
@@ -86,12 +94,16 @@ func (r *SubjectRepository) SearchSubjects(ctx context.Context, title string, li
 	var domainSubjects []domain.Subject
 	for _, subject := range subjects {
 		domainSubjects = append(domainSubjects, domain.Subject{
-			ID:          subject.ID,
-			Title:       subject.Title,
-			Description: subject.Description,
-			CreatedAt:   subject.CreatedAt.Time,
-			UpdatedAt:   subject.UpdatedAt.Time,
-			DeletedAt:   toTimePtr(subject.DeletedAt),
+			ID:              subject.ID,
+			Title:           subject.Title,
+			Description:     subject.Description,
+			DurationMinutes: subject.DurationMinutes,
+			TotalMarks:      subject.TotalMarks,
+			PassScore:       subject.PassScore,
+			Status:          domain.SubjectStatus(subject.Status),
+			CreatedAt:       subject.CreatedAt.Time,
+			UpdatedAt:       subject.UpdatedAt.Time,
+			DeletedAt:       toTimePtr(subject.DeletedAt),
 		})
 	}
 
@@ -119,21 +131,29 @@ func (r *SubjectRepository) UpdateSubject(ctx context.Context, subject domain.Su
 	}
 
 	updatedSubject, err := queries.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
-		ID:          subject.ID,
-		Title:       subject.Title,
-		Description: subject.Description,
+		ID:              subject.ID,
+		Title:           subject.Title,
+		Description:     subject.Description,
+		DurationMinutes: subject.DurationMinutes,
+		TotalMarks:      subject.TotalMarks,
+		PassScore:       subject.PassScore,
+		Status:          sqlc.SubjectStatusType(subject.Status),
 	})
 	if err != nil {
 		return domain.Subject{}, err
 	}
 
 	return domain.Subject{
-		ID:          updatedSubject.ID,
-		Title:       updatedSubject.Title,
-		Description: updatedSubject.Description,
-		CreatedAt:   updatedSubject.CreatedAt.Time,
-		UpdatedAt:   updatedSubject.UpdatedAt.Time,
-		DeletedAt:   toTimePtr(updatedSubject.DeletedAt),
+		ID:              updatedSubject.ID,
+		Title:           updatedSubject.Title,
+		Description:     updatedSubject.Description,
+		DurationMinutes: updatedSubject.DurationMinutes,
+		TotalMarks:      updatedSubject.TotalMarks,
+		PassScore:       updatedSubject.PassScore,
+		Status:          domain.SubjectStatus(updatedSubject.Status),
+		CreatedAt:       updatedSubject.CreatedAt.Time,
+		UpdatedAt:       updatedSubject.UpdatedAt.Time,
+		DeletedAt:       toTimePtr(updatedSubject.DeletedAt),
 	}, nil
 }
 
@@ -149,12 +169,16 @@ func (r *SubjectRepository) DeleteSubject(ctx context.Context, id uuid.UUID) (do
 	}
 
 	return domain.Subject{
-		ID:          deletedSubject.ID,
-		Title:       deletedSubject.Title,
-		Description: deletedSubject.Description,
-		CreatedAt:   deletedSubject.CreatedAt.Time,
-		UpdatedAt:   deletedSubject.UpdatedAt.Time,
-		DeletedAt:   toTimePtr(deletedSubject.DeletedAt),
+		ID:              deletedSubject.ID,
+		Title:           deletedSubject.Title,
+		Description:     deletedSubject.Description,
+		DurationMinutes: deletedSubject.DurationMinutes,
+		TotalMarks:      deletedSubject.TotalMarks,
+		PassScore:       deletedSubject.PassScore,
+		Status:          domain.SubjectStatus(deletedSubject.Status),
+		CreatedAt:       deletedSubject.CreatedAt.Time,
+		UpdatedAt:       deletedSubject.UpdatedAt.Time,
+		DeletedAt:       toTimePtr(deletedSubject.DeletedAt),
 	}, nil
 }
 
@@ -170,12 +194,16 @@ func (r *SubjectRepository) RestoreSubject(ctx context.Context, id uuid.UUID) (d
 	}
 
 	return domain.Subject{
-		ID:          restoredSubject.ID,
-		Title:       restoredSubject.Title,
-		Description: restoredSubject.Description,
-		CreatedAt:   restoredSubject.CreatedAt.Time,
-		UpdatedAt:   restoredSubject.UpdatedAt.Time,
-		DeletedAt:   toTimePtr(restoredSubject.DeletedAt),
+		ID:              restoredSubject.ID,
+		Title:           restoredSubject.Title,
+		Description:     restoredSubject.Description,
+		DurationMinutes: restoredSubject.DurationMinutes,
+		TotalMarks:      restoredSubject.TotalMarks,
+		PassScore:       restoredSubject.PassScore,
+		Status:          domain.SubjectStatus(restoredSubject.Status),
+		CreatedAt:       restoredSubject.CreatedAt.Time,
+		UpdatedAt:       restoredSubject.UpdatedAt.Time,
+		DeletedAt:       toTimePtr(restoredSubject.DeletedAt),
 	}, nil
 }
 
@@ -224,12 +252,16 @@ func (r *SubjectRepository) ListDeletedSubjects(ctx context.Context, limit int32
 	var domainSubjects []domain.Subject
 	for _, subject := range subjects {
 		domainSubjects = append(domainSubjects, domain.Subject{
-			ID:          subject.ID,
-			Title:       subject.Title,
-			Description: subject.Description,
-			CreatedAt:   subject.CreatedAt.Time,
-			UpdatedAt:   subject.UpdatedAt.Time,
-			DeletedAt:   toTimePtr(subject.DeletedAt),
+			ID:              subject.ID,
+			Title:           subject.Title,
+			Description:     subject.Description,
+			DurationMinutes: subject.DurationMinutes,
+			TotalMarks:      subject.TotalMarks,
+			PassScore:       subject.PassScore,
+			Status:          domain.SubjectStatus(subject.Status),
+			CreatedAt:       subject.CreatedAt.Time,
+			UpdatedAt:       subject.UpdatedAt.Time,
+			DeletedAt:       toTimePtr(subject.DeletedAt),
 		})
 	}
 
@@ -272,8 +304,12 @@ func (r *SubjectRepository) CreateSubject(ctx context.Context, subject domain.Su
 	}
 
 	createdSubject, err := queries.CreateSubject(ctx, sqlc.CreateSubjectParams{
-		Title:       subject.Title,
-		Description: subject.Description,
+		Title:           subject.Title,
+		Description:     subject.Description,
+		DurationMinutes: subject.DurationMinutes,
+		TotalMarks:      subject.TotalMarks,
+		PassScore:       subject.PassScore,
+		Status:          sqlc.SubjectStatusType(subject.Status),
 	})
 	if err != nil {
 		return domain.Subject{}, err

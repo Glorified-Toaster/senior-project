@@ -28,7 +28,6 @@ type CreateExamParams struct {
 	SubjectID       uuid.UUID
 	Title           string
 	Description     *string
-	DurationMinutes int32
 	TotalMarks      int32
 	PassScore       int32
 	StartTime       *string
@@ -41,7 +40,6 @@ type UpdateExamParams struct {
 	ID              uuid.UUID
 	Title           string
 	Description     *string
-	DurationMinutes int32
 	TotalMarks      int32
 	PassScore       int32
 	Status          domain.ExamStatus

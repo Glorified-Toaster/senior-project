@@ -311,8 +311,6 @@ func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
 			return
 		}
 
-		// After deletion, we re-render the table container.
-		// For simplicity, we just fetch the first page.
 		exams, err := h.App.ListAllExams(ctx, ports.ListAllExamsParams{Limit: 10, Offset: 0})
 		if err != nil {
 			exams = []domain.Exam{}
@@ -486,7 +484,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 		description := ctx.PostForm("description")
-		durationStr := ctx.PostForm("duration")
 		totalMarksStr := ctx.PostForm("total_marks")
 		passScoreStr := ctx.PostForm("pass_marks")
 
@@ -501,20 +498,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
-		durationParts := strings.Split(durationStr, ":")
-		if len(durationParts) != 2 {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Exam Failed", "Invalid duration format (expected HH:MM)", toast.VariantError)
-			return
-		}
-		hrs, err1 := strconv.Atoi(durationParts[0])
-		m, err2 := strconv.Atoi(durationParts[1])
-		if err1 != nil || err2 != nil {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Exam Failed", "Invalid duration values", toast.VariantError)
-			return
-		}
-		duration := hrs*60 + m
 		totalMarks, err := strconv.Atoi(totalMarksStr)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -529,14 +512,13 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		}
 
 		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
-			Title:           title,
-			SubjectID:       subjectID,
-			CreatedBy:       createdBy,
-			Description:     &description,
-			DurationMinutes: int32(duration),
-			TotalMarks:      int32(totalMarks),
-			PassScore:       int32(passScore),
-			Status:          domain.ExamStatusDraft,
+			Title:       title,
+			SubjectID:   subjectID,
+			CreatedBy:   createdBy,
+			Description: &description,
+			TotalMarks:  int32(totalMarks),
+			PassScore:   int32(passScore),
+			Status:      domain.ExamStatusDraft,
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -571,10 +553,32 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 			return
 		}
 
+		durationStr := ctx.PostForm("duration_minutes")
+		totalMarksStr := ctx.PostForm("total_marks")
+		passScoreStr := ctx.PostForm("pass_score")
+		statusStr := ctx.PostForm("status")
+
+		totalMarks, _ := strconv.Atoi(totalMarksStr)
+		passScore, _ := strconv.Atoi(passScoreStr)
+
+		var duration int32
+		if durationStr != "" && strings.Contains(durationStr, ":") {
+			parts := strings.Split(durationStr, ":")
+			if len(parts) == 2 {
+				hour, _ := strconv.Atoi(parts[0])
+				minute, _ := strconv.Atoi(parts[1])
+				duration = int32(hour)*60 + int32(minute)
+			}
+		}
+
 		_, err := h.App.UpdateSubject(ctx, domain.Subject{
-			ID:          uuid.MustParse(id),
-			Title:       name,
-			Description: &description,
+			ID:              uuid.MustParse(id),
+			Title:           name,
+			Description:     &description,
+			DurationMinutes: duration,
+			TotalMarks:      int32(totalMarks),
+			PassScore:       int32(passScore),
+			Status:          domain.SubjectStatus(statusStr),
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -603,13 +607,35 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 			return
 		}
 
+		durationStr := ctx.PostForm("duration_minutes")
+		totalMarksStr := ctx.PostForm("total_marks")
+		passScoreStr := ctx.PostForm("pass_score")
+		statusStr := ctx.PostForm("status")
+
+		totalMarks, _ := strconv.Atoi(totalMarksStr)
+		passScore, _ := strconv.Atoi(passScoreStr)
+
+		var duration int32
+		if durationStr != "" && strings.Contains(durationStr, ":") {
+			parts := strings.Split(durationStr, ":")
+			if len(parts) == 2 {
+				hour, _ := strconv.Atoi(parts[0])
+				minute, _ := strconv.Atoi(parts[1])
+				duration = int32(hour)*60 + int32(minute)
+			}
+		}
+
 		_, err := h.App.CreateSubject(ctx, domain.Subject{
-			Title:       name,
-			Description: &description,
+			Title:           name,
+			Description:     &description,
+			DurationMinutes: duration,
+			TotalMarks:      int32(totalMarks),
+			PassScore:       int32(passScore),
+			Status:          domain.SubjectStatus(statusStr),
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Subject Failed", "Failed to create subject", toast.VariantError)
+			helpers.Toast(ctx, "Create Subject Failed", "Failed to create subject : "+err.Error(), toast.VariantError)
 			return
 		}
 		limit := ctx.DefaultQuery("limit", "12")
@@ -718,7 +744,6 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		idStr := ctx.Param("id")
 		name := ctx.PostForm("exam_name")
 		description := ctx.PostForm("exam_description")
-		durationStr := ctx.PostForm("exam_duration")
 		passScoreStr := ctx.PostForm("exam_pass_score")
 		totalMarksStr := ctx.PostForm("exam_total_marks")
 		statusStr := ctx.PostForm("exam_status")
@@ -736,27 +761,19 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 			return
 		}
 
-		duration, err := strconv.Atoi(durationStr)
-		if err != nil {
-			duration = 0
-		}
 		passScore, err := strconv.Atoi(passScoreStr)
-		if err != nil {
-			passScore = 0
-		}
 		totalMarks, err := strconv.Atoi(totalMarksStr)
 		if err != nil {
 			totalMarks = 0
 		}
 
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
-			ID:              examID,
-			Title:           name,
-			Description:     &description,
-			DurationMinutes: int32(duration),
-			PassScore:       int32(passScore),
-			TotalMarks:      int32(totalMarks),
-			Status:          domain.ExamStatus(statusStr),
+			ID:          examID,
+			Title:       name,
+			Description: &description,
+			PassScore:   int32(passScore),
+			TotalMarks:  int32(totalMarks),
+			Status:      domain.ExamStatus(statusStr),
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")

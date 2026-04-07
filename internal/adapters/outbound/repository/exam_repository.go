@@ -6,10 +6,8 @@ import (
 	"uot-exam/internal/adapters/outbound/database/sqlc"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ExamRepository struct {
@@ -85,20 +83,17 @@ func (r *ExamRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 
 func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 	return domain.Exam{
-		ID:              exam.ID,
-		SubjectID:       exam.SubjectID.UUID,
-		Title:           exam.Title,
-		Description:     exam.Description,
-		DurationMinutes: exam.DurationMinutes,
-		TotalMarks:      exam.TotalMarks,
-		PassScore:       exam.PassScore,
-		StartTime:       exam.StartTime.Time,
-		EndTime:         exam.EndTime.Time,
-		Status:          domain.ExamStatus(exam.Status),
-		CreatedBy:       exam.CreatedBy.UUID,
-		CreatedAt:       exam.CreatedAt.Time,
-		UpdatedAt:       exam.UpdatedAt.Time,
-		DeletedAt:       toTimePtr(exam.DeletedAt),
+		ID:          exam.ID,
+		SubjectID:   exam.SubjectID.UUID,
+		Title:       exam.Title,
+		Description: exam.Description,
+		TotalMarks:  exam.TotalMarks,
+		PassScore:   exam.PassScore,
+		Status:      domain.ExamStatus(exam.Status),
+		CreatedBy:   exam.CreatedBy.UUID,
+		CreatedAt:   exam.CreatedAt.Time,
+		UpdatedAt:   exam.UpdatedAt.Time,
+		DeletedAt:   toTimePtr(exam.DeletedAt),
 	}
 }
 
@@ -122,33 +117,14 @@ func (r *ExamRepository) Create(ctx context.Context, arg ports.CreateExamParams)
 		queries = queries.WithTx(tx)
 	}
 
-	startTime := pgtype.Timestamptz{Valid: false}
-	if arg.StartTime != nil && *arg.StartTime != "" {
-		t, err := time.Parse("2006-01-02T15:04", *arg.StartTime)
-		if err == nil {
-			startTime = pgtype.Timestamptz{Time: t, Valid: true}
-		}
-	}
-
-	endTime := pgtype.Timestamptz{Valid: false}
-	if arg.EndTime != nil && *arg.EndTime != "" {
-		t, err := time.Parse("2006-01-02T15:04", *arg.EndTime)
-		if err == nil {
-			endTime = pgtype.Timestamptz{Time: t, Valid: true}
-		}
-	}
-
 	exam, err := queries.CreateExam(ctx, sqlc.CreateExamParams{
-		SubjectID:       uuid.NullUUID{UUID: arg.SubjectID, Valid: true},
-		Title:           arg.Title,
-		Description:     arg.Description,
-		DurationMinutes: arg.DurationMinutes,
-		TotalMarks:      arg.TotalMarks,
-		PassScore:       arg.PassScore,
-		StartTime:       startTime,
-		EndTime:         endTime,
-		Status:          sqlc.ExamStatusType(arg.Status),
-		CreatedBy:       uuid.NullUUID{UUID: arg.CreatedBy, Valid: true},
+		SubjectID:   uuid.NullUUID{UUID: arg.SubjectID, Valid: true},
+		Title:       arg.Title,
+		Description: arg.Description,
+		TotalMarks:  arg.TotalMarks,
+		PassScore:   arg.PassScore,
+		Status:      sqlc.ExamStatusType(arg.Status),
+		CreatedBy:   uuid.NullUUID{UUID: arg.CreatedBy, Valid: true},
 	})
 	if err != nil {
 		return domain.Exam{}, err
@@ -183,13 +159,12 @@ func (r *ExamRepository) Update(ctx context.Context, arg ports.UpdateExamParams)
 	}
 
 	exam, err := queries.UpdateExam(ctx, sqlc.UpdateExamParams{
-		ID:              arg.ID,
-		Title:           arg.Title,
-		Description:     arg.Description,
-		DurationMinutes: arg.DurationMinutes,
-		TotalMarks:      arg.TotalMarks,
-		PassScore:       arg.PassScore,
-		Status:          sqlc.ExamStatusType(arg.Status),
+		ID:          arg.ID,
+		Title:       arg.Title,
+		Description: arg.Description,
+		TotalMarks:  arg.TotalMarks,
+		PassScore:   arg.PassScore,
+		Status:      sqlc.ExamStatusType(arg.Status),
 	})
 	if err != nil {
 		return domain.Exam{}, err

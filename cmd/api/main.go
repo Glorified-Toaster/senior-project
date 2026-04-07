@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"syscall"
-	"time"
 
 	"uot-exam/internal/adapters/inbound/http/handler"
 	"uot-exam/internal/adapters/inbound/http/helpers"
@@ -26,7 +25,6 @@ import (
 	"github.com/bxcodec/faker/v4"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"go.uber.org/zap"
 )
 
@@ -86,7 +84,7 @@ func main() {
 	localDisk := storage.NewLocalDiskAdapter()
 	app := application.NewApplication(userRepo, subjectRepo, examRepo, questionRepo, localDisk, txManager, pool, zlog)
 
-	//populateDB(app)
+	populateDB(app)
 	//mockExam(app)
 	//populateSubjects(query)
 	//populateExams(query)
@@ -190,15 +188,12 @@ func populateExams(query sqlc.Querier) {
 
 	str := "for PhD"
 	exam, err := query.CreateExam(ctx, sqlc.CreateExamParams{
-		SubjectID:       uuid.NullUUID{UUID: subjectID, Valid: true},
-		Title:           "Exam 3",
-		Description:     &str,
-		DurationMinutes: 60,
-		TotalMarks:      100,
-		StartTime:       pgtype.Timestamptz{Time: time.Now(), Valid: true},
-		EndTime:         pgtype.Timestamptz{Time: time.Now().Add(time.Hour * 2), Valid: true},
-		Status:          "PUBLISHED",
-		CreatedBy:       uuid.NullUUID{UUID: userID, Valid: true},
+		SubjectID:   uuid.NullUUID{UUID: subjectID, Valid: true},
+		Title:       "Exam 3",
+		Description: &str,
+		TotalMarks:  100,
+		Status:      "PUBLISHED",
+		CreatedBy:   uuid.NullUUID{UUID: userID, Valid: true},
 	})
 	if err != nil {
 		log.Println("error creating exam", err)

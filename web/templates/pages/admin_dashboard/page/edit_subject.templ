@@ -1,6 +1,7 @@
 package page
 
 import "uot-exam/internal/domain"
+import "fmt"
 import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
 import "uot-exam/web/templates/components/sidebar"
@@ -180,6 +181,54 @@ templ InformationTab(param EditSubjectPageParam) {
 					Value:       utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
 					Class:       "mb-4",
 				})
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "duration_minutes", Class: "mb-2"}) {
+							Duration (Minutes)
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeNumber,
+							ID:          "duration_minutes",
+							Name:        "duration_minutes",
+							Value:       fmt.Sprintf("%d", param.Subject.DurationMinutes),
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "total_marks", Class: "mb-2"}) {
+							Total Marks
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeNumber,
+							ID:          "total_marks",
+							Name:        "total_marks",
+							Value:       fmt.Sprintf("%d", param.Subject.TotalMarks),
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "pass_score", Class: "mb-2"}) {
+							Pass Score
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeNumber,
+							ID:          "pass_score",
+							Name:        "pass_score",
+							Value:       fmt.Sprintf("%d", param.Subject.PassScore),
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "status", Class: "mb-2"}) {
+							Status
+						}
+						<select name="status" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+							<option value="ACTIVE" selected?={ param.Subject.Status == domain.SubjectStatusActive }>Active</option>
+							<option value="INACTIVE" selected?={ param.Subject.Status == domain.SubjectStatusInactive }>Inactive</option>
+						</select>
+					</div>
+
+				</div>
 				@label.Label(label.Props{
 					For:   "subject_uuid",
 					Class: "flex items-center gap-2 mb-2 mt-4",
@@ -496,18 +545,6 @@ templ ExamForm(param EditSubjectPageParam) {
 				Required: true,
 				Value:    param.UserID.String(),
 				Readonly: true,
-			})
-		</div>
-		<div class="space-y-2 mb-4">
-			@form.Label(form.LabelProps{For: "duration", Class: "block text-sm font-medium mb-2"}) {
-				Duration
-			}
-			@timepicker.TimePicker(timepicker.Props{
-				ID:          "duration",
-				Name:        "duration",
-				Placeholder: "Select exam duration",
-				Use12Hours:  false,
-				Step:        5,
 			})
 		</div>
 		<div class="space-y-2 mb-4">

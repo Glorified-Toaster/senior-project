@@ -24,22 +24,19 @@ func (q *Queries) CountExams(ctx context.Context) (int64, error) {
 }
 
 const createExam = `-- name: CreateExam :one
-INSERT INTO exams (subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-RETURNING id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at
+INSERT INTO exams (subject_id, title, description, total_marks, pass_score, status, created_by)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
+RETURNING id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at
 `
 
 type CreateExamParams struct {
-	SubjectID       uuid.NullUUID      `json:"subject_id"`
-	Title           string             `json:"title"`
-	Description     *string            `json:"description"`
-	DurationMinutes int32              `json:"duration_minutes"`
-	TotalMarks      int32              `json:"total_marks"`
-	PassScore       int32              `json:"pass_score"`
-	StartTime       pgtype.Timestamptz `json:"start_time"`
-	EndTime         pgtype.Timestamptz `json:"end_time"`
-	Status          ExamStatusType     `json:"status"`
-	CreatedBy       uuid.NullUUID      `json:"created_by"`
+	SubjectID   uuid.NullUUID  `json:"subject_id"`
+	Title       string         `json:"title"`
+	Description *string        `json:"description"`
+	TotalMarks  int32          `json:"total_marks"`
+	PassScore   int32          `json:"pass_score"`
+	Status      ExamStatusType `json:"status"`
+	CreatedBy   uuid.NullUUID  `json:"created_by"`
 }
 
 func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, error) {
@@ -47,11 +44,8 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		arg.SubjectID,
 		arg.Title,
 		arg.Description,
-		arg.DurationMinutes,
 		arg.TotalMarks,
 		arg.PassScore,
-		arg.StartTime,
-		arg.EndTime,
 		arg.Status,
 		arg.CreatedBy,
 	)
@@ -61,11 +55,8 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		&i.SubjectID,
 		&i.Title,
 		&i.Description,
-		&i.DurationMinutes,
 		&i.TotalMarks,
 		&i.PassScore,
-		&i.StartTime,
-		&i.EndTime,
 		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -96,7 +87,7 @@ func (q *Queries) GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt
 }
 
 const getExamByID = `-- name: GetExamByID :one
-SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE id = $1
+SELECT id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE id = $1
 `
 
 func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
@@ -107,11 +98,8 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 		&i.SubjectID,
 		&i.Title,
 		&i.Description,
-		&i.DurationMinutes,
 		&i.TotalMarks,
 		&i.PassScore,
-		&i.StartTime,
-		&i.EndTime,
 		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -122,7 +110,7 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 }
 
 const listAllExams = `-- name: ListAllExams :many
-SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2
+SELECT id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2
 `
 
 type ListAllExamsParams struct {
@@ -144,11 +132,8 @@ func (q *Queries) ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]E
 			&i.SubjectID,
 			&i.Title,
 			&i.Description,
-			&i.DurationMinutes,
 			&i.TotalMarks,
 			&i.PassScore,
-			&i.StartTime,
-			&i.EndTime,
 			&i.Status,
 			&i.CreatedBy,
 			&i.CreatedAt,
@@ -230,7 +215,7 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 }
 
 const listExamsBySubject = `-- name: ListExamsBySubject :many
-SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC
+SELECT id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC
 `
 
 func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error) {
@@ -247,11 +232,8 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 			&i.SubjectID,
 			&i.Title,
 			&i.Description,
-			&i.DurationMinutes,
 			&i.TotalMarks,
 			&i.PassScore,
-			&i.StartTime,
-			&i.EndTime,
 			&i.Status,
 			&i.CreatedBy,
 			&i.CreatedAt,
@@ -301,7 +283,7 @@ func (q *Queries) SaveAnswer(ctx context.Context, arg SaveAnswerParams) (Student
 }
 
 const searchExams = `-- name: SearchExams :many
-SELECT id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at FROM exams 
+SELECT id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at FROM exams 
 WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
 AND deleted_at IS NULL
 ORDER BY created_at DESC
@@ -328,11 +310,8 @@ func (q *Queries) SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exa
 			&i.SubjectID,
 			&i.Title,
 			&i.Description,
-			&i.DurationMinutes,
 			&i.TotalMarks,
 			&i.PassScore,
-			&i.StartTime,
-			&i.EndTime,
 			&i.Status,
 			&i.CreatedBy,
 			&i.CreatedAt,
@@ -406,22 +385,20 @@ UPDATE exams
 SET 
   title = $2,
   description = $3,
-  duration_minutes = $4,
-  total_marks = $5,
-  pass_score = $6,
-  status = $7
+  total_marks = $4,
+  pass_score = $5,
+  status = $6
 WHERE id = $1
-RETURNING id, subject_id, title, description, duration_minutes, total_marks, pass_score, start_time, end_time, status, created_by, created_at, updated_at, deleted_at
+RETURNING id, subject_id, title, description, total_marks, pass_score, status, created_by, created_at, updated_at, deleted_at
 `
 
 type UpdateExamParams struct {
-	ID              uuid.UUID      `json:"id"`
-	Title           string         `json:"title"`
-	Description     *string        `json:"description"`
-	DurationMinutes int32          `json:"duration_minutes"`
-	TotalMarks      int32          `json:"total_marks"`
-	PassScore       int32          `json:"pass_score"`
-	Status          ExamStatusType `json:"status"`
+	ID          uuid.UUID      `json:"id"`
+	Title       string         `json:"title"`
+	Description *string        `json:"description"`
+	TotalMarks  int32          `json:"total_marks"`
+	PassScore   int32          `json:"pass_score"`
+	Status      ExamStatusType `json:"status"`
 }
 
 func (q *Queries) UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, error) {
@@ -429,7 +406,6 @@ func (q *Queries) UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, e
 		arg.ID,
 		arg.Title,
 		arg.Description,
-		arg.DurationMinutes,
 		arg.TotalMarks,
 		arg.PassScore,
 		arg.Status,
@@ -440,11 +416,8 @@ func (q *Queries) UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, e
 		&i.SubjectID,
 		&i.Title,
 		&i.Description,
-		&i.DurationMinutes,
 		&i.TotalMarks,
 		&i.PassScore,
-		&i.StartTime,
-		&i.EndTime,
 		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,

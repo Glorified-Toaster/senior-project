@@ -13,6 +13,8 @@ CREATE TYPE user_role_type AS ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
 
 CREATE TYPE exam_status_type AS ENUM ('DRAFT', 'PUBLISHED', 'CLOSED');
 
+CREATE TYPE subject_status_type AS ENUM ('ACTIVE', 'INACTIVE');
+
 CREATE TYPE attempt_status_type AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'GRADED', 'CANCELLED');
 
 CREATE TYPE question_type_type AS ENUM ('TEXT', 'CODE', 'IMAGE');
@@ -69,8 +71,8 @@ CREATE TABLE subjects (
     description TEXT,
     duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
     total_marks INT NOT NULL CHECK (total_marks > 0),
-    pass_score INT NOT NULL CHECK (pass_score > 0),
-
+    pass_score INT NOT NULL CHECK (pass_score > 0 AND pass_score <= total_marks),
+    status subject_status_type NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL
@@ -79,7 +81,7 @@ CREATE TABLE subjects (
 -- =============================
 -- SUBJECT INSTRUCTORS (Join Table)
 -- =============================
-CREATE TABLE subject_instructors (
+CREATE TABLE subject_instructors ( 
     subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
     instructor_id UUID REFERENCES users(id) ON DELETE CASCADE,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -105,23 +107,18 @@ CREATE TABLE exams (
     subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
     total_marks INT NOT NULL CHECK (total_marks > 0),
     pass_score INT NOT NULL CHECK (pass_score > 0),
-    start_time TIMESTAMPTZ,
-    end_time TIMESTAMPTZ,
     status exam_status_type NOT NULL DEFAULT 'DRAFT',
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL,
-    CHECK (end_time IS NULL OR start_time IS NULL OR end_time > start_time)
+    deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE INDEX idx_exams_subject ON exams(subject_id);
 CREATE INDEX idx_exams_id ON exams(id);
 CREATE INDEX idx_exams_status ON exams(status);
-CREATE INDEX idx_exams_time_window ON exams(start_time, end_time);
 
 CREATE TRIGGER exams_updated_at
 BEFORE UPDATE ON exams
@@ -292,6 +289,7 @@ DROP TRIGGER IF EXISTS check_choices_count ON choices;
 DROP TYPE IF EXISTS attempt_status_type CASCADE;
 DROP TYPE IF EXISTS exam_status_type CASCADE;
 DROP TYPE IF EXISTS user_role_type CASCADE;
+DROP TYPE IF EXISTS subject_status_type CASCADE;
 DROP TYPE IF EXISTS question_type_type CASCADE;
 
 DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
