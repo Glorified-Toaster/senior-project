@@ -11,6 +11,7 @@ import "uot-exam/web/templates/components/chart"
 import "uot-exam/internal/domain"
 import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/input"
 
 type AllExamsPageParam struct {
 	FullName   string
@@ -44,7 +45,34 @@ templ AllExamsPage(params AllExamsPageParam) {
 						<p class="text-slate-500 mt-1">Overview of all exams on the platform.</p>
 					</div>
 				</div>
-				@components.ExamTableGrid(params.Exams)
+
+				<div class="flex items-center gap-2 w-full">
+					@icon.Search(icon.Props{Class: "h-4 w-4"})
+					@input.Input(input.Props{
+						Type:        input.TypeSearch,
+						Name:        "search",
+						Placeholder: "Search exams...",
+						Attributes: templ.Attributes{
+							"hx-get":    "/admin/dashboard/exams/search",
+							"hx-trigger": "keyup changed delay:300ms, search",
+							"hx-target":  "#exams-table-container",
+							"hx-swap":    "outerHTML",
+						},
+					})
+				</div>
+
+				@components.ExamTableContainer(components.ExamTableProps{
+					Exams:         params.Exams,
+					Title:         "All Exams",
+					TotalCount:    params.TotalExams,
+					Limit:         params.Limit,
+					Offset:        params.Offset,
+					BaseURL:       "/admin/dashboard/exams",
+					ShowAllButton: false,
+					Search:        false,
+					SearchAPI:     "/admin/dashboard/exams/search",
+					CreateExam:    true,
+				})
 			</div>
 		}
 	</div>

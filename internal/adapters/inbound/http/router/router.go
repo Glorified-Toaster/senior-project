@@ -101,7 +101,6 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/users/create-csv", r.userHandler.CreateUserCSV())
 			dashboardRoutes.GET("/users/generate-username", r.userHandler.GenerateRandomUsername())
 			dashboardRoutes.GET("/users/generate-password", r.userHandler.GenerateRandomPassword())
-			dashboardRoutes.GET("/users/deleted", r.userHandler.DeletedUsersPageRender())
 			dashboardRoutes.GET("/users/deleted/search", r.userHandler.SearchDeletedUsers())
 			dashboardRoutes.POST("/users/deleted/search", r.userHandler.SearchDeletedUsers())
 			dashboardRoutes.GET("/exams", r.userHandler.AllExamsPageRender())

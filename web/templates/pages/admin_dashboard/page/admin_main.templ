@@ -17,10 +17,12 @@ import "uot-exam/web/templates/components/button"
 type AdminDashboardParam struct {
 	Users           []domain.User
 	Exams           []domain.Exam
-	TotalUsers      string
-	TotalUsersCount int64
-	Username        string
-	FullName        string
+	TotalUsers        string
+	TotalUsersCount   int64
+	Username          string
+	FullName          string
+	DeletedUsers      []domain.User
+	DeletedUsersCount int64
 }
 
 templ AdminMainPage(params AdminDashboardParam) {

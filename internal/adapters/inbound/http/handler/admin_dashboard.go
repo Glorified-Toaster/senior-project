@@ -96,27 +96,6 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname, _ := parseUsername(ctx)
-
-		params := page.AdminDashboardParam{
-			Users:           users,
-			TotalUsers:      fmt.Sprintf("%d", userCount),
-			TotalUsersCount: userCount,
-			Username:        username,
-			FullName:        fullname,
-		}
-		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AllUsers(params)))
-	}
-}
-
-func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		limitStr := ctx.DefaultQuery("limit", "12")
-		offsetStr := ctx.DefaultQuery("offset", "0")
-
-		limit, _ := strconv.Atoi(limitStr)
-		offset, _ := strconv.Atoi(offsetStr)
-
 		deletedUsers, err := h.App.ListDeletedUsers(ctx.Request.Context(), ports.ListDeletedUsersParams{
 			Limit:  int32(limit),
 			Offset: int32(offset),
@@ -126,36 +105,23 @@ func (h *UserHandler) DeletedUsersPageRender() gin.HandlerFunc {
 			return
 		}
 
-		deletedUserCount, err := h.App.CountDeletedUsers(ctx)
+		deletedUsersCount, err := h.App.CountDeletedUsers(ctx)
 		if err != nil {
-			return
-		}
-
-		// Check if it's an HTMX request
-		if ctx.GetHeader("HX-Request") != "" {
-			props := components.UserTableProps{
-				Title:      "Deleted Users",
-				Users:      deletedUsers,
-				TotalCount: deletedUserCount,
-				Limit:      int32(limit),
-				Offset:     int32(offset),
-				BaseURL:    "/admin/dashboard/users/deleted",
-			}
-			render.Render(ctx, components.UserTableContainer(props))
 			return
 		}
 
 		username, fullname, _ := parseUsername(ctx)
 
-		params := page.DeletedUsersPageParams{
-			DeletedUsers:    deletedUsers,
-			TotalUsers:      fmt.Sprintf("%d", deletedUserCount),
-			TotalUsersCount: deletedUserCount,
-			Username:        username,
-			FullName:        fullname,
-			Title:           "Deleted Users",
+		params := page.AdminDashboardParam{
+			Users:             users,
+			TotalUsers:        fmt.Sprintf("%d", userCount),
+			TotalUsersCount:   userCount,
+			Username:          username,
+			FullName:          fullname,
+			DeletedUsers:      deletedUsers,
+			DeletedUsersCount: deletedUsersCount,
 		}
-		render.Render(ctx, pages.BasePage("Deleted Users", page.DeletedUsersPage(params)))
+		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AllUsers(params)))
 	}
 }
 
@@ -277,7 +243,7 @@ func (h *UserHandler) SearchExams() gin.HandlerFunc {
 			Offset: int32(offset),
 		})
 		if err != nil {
-			render.Render(ctx, components.ExamTableRows([]domain.Exam{}))
+			render.Render(ctx, components.ExamTableGrid([]domain.Exam{}))
 			return
 		}
 

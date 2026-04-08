@@ -12,6 +12,8 @@ import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/selectbox"
 import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/tabs"
+import "fmt"
 
 templ AllUsers(params AdminDashboardParam) {
 	@sidebar.Script()
@@ -23,6 +25,7 @@ templ AllUsers(params AdminDashboardParam) {
 	@input.Script()
 	@toast.Script()
 	@chart.Script()
+	@tabs.Script()
 	@components.Sidebar("/admin/dashboard/users", []navbar.BreadPath{
 		{
 			Href: "/admin/dashboard",
@@ -33,7 +36,7 @@ templ AllUsers(params AdminDashboardParam) {
 			Path: "Users",
 		},
 	}, params.Username, params.FullName) {
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 				<div>
 					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
@@ -43,7 +46,54 @@ templ AllUsers(params AdminDashboardParam) {
 					<p class="text-slate-500 mt-1">List of all users on the platform.</p>
 				</div>
 			</div>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+			@UserTabs(params)
+		</div>
+		<div id="toast-container"></div>
+	}
+}
+
+templ UserTabs(params AdminDashboardParam) {
+	@tabs.Tabs(tabs.Props{
+		ID: "account-tabs",
+	}) {
+		@tabs.List(tabs.ListProps{
+			Class: "w-full",
+		}) {
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:    "all_users",
+				IsActive: true,
+				TabsID:   "account-tabs",
+				Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				All Users
+			}
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:  "deleted_users",
+				TabsID: "account-tabs",
+				Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Deleted Users
+			}
+		}
+		<div class="w-full mt-2">
+			@tabs.Content(tabs.ContentProps{
+				Value:  "all_users",
+				TabsID: "account-tabs",
+			}) {
+				@AllUsersContent(params)
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:  "deleted_users",
+				TabsID: "account-tabs",
+			}) {
+				@DeletedUsersContent(params)
+			}
+		</div>
+	}
+}
+
+templ AllUsersContent(params AdminDashboardParam) {
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Total Users",
 					Description: "Total number of users on the platform.",
@@ -63,6 +113,7 @@ templ AllUsers(params AdminDashboardParam) {
 					Icon:        icon.User(icon.Props{Class: "h-10 w-10"}),
 				})
 			</div>
+
 			@components.UserTable(components.UserTableProps{
 				Title:      "All Users",
 				Users:      params.Users,
@@ -75,7 +126,27 @@ templ AllUsers(params AdminDashboardParam) {
 				AddUser:    true,
 				AddUserCSV: true,
 			})
-		</div>
-		<div id="toast-container"></div>
-	}
+}
+
+templ DeletedUsersContent(params AdminDashboardParam) {
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+				@components.TotalCard(components.TotalCardProps{
+					Title:       "Total Deleted Users",
+					Description: "Total number of deleted users on the platform.",
+					Value:       fmt.Sprintf("%d", params.DeletedUsersCount),
+					Icon:        icon.Users(icon.Props{Class: "h-10 w-10"}),
+				})
+			</div>
+			@components.UserTable(components.UserTableProps{
+				Title:         "Deleted Users",
+				Users:         params.DeletedUsers,
+				TotalCount:    params.DeletedUsersCount,
+				Limit:         12,
+				Offset:        0,
+				BaseURL:       "/admin/dashboard/users/deleted",
+				Search:        true,
+				SearchAPI:     "/admin/dashboard/users/deleted/search",
+				AddUser:       false,
+				DeletedButton: true,
+			})
 }
