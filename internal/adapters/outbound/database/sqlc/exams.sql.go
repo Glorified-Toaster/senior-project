@@ -23,6 +23,19 @@ func (q *Queries) CountExams(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countSearchExams = `-- name: CountSearchExams :one
+SELECT COUNT(*) FROM exams 
+WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
+AND deleted_at IS NULL
+`
+
+func (q *Queries) CountSearchExams(ctx context.Context, dollar_1 string) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchExams, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createExam = `-- name: CreateExam :one
 INSERT INTO exams (subject_id, title, description, total_marks, status, created_by)
 VALUES ($1,$2,$3,$4,$5,$6)
@@ -106,7 +119,7 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 }
 
 const listAllExams = `-- name: ListAllExams :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2
 `
 
 type ListAllExamsParams struct {
@@ -280,7 +293,7 @@ const searchExams = `-- name: SearchExams :many
 SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
 WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
 AND deleted_at IS NULL
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id ASC
 LIMIT $2 OFFSET $3
 `
 

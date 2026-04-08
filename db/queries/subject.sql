@@ -9,14 +9,14 @@ SELECT * FROM subjects WHERE id = $1;
 -- name: ListAllSubjects :many
 SELECT * FROM subjects 
 WHERE deleted_at IS NULL
-ORDER BY updated_at DESC
+ORDER BY updated_at DESC, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: SearchSubjects :many
 SELECT * FROM subjects 
 WHERE title ILIKE '%' || sqlc.arg(title) || '%'
 AND deleted_at IS NULL
-ORDER BY updated_at DESC
+ORDER BY updated_at DESC, id ASC
 LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
 
 -- name: CountSearchSubjects :one
@@ -49,7 +49,10 @@ SELECT COUNT(*) FROM subjects WHERE deleted_at IS NULL;
 SELECT COUNT(*) FROM subjects WHERE deleted_at IS NOT NULL;
 
 -- name: ListDeletedSubjects :many
-SELECT * FROM subjects WHERE deleted_at IS NOT NULL LIMIT $1 OFFSET $2;
+SELECT * FROM subjects 
+WHERE deleted_at IS NOT NULL 
+ORDER BY deleted_at DESC, id ASC
+LIMIT $1 OFFSET $2;
 
 -- name: ListInstructorsBySubjectID :many
 SELECT 

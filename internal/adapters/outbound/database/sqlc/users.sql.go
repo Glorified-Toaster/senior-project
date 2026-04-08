@@ -248,7 +248,7 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 const listAllInstructors = `-- name: ListAllInstructors :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -291,7 +291,7 @@ func (q *Queries) ListAllInstructors(ctx context.Context, arg ListAllInstructors
 const listAllUsers = `-- name: ListAllUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NULL 
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -334,7 +334,7 @@ func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]U
 const listDeletedUsers = `-- name: ListDeletedUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NOT NULL 
-ORDER BY deleted_at DESC
+ORDER BY deleted_at DESC, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -430,7 +430,7 @@ WHERE
         username ILIKE '%' || $3::text || '%'
         OR full_name ILIKE '%' || $3::text || '%'
     )
-ORDER BY deleted_at DESC
+ORDER BY deleted_at DESC, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -479,7 +479,7 @@ WHERE
         username ILIKE '%' || $3::text || '%'
         OR full_name ILIKE '%' || $3::text || '%'
     )
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2
 `
 

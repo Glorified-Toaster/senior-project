@@ -18,6 +18,7 @@ type Querier interface {
 	CountInstructors(ctx context.Context) (int64, error)
 	CountQuestions(ctx context.Context) (int64, error)
 	CountSearchDeletedUsers(ctx context.Context, search string) (int64, error)
+	CountSearchExams(ctx context.Context, dollar_1 string) (int64, error)
 	CountSearchSubjects(ctx context.Context, title *string) (int64, error)
 	CountSearchUsers(ctx context.Context, search string) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)

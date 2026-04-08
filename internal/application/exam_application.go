@@ -38,6 +38,16 @@ func (app *Application) CountExams(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+func (app *Application) CountSearchExams(ctx context.Context, search string) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.examRepo.CountSearch(txCtx, search)
+		return err
+	})
+	return count, err
+}
+
 func (app *Application) SoftDeleteExam(ctx context.Context, id uuid.UUID) error {
 	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		return app.examRepo.SoftDelete(txCtx, id)

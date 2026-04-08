@@ -244,8 +244,13 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}))
+			render.Render(ctx, components.UserTableRows([]domain.User{}, false))
 			return
+		}
+
+		totalCount, err := h.App.CountSearchUsers(ctx, search)
+		if err != nil {
+			totalCount = 0
 		}
 
 		if users == nil {
@@ -253,10 +258,14 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		}
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
-			Users:      users,
-			TotalCount: 0,
-			Limit:      int32(limit),
-			Offset:     int32(offset),
+			Users:         users,
+			TotalCount:    totalCount,
+			Limit:         int32(limit),
+			Offset:        int32(offset),
+			BaseURL:       "/admin/dashboard/users",
+			Search:        true,
+			SearchAPI:     "/admin/users/search",
+			ShowAllButton: false,
 		}))
 	}
 }
@@ -435,10 +444,10 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			Limit:  int32(limit),
 			Offset: int32(offset),
 		})
+		// Get total count for search results
+		totalCount, err := h.App.CountSearchDeletedUsers(ctx, search)
 		if err != nil {
-			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}))
-			return
+			totalCount = 0
 		}
 
 		if users == nil {
@@ -446,10 +455,14 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 		}
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
-			Users:      users,
-			TotalCount: 0,
-			Limit:      int32(limit),
-			Offset:     int32(offset),
+			Users:         users,
+			TotalCount:    totalCount,
+			Limit:         int32(limit),
+			Offset:        int32(offset),
+			BaseURL:       "/admin/dashboard/users/deleted",
+			Search:        true,
+			SearchAPI:     "/admin/users/search-deleted",
+			ShowAllButton: false,
 		}))
 	}
 }

@@ -72,6 +72,15 @@ func (r *ExamRepository) Count(ctx context.Context) (int64, error) {
 	return queries.CountExams(ctx)
 }
 
+func (r *ExamRepository) CountSearch(ctx context.Context, search string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountSearchExams(ctx, search)
+}
+
 func (r *ExamRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

@@ -20,10 +20,15 @@ SELECT * FROM exams WHERE id = $1;
 SELECT * FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC;
 
 -- name: ListAllExams :many
-SELECT * FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+SELECT * FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2;
 
 -- name: CountExams :one
 SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL;
+
+-- name: CountSearchExams :one
+SELECT COUNT(*) FROM exams 
+WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
+AND deleted_at IS NULL;
 
 -- name: StartExamAttempt :one
 INSERT INTO exam_attempts (exam_id, student_id)
@@ -54,7 +59,7 @@ SELECT * FROM student_answers WHERE attempt_id = $1;
 SELECT * FROM exams 
 WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
 AND deleted_at IS NULL
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id ASC
 LIMIT $2 OFFSET $3;
 
 -- name: SoftDeleteExam :exec

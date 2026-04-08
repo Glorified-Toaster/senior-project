@@ -374,6 +374,34 @@ func (r *UserRepository) CountDeleted(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
+func (r *UserRepository) CountSearch(ctx context.Context, search string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountSearchUsers(ctx, search)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *UserRepository) CountSearchDeleted(ctx context.Context, search string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountSearchDeletedUsers(ctx, search)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *UserRepository) SearchDeleted(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

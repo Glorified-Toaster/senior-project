@@ -23,7 +23,7 @@ import (
 
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		users, err := h.App.ListAllUsers(ctx.Request.Context(), ports.ListAllUsersParams{Limit: 4, Offset: 0})
+		users, err := h.App.ListAllUsers(ctx.Request.Context(), ports.ListAllUsersParams{Limit: 6, Offset: 0})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -282,13 +282,20 @@ func (h *UserHandler) SearchExams() gin.HandlerFunc {
 			exams = []domain.Exam{}
 		}
 
+		totalCount, err := h.App.CountSearchExams(ctx, search)
+		if err != nil {
+			totalCount = 0
+		}
+
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.ExamTableContainer(components.ExamTableProps{
 			Exams:      exams,
-			TotalCount: 0, // Search results often don't show full pagination
+			TotalCount: totalCount,
 			Limit:      int32(limit),
 			Offset:     int32(offset),
 			BaseURL:    "/admin/dashboard/exams",
+			Search:     true,
+			SearchAPI:  "/admin/exams/search",
 		}))
 	}
 }

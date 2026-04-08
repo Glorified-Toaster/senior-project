@@ -11,6 +11,7 @@ type ExamRepository interface {
 	ListAll(ctx context.Context, arg ListAllExamsParams) ([]domain.Exam, error)
 	Search(ctx context.Context, arg SearchExamsParams) ([]domain.Exam, error)
 	Count(ctx context.Context) (int64, error)
+	CountSearch(ctx context.Context, search string) (int64, error)
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (domain.Exam, error)
 	Create(ctx context.Context, arg CreateExamParams) (domain.Exam, error)

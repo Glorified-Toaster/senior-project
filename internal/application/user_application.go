@@ -172,6 +172,22 @@ func (app *Application) CountDeletedUsers(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
+func (app *Application) CountSearchUsers(ctx context.Context, search string) (int64, error) {
+	count, err := app.userRepo.CountSearch(ctx, search)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (app *Application) CountSearchDeletedUsers(ctx context.Context, search string) (int64, error) {
+	count, err := app.userRepo.CountSearchDeleted(ctx, search)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (app *Application) SearchDeletedUsers(ctx context.Context, arg ports.SearchUsersParams) ([]domain.User, error) {
 	users, err := app.userRepo.SearchDeleted(ctx, arg)
 	if err != nil {

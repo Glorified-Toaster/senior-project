@@ -12,6 +12,7 @@ import "uot-exam/internal/domain"
 import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
 import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/button"
 
 type AdminDashboardParam struct {
 	Users           []domain.User
@@ -73,6 +74,7 @@ templ AdminMainPage(params AdminDashboardParam) {
 					Offset:        0,
 					BaseURL:       "/admin/dashboard/users",
 					ShowAllButton: true,
+					HideActions:   true,
 				})
 			</div>
 		}
@@ -81,7 +83,7 @@ templ AdminMainPage(params AdminDashboardParam) {
 
 templ ExamGridTableCard(exams []domain.Exam) {
 	@card.Card(card.Props{
-		Class: "w-full",
+		Class: "w-full overflow-hidden",
 	}) {
 		@card.Header() {
 			@card.Title() {
@@ -93,8 +95,14 @@ templ ExamGridTableCard(exams []domain.Exam) {
 				<span class="text-sm text-muted-foreground">Overview of recent exams on the platform.</span>
 			}
 		}
-		@card.Content() {
+		@card.Content(card.ContentProps{Class: "p-4"}) {
 			@components.ExamTableGrid(exams)
+			@button.Button(button.Props{
+				Href:  "/admin/dashboard/exams",
+				Class: "w-full mt-4",
+			}) {
+				All Exams 
+			}
 		}
 	}
 }

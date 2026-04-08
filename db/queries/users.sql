@@ -31,7 +31,7 @@ WHERE id = $1;
 -- name: ListDeletedUsers :many
 SELECT * FROM users 
 WHERE deleted_at IS NOT NULL 
-ORDER BY deleted_at DESC
+ORDER BY deleted_at DESC, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: DisableUser :exec
@@ -65,7 +65,7 @@ ORDER BY created_at DESC;
 -- name: ListAllUsers :many
 SELECT * FROM users 
 WHERE deleted_at IS NULL 
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: UpdateUserRole :exec
@@ -87,7 +87,7 @@ WHERE
         username ILIKE '%' || sqlc.arg(search)::text || '%'
         OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
     )
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: SearchDeletedUsers :many
@@ -98,7 +98,7 @@ WHERE
         username ILIKE '%' || sqlc.arg(search)::text || '%'
         OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
     )
-ORDER BY deleted_at DESC
+ORDER BY deleted_at DESC, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: CountUsers :one
@@ -129,7 +129,7 @@ WHERE
 -- name: ListAllInstructors :many
 SELECT * FROM users 
 WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL
-ORDER BY last_login DESC NULLS LAST
+ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: CountInstructors :one

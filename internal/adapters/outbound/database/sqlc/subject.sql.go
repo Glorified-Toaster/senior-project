@@ -157,7 +157,7 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, er
 const listAllSubjects = `-- name: ListAllSubjects :many
 SELECT id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at FROM subjects 
 WHERE deleted_at IS NULL
-ORDER BY updated_at DESC
+ORDER BY updated_at DESC, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -198,7 +198,10 @@ func (q *Queries) ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams
 }
 
 const listDeletedSubjects = `-- name: ListDeletedSubjects :many
-SELECT id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at FROM subjects WHERE deleted_at IS NOT NULL LIMIT $1 OFFSET $2
+SELECT id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at FROM subjects 
+WHERE deleted_at IS NOT NULL 
+ORDER BY deleted_at DESC, id ASC
+LIMIT $1 OFFSET $2
 `
 
 type ListDeletedSubjectsParams struct {
@@ -328,7 +331,7 @@ const searchSubjects = `-- name: SearchSubjects :many
 SELECT id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at FROM subjects 
 WHERE title ILIKE '%' || $1 || '%'
 AND deleted_at IS NULL
-ORDER BY updated_at DESC
+ORDER BY updated_at DESC, id ASC
 LIMIT $3 OFFSET $2
 `
 
