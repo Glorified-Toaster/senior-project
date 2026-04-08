@@ -17,12 +17,21 @@ type ExamRepository interface {
 	Create(ctx context.Context, arg CreateExamParams) (domain.Exam, error)
 	Update(ctx context.Context, arg UpdateExamParams) (domain.Exam, error)
 	ListBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.Exam, error)
+	SearchBySubject(ctx context.Context, arg SearchExamsBySubjectParams) ([]domain.Exam, error)
+	CountSearchBySubject(ctx context.Context, subjectID uuid.UUID, search string) (int64, error)
 }
 
 type SearchExamsParams struct {
 	Search string
 	Limit  int32
 	Offset int32
+}
+
+type SearchExamsBySubjectParams struct {
+	SubjectID uuid.UUID
+	Search    string
+	Limit     int32
+	Offset    int32
 }
 
 type CreateExamParams struct {

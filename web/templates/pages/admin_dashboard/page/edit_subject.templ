@@ -177,23 +177,6 @@ templ InformationTab(param EditSubjectPageParam) {
 					Value:       param.Subject.Title,
 					Class:       "mb-4",
 				})
-				@label.Label(label.Props{
-					For:   "subject_description",
-					Class: "flex items-center gap-2 mb-2 mt-4",
-				}) {
-					@icon.MessageSquareText(icon.Props{
-						Class: "h-4 w-4",
-					})
-					Subject Description
-				}
-				@textarea.Textarea(textarea.Props{
-					Placeholder: "Subject Description",
-					ID:          "subject_description",
-					Name:        "subject_description",
-					Rows:        3,
-					Value:       utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
-					Class:       "mb-4",
-				})
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="space-y-2 mb-4">
 						@label.Label(label.Props{For: "duration_minutes", Class: "mb-2"}) {
@@ -308,6 +291,24 @@ templ InformationTab(param EditSubjectPageParam) {
 					Readonly: true,
 					Disabled: true,
 					Class:    "mb-4",
+				})
+
+				@label.Label(label.Props{
+					For:   "subject_description",
+					Class: "flex items-center gap-2 mb-2 mt-4",
+				}) {
+					@icon.MessageSquareText(icon.Props{
+						Class: "h-4 w-4",
+					})
+					Subject Description
+				}
+				@textarea.Textarea(textarea.Props{
+					Placeholder: "Subject Description",
+					ID:          "subject_description",
+					Name:        "subject_description",
+					Rows:        3,
+					Value:       utils.IfElse(param.Subject.Description != nil, *param.Subject.Description, ""),
+					Class:       "mb-4",
 				})
 			}
 			@card.Footer(card.FooterProps{

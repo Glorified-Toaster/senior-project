@@ -19,6 +19,7 @@ type Querier interface {
 	CountQuestions(ctx context.Context) (int64, error)
 	CountSearchDeletedUsers(ctx context.Context, search string) (int64, error)
 	CountSearchExams(ctx context.Context, dollar_1 string) (int64, error)
+	CountSearchExamsBySubject(ctx context.Context, arg CountSearchExamsBySubjectParams) (int64, error)
 	CountSearchSubjects(ctx context.Context, title *string) (int64, error)
 	CountSearchUsers(ctx context.Context, search string) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
@@ -63,6 +64,7 @@ type Querier interface {
 	SaveAnswer(ctx context.Context, arg SaveAnswerParams) (StudentAnswer, error)
 	SearchDeletedUsers(ctx context.Context, arg SearchDeletedUsersParams) ([]User, error)
 	SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exam, error)
+	SearchExamsBySubject(ctx context.Context, arg SearchExamsBySubjectParams) ([]Exam, error)
 	SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]Subject, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SetQuestionImagePath(ctx context.Context, arg SetQuestionImagePathParams) error

@@ -12,6 +12,8 @@ import "fmt"
 import "time"
 import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/form"
+import "uot-exam/web/templates/components/selectbox"
 
 type UserTableProps struct {
 	Users         []domain.User
@@ -57,10 +59,135 @@ templ UserTable(props UserTableProps) {
 						</div>
 					}
 					if props.AddUser {
-						@button.Button(button.Props{
-							Href: props.AddAPI,
+						@dialog.Dialog(){
+							@dialog.Trigger(){
+								@button.Button(button.Props{
+									Variant: button.VariantDefault,
+								}) {
+									Add User
+								}
+							}
+							@dialog.Content(){
+								@dialog.Header(){
+									@dialog.Title() {
+										Add User
+									}
+									@dialog.Description(){
+										Add a new user to the platform.
+									}
+								}
+
+							<form
+								id="add-user-form"
+								hx-post="/admin/dashboard/users/create"
+								hx-target="#users-table-container"
+								hx-swap="outerHTML"
+							>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2 mb-4 md:col-span-2">
+						@form.Label(form.LabelProps{For: "full_name"}) {
+							Full Name
+						}
+						@input.Input(input.Props{
+							ID:          "full_name",
+							Name:        "full_name",
+							Placeholder: "Enter full name",
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@form.Label(form.LabelProps{For: "username"}) {
+							Username
+						}
+						@input.Input(input.Props{
+							ID:          "username",
+							Name:        "username",
+							Placeholder: "Enter username",
+							Required: true,
+						
+						})
+					</div>
+
+					<div class="space-y-2 mb-4">
+						@form.Label(form.LabelProps{For: "password"}) {
+							Password
+						}
+						@input.Input(input.Props{
+							ID:          "password",
+							Name:        "password",
+							Placeholder: "Enter password",
+							Type:        input.TypePassword,
+							Required: true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@form.Label(form.LabelProps{For: "role"}) {
+							Role
+						}
+			@selectbox.SelectBox() {
+				@selectbox.Trigger(selectbox.TriggerProps{
+					Name: "role",
+				}) {
+					@selectbox.Value(selectbox.ValueProps{
+						Placeholder: "Select the role",
+					})
+				}
+				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+					@selectbox.Group() {
+						@selectbox.Label() {
+							Role
+						}
+						@selectbox.Item(selectbox.ItemProps{
+							Value: "ADMIN",
 						}) {
-							Add User
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantSecondary,
+							}) {
+								Admin
+							}
+						}
+						@selectbox.Item(selectbox.ItemProps{
+							Value: "STUDENT",
+						}) {
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantDestructive,
+							}) {
+								Student
+							}
+						}
+						@selectbox.Item(selectbox.ItemProps{
+							Value: "INSTRUCTOR",
+						}) {
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantDefault,
+							}) {
+								Instructor
+							}
+						}
+					}
+				}
+			}
+					</div>
+
+				</div>
+								@dialog.Footer(){
+									@dialog.Close(){
+										@button.Button(button.Props{
+											Variant: button.VariantOutline,	
+										}) {
+											Cancel
+										}
+									}
+									@button.Button(button.Props{
+										Variant: button.VariantDefault,
+										Type:    button.TypeSubmit,
+									}){
+										Add User
+									}
+								}
+							</form>
+							}
 						}
 					}
 				</div>

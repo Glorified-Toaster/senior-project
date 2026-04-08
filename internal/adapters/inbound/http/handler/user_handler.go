@@ -42,45 +42,63 @@ func NewUserHandler(App *application.Application, validate *validator.Validate, 
 
 func (h *UserHandler) Create() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req ports.CreateUserParams
-		if err := ctx.ShouldBind(&req); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body (json)"})
+		fullname := ctx.PostForm("full_name")
+		username := ctx.PostForm("username")
+		password := ctx.PostForm("password")
+		role := ctx.PostForm("role")
+
+		if helpers.IsTrimmedEmpty(fullname) ||
+			helpers.IsTrimmedEmpty(username) ||
+			helpers.IsTrimmedEmpty(password) ||
+			helpers.IsTrimmedEmpty(role) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User Failed", "All fields are required.", toast.VariantError)
 			return
 		}
 
-		if err := h.validate.Struct(req); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body (struct validation)"})
-			return
-		}
-
-		user, err := h.App.CreateUser(ctx, req)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create user : " + err.Error()})
-			return
-		}
-
-		token, err := h.jwt.GenerateToken(user)
-		if err != nil {
-			ctx.JSON(http.StatusOK, gin.H{
-				"msg":        "User created successfully. Please login to get access token.",
-				"student_id": user.ID,
-				"warning":    "Token generation failed - please login manually",
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, gin.H{
-			"msg":          "User created successfully",
-			"access_token": token,
-			"token_type":   "Bearer",
-			"user": gin.H{
-				"id":        user.ID,
-				"full_name": user.FullName,
-				"user_name": user.Username,
-				"is_active": user.IsActive,
-				"role":      user.Role,
-			},
+		_, err := h.App.CreateUser(ctx, ports.CreateUserParams{
+			FullName: fullname,
+			Username: username,
+			Password: password,
+			Role:     domain.UserRole(role),
+			IsActive: true,
 		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User Failed", "Error creating user: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Reswap", "none")
+		helpers.Toast(ctx, "Create User Success", "User created successfully", toast.VariantSuccess)
+
+		// Fetch updated first page of users to refresh the table
+		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
+			Limit:  12,
+			Offset: 0,
+		})
+		if err != nil {
+			users = []domain.User{}
+		}
+
+		totalCount, err := h.App.CountUsers(ctx)
+		if err != nil {
+			totalCount = 0
+		}
+
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			Users:         users,
+			Title:         "All Users",
+			ID:            "users-table",
+			TotalCount:    totalCount,
+			Limit:         12,
+			Offset:        0,
+			BaseURL:       "/admin/dashboard/users",
+			Search:        true,
+			SearchAPI:     "/admin/users/search",
+			AddUser:       true,
+			DeletedButton: true,
+		}))
 	}
 }
 
@@ -203,7 +221,10 @@ func (h *UserHandler) GetUserByUsername() gin.HandlerFunc {
 
 func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		search := ctx.PostForm("search")
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
 		limitStr := ctx.Query("limit")
 		offsetStr := ctx.Query("offset")
 
@@ -217,7 +238,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		}
 
 		// If search is empty, return the first page with pagination
-		if strings.TrimSpace(search) == "" {
+		if search == "" {
 			users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
 				Limit:  int32(limit),
 				Offset: int32(offset),
@@ -262,7 +283,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 			TotalCount:    totalCount,
 			Limit:         int32(limit),
 			Offset:        int32(offset),
-			BaseURL:       "/admin/dashboard/users",
+			BaseURL:       "/admin/users/search?search=" + url.QueryEscape(search),
 			Search:        true,
 			SearchAPI:     "/admin/users/search",
 			ShowAllButton: false,
@@ -405,7 +426,10 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 
 func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		search := ctx.PostForm("search")
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
 		limitStr := ctx.Query("limit")
 		offsetStr := ctx.Query("offset")
 
@@ -419,7 +443,7 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 		}
 
 		// If search is empty, return the first page with pagination
-		if strings.TrimSpace(search) == "" {
+		if search == "" {
 			users, err := h.App.ListDeletedUsers(ctx, ports.ListDeletedUsersParams{
 				Limit:  int32(limit),
 				Offset: int32(offset),
@@ -459,7 +483,7 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			TotalCount:    totalCount,
 			Limit:         int32(limit),
 			Offset:        int32(offset),
-			BaseURL:       "/admin/dashboard/users/deleted",
+			BaseURL:       "/admin/dashboard/users/deleted/search?search=" + url.QueryEscape(search),
 			Search:        true,
 			SearchAPI:     "/admin/users/search-deleted",
 			ShowAllButton: false,

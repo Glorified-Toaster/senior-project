@@ -234,7 +234,10 @@ func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 
 func (h *UserHandler) SearchExams() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		search := ctx.PostForm("search")
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
 		limitStr := ctx.Query("limit")
 		offsetStr := ctx.Query("offset")
 
@@ -248,7 +251,7 @@ func (h *UserHandler) SearchExams() gin.HandlerFunc {
 		}
 
 		// If search is empty, return the first page with pagination
-		if helpers.IsTrimmedEmpty(search) {
+		if search == "" {
 			exams, err := h.App.ListAllExams(ctx, ports.ListAllExamsParams{
 				Limit:  int32(limit),
 				Offset: int32(offset),
@@ -293,7 +296,7 @@ func (h *UserHandler) SearchExams() gin.HandlerFunc {
 			TotalCount: totalCount,
 			Limit:      int32(limit),
 			Offset:     int32(offset),
-			BaseURL:    "/admin/dashboard/exams",
+			BaseURL:    "/admin/exams/search?search=" + url.QueryEscape(search),
 			Search:     true,
 			SearchAPI:  "/admin/exams/search",
 		}))
@@ -469,6 +472,49 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Exams:       exams,
 			UserID:      userID,
 		})))
+	}
+}
+
+func (h *UserHandler) SearchExamsBySubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subject ID"})
+			return
+		}
+
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
+
+		limitStr := ctx.DefaultQuery("limit", "10")
+		limit, _ := strconv.Atoi(limitStr)
+		offsetStr := ctx.DefaultQuery("offset", "0")
+		offset, _ := strconv.Atoi(offsetStr)
+
+		var exams []domain.Exam
+
+		if search == "" {
+			exams, err = h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+			if err != nil {
+				exams = []domain.Exam{}
+			}
+		} else {
+			exams, err = h.App.SearchExamsBySubject(ctx.Request.Context(), ports.SearchExamsBySubjectParams{
+				SubjectID: subjectID,
+				Search:    search,
+				Limit:     int32(limit),
+				Offset:    int32(offset),
+			})
+			if err != nil {
+				exams = []domain.Exam{}
+			}
+		}
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.ExamTableGrid(exams))
 	}
 }
 

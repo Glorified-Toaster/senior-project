@@ -93,3 +93,23 @@ func (app *Application) UpdateExam(ctx context.Context, arg ports.UpdateExamPara
 	})
 	return exam, err
 }
+
+func (app *Application) SearchExamsBySubject(ctx context.Context, arg ports.SearchExamsBySubjectParams) ([]domain.Exam, error) {
+	var exams []domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exams, err = app.examRepo.SearchBySubject(txCtx, arg)
+		return err
+	})
+	return exams, err
+}
+
+func (app *Application) CountSearchExamsBySubject(ctx context.Context, subjectID uuid.UUID, search string) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.examRepo.CountSearchBySubject(txCtx, subjectID, search)
+		return err
+	})
+	return count, err
+}

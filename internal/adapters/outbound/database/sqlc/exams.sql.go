@@ -36,6 +36,25 @@ func (q *Queries) CountSearchExams(ctx context.Context, dollar_1 string) (int64,
 	return count, err
 }
 
+const countSearchExamsBySubject = `-- name: CountSearchExamsBySubject :one
+SELECT COUNT(*) FROM exams 
+WHERE subject_id = $1
+AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
+AND deleted_at IS NULL
+`
+
+type CountSearchExamsBySubjectParams struct {
+	SubjectID uuid.NullUUID `json:"subject_id"`
+	Column2   string        `json:"column_2"`
+}
+
+func (q *Queries) CountSearchExamsBySubject(ctx context.Context, arg CountSearchExamsBySubjectParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchExamsBySubject, arg.SubjectID, arg.Column2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createExam = `-- name: CreateExam :one
 INSERT INTO exams (subject_id, title, description, total_marks, status, created_by)
 VALUES ($1,$2,$3,$4,$5,$6)
@@ -305,6 +324,58 @@ type SearchExamsParams struct {
 
 func (q *Queries) SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exam, error) {
 	rows, err := q.db.Query(ctx, searchExams, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exam
+	for rows.Next() {
+		var i Exam
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Title,
+			&i.Description,
+			&i.TotalMarks,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchExamsBySubject = `-- name: SearchExamsBySubject :many
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
+WHERE subject_id = $1
+AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
+AND deleted_at IS NULL
+ORDER BY created_at DESC, id ASC
+LIMIT $3 OFFSET $4
+`
+
+type SearchExamsBySubjectParams struct {
+	SubjectID uuid.NullUUID `json:"subject_id"`
+	Column2   string        `json:"column_2"`
+	Limit     int32         `json:"limit"`
+	Offset    int32         `json:"offset"`
+}
+
+func (q *Queries) SearchExamsBySubject(ctx context.Context, arg SearchExamsBySubjectParams) ([]Exam, error) {
+	rows, err := q.db.Query(ctx, searchExamsBySubject,
+		arg.SubjectID,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -178,3 +178,39 @@ func (r *ExamRepository) Update(ctx context.Context, arg ports.UpdateExamParams)
 
 	return mapSqlcExamToDomain(exam), nil
 }
+
+func (r *ExamRepository) SearchBySubject(ctx context.Context, arg ports.SearchExamsBySubjectParams) ([]domain.Exam, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcExams, err := queries.SearchExamsBySubject(ctx, sqlc.SearchExamsBySubjectParams{
+		SubjectID: uuid.NullUUID{UUID: arg.SubjectID, Valid: true},
+		Column2:   arg.Search,
+		Limit:     arg.Limit,
+		Offset:    arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var exams []domain.Exam
+	for _, exam := range sqlcExams {
+		exams = append(exams, mapSqlcExamToDomain(exam))
+	}
+
+	return exams, nil
+}
+
+func (r *ExamRepository) CountSearchBySubject(ctx context.Context, subjectID uuid.UUID, search string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountSearchExamsBySubject(ctx, sqlc.CountSearchExamsBySubjectParams{
+		SubjectID: uuid.NullUUID{UUID: subjectID, Valid: true},
+		Column2:   search,
+	})
+}

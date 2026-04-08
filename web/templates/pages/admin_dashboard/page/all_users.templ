@@ -10,6 +10,7 @@ import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/chart"
 import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/selectbox"
 
 templ AllUsers(params AdminDashboardParam) {
 	@sidebar.Script()
@@ -17,6 +18,7 @@ templ AllUsers(params AdminDashboardParam) {
 	@dropdown.Script()
 	@popover.Script()
 	@dialog.Script()
+	@selectbox.Script()
 	@toast.Script()
 	@chart.Script()
 	@components.Sidebar("/admin/dashboard/users", []navbar.BreadPath{
@@ -71,5 +73,6 @@ templ AllUsers(params AdminDashboardParam) {
 				AddUser:    true,
 			})
 		</div>
+		<div id="toast-container"></div>
 	}
 }

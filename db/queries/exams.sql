@@ -62,5 +62,19 @@ AND deleted_at IS NULL
 ORDER BY created_at DESC, id ASC
 LIMIT $2 OFFSET $3;
 
+-- name: SearchExamsBySubject :many
+SELECT * FROM exams 
+WHERE subject_id = $1
+AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
+AND deleted_at IS NULL
+ORDER BY created_at DESC, id ASC
+LIMIT $3 OFFSET $4;
+
+-- name: CountSearchExamsBySubject :one
+SELECT COUNT(*) FROM exams 
+WHERE subject_id = $1
+AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
+AND deleted_at IS NULL;
+
 -- name: SoftDeleteExam :exec
 UPDATE exams SET deleted_at = NOW() WHERE id = $1;
