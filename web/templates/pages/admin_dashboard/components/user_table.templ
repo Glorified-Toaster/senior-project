@@ -97,28 +97,59 @@ templ UserTable(props UserTableProps) {
 						})
 					</div>
 					<div class="space-y-2 mb-4">
-						@form.Label(form.LabelProps{For: "username"}) {
-							Username
-						}
+						<div class="flex items-center justify-between">
+							@form.Label(form.LabelProps{For: "username"}) {
+								Username
+							}
+							@button.Button(button.Props{
+								Size:    button.SizeIcon,
+								Variant: button.VariantGhost,
+								Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+								Attributes: templ.Attributes{
+									"hx-get":    "/admin/dashboard/users/generate-username",
+									"hx-swap":   "none",
+									"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('username').value = event.detail.xhr.responseText }",
+									"type":      "button",
+									"title":     "Randomize Username",
+								},
+							}) {
+								@icon.Dices(icon.Props{Size: 14})
+							}
+						</div>
 						@input.Input(input.Props{
 							ID:          "username",
 							Name:        "username",
 							Placeholder: "Enter username",
-							Required: true,
-						
+							Required:    true,
 						})
 					</div>
 
 					<div class="space-y-2 mb-4">
-						@form.Label(form.LabelProps{For: "password"}) {
-							Password
-						}
+						<div class="flex items-center justify-between">
+							@form.Label(form.LabelProps{For: "password"}) {
+								Password
+							}
+							@button.Button(button.Props{
+								Size:    button.SizeIcon,
+								Variant: button.VariantGhost,
+								Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+								Attributes: templ.Attributes{
+									"hx-get":    "/admin/dashboard/users/generate-password",
+									"hx-swap":   "none",
+									"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('password').value = event.detail.xhr.responseText }",
+									"type":      "button",
+									"title":     "Randomize Password",
+								},
+							}) {
+								@icon.Dices(icon.Props{Size: 14})
+							}
+						</div>
 						@input.Input(input.Props{
 							ID:          "password",
 							Name:        "password",
 							Placeholder: "Enter password",
 							Type:        input.TypePassword,
-							Required: true,
+							Required:    true,
 						})
 					</div>
 					<div class="space-y-2 mb-4">

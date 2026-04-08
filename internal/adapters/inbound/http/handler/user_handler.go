@@ -12,6 +12,7 @@ import (
 	"uot-exam/internal/application"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
+	"uot-exam/internal/utils/random"
 	"uot-exam/web/templates/components/toast"
 	"uot-exam/web/templates/pages"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
@@ -477,7 +478,6 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 		if users == nil {
 			users = []domain.User{}
 		}
-		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
 			Users:         users,
 			TotalCount:    totalCount,
@@ -488,5 +488,29 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			SearchAPI:     "/admin/users/search-deleted",
 			ShowAllButton: false,
 		}))
+	}
+}
+
+func (h *UserHandler) GenerateRandomUsername() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		suffix, err := random.String(8)
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "INTERNAL_ERROR", "INTERNAL_ERROR", "Failed to generate random username", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
+		ctx.String(http.StatusOK, "user_"+suffix)
+	}
+}
+
+func (h *UserHandler) GenerateRandomPassword() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pass, err := random.Password(12)
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "INTERNAL_ERROR", "INTERNAL_ERROR", "Failed to generate random password", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
+		ctx.String(http.StatusOK, pass)
 	}
 }
