@@ -25,24 +25,22 @@ type SearchExamsParams struct {
 }
 
 type CreateExamParams struct {
-	SubjectID       uuid.UUID
-	Title           string
-	Description     *string
-	TotalMarks      int32
-	PassScore       int32
-	StartTime       *string
-	EndTime         *string
-	Status          domain.ExamStatus
-	CreatedBy       uuid.UUID
+	SubjectID   uuid.UUID
+	Title       string
+	Description *string
+	TotalMarks  int32
+	StartTime   *string
+	EndTime     *string
+	Status      domain.ExamStatus
+	CreatedBy   uuid.UUID
 }
 
 type UpdateExamParams struct {
-	ID              uuid.UUID
-	Title           string
-	Description     *string
-	TotalMarks      int32
-	PassScore       int32
-	Status          domain.ExamStatus
+	ID          uuid.UUID
+	Title       string
+	Description *string
+	TotalMarks  int32
+	Status      domain.ExamStatus
 }
 
 type ListAllExamsParams struct {

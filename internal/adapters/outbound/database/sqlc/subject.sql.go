@@ -73,8 +73,8 @@ func (q *Queries) CountSubjects(ctx context.Context) (int64, error) {
 }
 
 const createSubject = `-- name: CreateSubject :one
-INSERT INTO subjects (title, description, duration_minutes, total_marks, pass_score, status)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO subjects (title, description, duration_minutes, pass_score, status)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at
 `
 
@@ -82,7 +82,6 @@ type CreateSubjectParams struct {
 	Title           string            `json:"title"`
 	Description     *string           `json:"description"`
 	DurationMinutes int32             `json:"duration_minutes"`
-	TotalMarks      int32             `json:"total_marks"`
 	PassScore       int32             `json:"pass_score"`
 	Status          SubjectStatusType `json:"status"`
 }
@@ -92,7 +91,6 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (S
 		arg.Title,
 		arg.Description,
 		arg.DurationMinutes,
-		arg.TotalMarks,
 		arg.PassScore,
 		arg.Status,
 	)
@@ -416,9 +414,8 @@ UPDATE subjects
 SET title = $2, 
     description = $3, 
     duration_minutes = $4, 
-    total_marks = $5, 
-    pass_score = $6, 
-    status = $7, 
+    pass_score = $5, 
+    status = $6, 
     updated_at = NOW() 
 WHERE id = $1 AND deleted_at IS NULL 
 RETURNING id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at
@@ -429,7 +426,6 @@ type UpdateSubjectParams struct {
 	Title           string            `json:"title"`
 	Description     *string           `json:"description"`
 	DurationMinutes int32             `json:"duration_minutes"`
-	TotalMarks      int32             `json:"total_marks"`
 	PassScore       int32             `json:"pass_score"`
 	Status          SubjectStatusType `json:"status"`
 }
@@ -440,7 +436,6 @@ func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (S
 		arg.Title,
 		arg.Description,
 		arg.DurationMinutes,
-		arg.TotalMarks,
 		arg.PassScore,
 		arg.Status,
 	)

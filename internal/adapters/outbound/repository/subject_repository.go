@@ -135,7 +135,6 @@ func (r *SubjectRepository) UpdateSubject(ctx context.Context, subject domain.Su
 		Title:           subject.Title,
 		Description:     subject.Description,
 		DurationMinutes: subject.DurationMinutes,
-		TotalMarks:      subject.TotalMarks,
 		PassScore:       subject.PassScore,
 		Status:          sqlc.SubjectStatusType(subject.Status),
 	})
@@ -307,7 +306,6 @@ func (r *SubjectRepository) CreateSubject(ctx context.Context, subject domain.Su
 		Title:           subject.Title,
 		Description:     subject.Description,
 		DurationMinutes: subject.DurationMinutes,
-		TotalMarks:      subject.TotalMarks,
 		PassScore:       subject.PassScore,
 		Status:          sqlc.SubjectStatusType(subject.Status),
 	})

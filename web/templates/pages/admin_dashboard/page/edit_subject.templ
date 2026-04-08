@@ -82,7 +82,7 @@ templ TabsSubject(param EditSubjectPageParam) {
 		ID: "account-tabs",
 	}) {
 		@tabs.List(tabs.ListProps{
-			Class: "w-full max-w-xs",
+			Class: "w-full",
 		}) {
 			@tabs.Trigger(tabs.TriggerProps{
 				Value:    "exams",
@@ -98,6 +98,13 @@ templ TabsSubject(param EditSubjectPageParam) {
 				Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
 			}) {
 				Instructors
+			}
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:  "students",
+				TabsID: "account-tabs",
+				Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Students
 			}
 			@tabs.Trigger(tabs.TriggerProps{
 				Value:  "information",
@@ -119,6 +126,12 @@ templ TabsSubject(param EditSubjectPageParam) {
 				TabsID: "account-tabs",
 			}) {
 				@ExamTab(param)
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:  "students",
+				TabsID: "account-tabs",
+			}) {
+				@StudentsTab(param)
 			}
 			@tabs.Content(tabs.ContentProps{
 				Value:  "instructors",
@@ -196,14 +209,15 @@ templ InformationTab(param EditSubjectPageParam) {
 					</div>
 					<div class="space-y-2 mb-4">
 						@label.Label(label.Props{For: "total_marks", Class: "mb-2"}) {
-							Total Marks
+							Total Marks (auto-computed)
 						}
 						@input.Input(input.Props{
 							Type:        input.TypeNumber,
 							ID:          "total_marks",
-							Name:        "total_marks",
 							Value:       fmt.Sprintf("%d", param.Subject.TotalMarks),
-							Required:    true,
+							Disabled:    true,
+							Attributes:  templ.Attributes{"readonly": "true"},
+							Class:       "bg-muted text-muted-foreground",
 						})
 					</div>
 					<div class="space-y-2 mb-4">
@@ -222,10 +236,59 @@ templ InformationTab(param EditSubjectPageParam) {
 						@label.Label(label.Props{For: "status", Class: "mb-2"}) {
 							Status
 						}
-						<select name="status" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-							<option value="ACTIVE" selected?={ param.Subject.Status == domain.SubjectStatusActive }>Active</option>
-							<option value="INACTIVE" selected?={ param.Subject.Status == domain.SubjectStatusInactive }>Inactive</option>
-						</select>
+						@selectbox.SelectBox() {
+							@selectbox.Trigger(selectbox.TriggerProps{
+								Name: "status",
+							}) {
+								@selectbox.Value(selectbox.ValueProps{
+									Placeholder: "Select the status",
+								}) {
+									switch param.Subject.Status {
+										case domain.SubjectStatusActive:
+											@badge.Badge(badge.Props{
+												Variant: badge.VariantDefault,
+											}) {
+												Active
+											}
+										case domain.SubjectStatusInactive:
+											@badge.Badge(badge.Props{
+												Variant: badge.VariantDestructive,
+											}) {
+												Inactive
+											}
+									}
+								}
+							}
+							@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+								@selectbox.Group() {
+									@selectbox.Label() {
+										Status
+									}
+									@selectbox.Item(selectbox.ItemProps{
+										Value:    "ACTIVE",
+										Selected: param.Subject.Status == domain.SubjectStatusActive,
+										Class:    "mb-2 mt-2",
+									}) {
+										@badge.Badge(badge.Props{
+											Variant: badge.VariantDefault,
+										}) {
+											Active
+										}
+									}
+									@selectbox.Item(selectbox.ItemProps{
+										Value:    "INACTIVE",
+										Selected: param.Subject.Status == domain.SubjectStatusInactive,
+										Class:    "mb-2 mt-2",
+									}) {
+										@badge.Badge(badge.Props{
+											Variant: badge.VariantDestructive,
+										}) {
+											Inactive
+										}
+									}
+								}
+							}
+						}
 					</div>
 
 				</div>
@@ -560,27 +623,24 @@ templ ExamForm(param EditSubjectPageParam) {
 				Attributes:  templ.Attributes{"min": "0"},
 			})
 		</div>
-		<div class="space-y-2 mb-4 md:col-start-1 md:col-end-2">
-			@form.Label(form.LabelProps{For: "pass_marks", Class: "block text-sm font-medium mb-2"}) {
-				Pass Marks
-			}
-			@input.Input(input.Props{
-				Type:        input.TypeNumber,
-				ID:          "pass_marks",
-				Name:        "pass_marks",
-				Placeholder: "Enter pass marks",
-				Attributes:  templ.Attributes{"min": "0"},
-			})
-		</div>
+
 		<div class="space-y-2 mb-4">
 			@form.Label(form.LabelProps{For: "status", Class: "block text-sm font-medium mb-2"}) {
 				Status
 			}
 			@selectbox.SelectBox() {
-				@selectbox.Trigger() {
+				@selectbox.Trigger(selectbox.TriggerProps{
+					Name: "exam_status",
+				}) {
 					@selectbox.Value(selectbox.ValueProps{
 						Placeholder: "Select the status",
-					})
+					}) {
+						@badge.Badge(badge.Props{
+							Variant: badge.VariantSecondary,
+						}) {
+							Draft
+						}
+					}
 				}
 				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
 					@selectbox.Group() {
@@ -588,7 +648,8 @@ templ ExamForm(param EditSubjectPageParam) {
 							Status
 						}
 						@selectbox.Item(selectbox.ItemProps{
-							Value: "DRAFT",
+							Value:    "DRAFT",
+							Selected: true,
 						}) {
 							@badge.Badge(badge.Props{
 								Variant: badge.VariantSecondary,
@@ -630,4 +691,8 @@ templ ExamForm(param EditSubjectPageParam) {
 			})
 		</div>
 	</div>
+}
+
+templ StudentsTab(param EditSubjectPageParam) {
+
 }

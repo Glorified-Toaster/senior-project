@@ -1,6 +1,6 @@
 -- name: CreateSubject :one
-INSERT INTO subjects (title, description, duration_minutes, total_marks, pass_score, status)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO subjects (title, description, duration_minutes, pass_score, status)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: GetSubjectByID :one
@@ -30,9 +30,8 @@ UPDATE subjects
 SET title = $2, 
     description = $3, 
     duration_minutes = $4, 
-    total_marks = $5, 
-    pass_score = $6, 
-    status = $7, 
+    pass_score = $5, 
+    status = $6, 
     updated_at = NOW() 
 WHERE id = $1 AND deleted_at IS NULL 
 RETURNING *;

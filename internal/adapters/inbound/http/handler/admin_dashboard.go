@@ -30,7 +30,7 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 		}
 
 		username, fullname, _ := parseUsername(ctx)
-		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{Limit: 4, Offset: 0})
+		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{Limit: 6, Offset: 0})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -485,7 +485,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		}
 		description := ctx.PostForm("description")
 		totalMarksStr := ctx.PostForm("total_marks")
-		passScoreStr := ctx.PostForm("pass_marks")
 
 		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) {
 			helpers.Toast(ctx, "Create Exam Failed", "Missing required fields", toast.VariantError)
@@ -504,12 +503,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			helpers.Toast(ctx, "Create Exam Failed", "Invalid total marks", toast.VariantError)
 			return
 		}
-		passScore, err := strconv.Atoi(passScoreStr)
-		if err != nil {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Create Exam Failed", "Invalid pass score", toast.VariantError)
-			return
-		}
 
 		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
 			Title:       title,
@@ -517,7 +510,6 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			CreatedBy:   createdBy,
 			Description: &description,
 			TotalMarks:  int32(totalMarks),
-			PassScore:   int32(passScore),
 			Status:      domain.ExamStatusDraft,
 		})
 		if err != nil {
@@ -554,20 +546,23 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 		}
 
 		durationStr := ctx.PostForm("duration_minutes")
-		totalMarksStr := ctx.PostForm("total_marks")
 		passScoreStr := ctx.PostForm("pass_score")
 		statusStr := ctx.PostForm("status")
 
-		totalMarks, _ := strconv.Atoi(totalMarksStr)
 		passScore, _ := strconv.Atoi(passScoreStr)
 
 		var duration int32
-		if durationStr != "" && strings.Contains(durationStr, ":") {
-			parts := strings.Split(durationStr, ":")
-			if len(parts) == 2 {
-				hour, _ := strconv.Atoi(parts[0])
-				minute, _ := strconv.Atoi(parts[1])
-				duration = int32(hour)*60 + int32(minute)
+		if durationStr != "" {
+			if strings.Contains(durationStr, ":") {
+				parts := strings.Split(durationStr, ":")
+				if len(parts) == 2 {
+					hour, _ := strconv.Atoi(parts[0])
+					minute, _ := strconv.Atoi(parts[1])
+					duration = int32(hour)*60 + int32(minute)
+				}
+			} else {
+				d, _ := strconv.Atoi(durationStr)
+				duration = int32(d)
 			}
 		}
 
@@ -576,13 +571,12 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 			Title:           name,
 			Description:     &description,
 			DurationMinutes: duration,
-			TotalMarks:      int32(totalMarks),
 			PassScore:       int32(passScore),
 			Status:          domain.SubjectStatus(statusStr),
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Edit Subject Failed", "Failed to update subject", toast.VariantError)
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to update subject : "+err.Error(), toast.VariantError)
 			return
 		}
 
@@ -608,20 +602,23 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 		}
 
 		durationStr := ctx.PostForm("duration_minutes")
-		totalMarksStr := ctx.PostForm("total_marks")
 		passScoreStr := ctx.PostForm("pass_score")
 		statusStr := ctx.PostForm("status")
 
-		totalMarks, _ := strconv.Atoi(totalMarksStr)
 		passScore, _ := strconv.Atoi(passScoreStr)
 
 		var duration int32
-		if durationStr != "" && strings.Contains(durationStr, ":") {
-			parts := strings.Split(durationStr, ":")
-			if len(parts) == 2 {
-				hour, _ := strconv.Atoi(parts[0])
-				minute, _ := strconv.Atoi(parts[1])
-				duration = int32(hour)*60 + int32(minute)
+		if durationStr != "" {
+			if strings.Contains(durationStr, ":") {
+				parts := strings.Split(durationStr, ":")
+				if len(parts) == 2 {
+					hour, _ := strconv.Atoi(parts[0])
+					minute, _ := strconv.Atoi(parts[1])
+					duration = int32(hour)*60 + int32(minute)
+				}
+			} else {
+				d, _ := strconv.Atoi(durationStr)
+				duration = int32(d)
 			}
 		}
 
@@ -629,7 +626,6 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 			Title:           name,
 			Description:     &description,
 			DurationMinutes: duration,
-			TotalMarks:      int32(totalMarks),
 			PassScore:       int32(passScore),
 			Status:          domain.SubjectStatus(statusStr),
 		})
@@ -744,7 +740,6 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		idStr := ctx.Param("id")
 		name := ctx.PostForm("exam_name")
 		description := ctx.PostForm("exam_description")
-		passScoreStr := ctx.PostForm("exam_pass_score")
 		totalMarksStr := ctx.PostForm("exam_total_marks")
 		statusStr := ctx.PostForm("exam_status")
 
@@ -761,17 +756,12 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 			return
 		}
 
-		passScore, err := strconv.Atoi(passScoreStr)
-		totalMarks, err := strconv.Atoi(totalMarksStr)
-		if err != nil {
-			totalMarks = 0
-		}
+		totalMarks, _ := strconv.Atoi(totalMarksStr)
 
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
 			ID:          examID,
 			Title:       name,
 			Description: &description,
-			PassScore:   int32(passScore),
 			TotalMarks:  int32(totalMarks),
 			Status:      domain.ExamStatus(statusStr),
 		})

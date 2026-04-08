@@ -284,27 +284,8 @@ templ ExamInformationTab(param EditExamPageParam) {
 				Class: "mb-4",
 			})
 			</div>
-			<div>
-			@label.Label(label.Props{
-				For: "exam_pass_score",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.Trophy(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Exam Pass Score 
-			}
-			@input.Input(input.Props{
-				Type: input.TypeNumber,
-				ID: "exam_pass_score",
-				Name: "exam_pass_score",
-				Value: strconv.Itoa(int(param.Exam.PassScore)),
-				Class: "mb-4",
-				Attributes: templ.Attributes{
-					"min": "0",
-				},
-			})
-			</div>
+
+
 			<div>
 			@label.Label(label.Props{
 				For: "exam_created_by",
@@ -362,7 +343,28 @@ templ ExamInformationTab(param EditExamPageParam) {
 			}) {
 				@selectbox.Value(selectbox.ValueProps{
 					Placeholder: "Select the status",
-				})
+				}) {
+					switch string(param.Exam.Status) {
+						case "DRAFT":
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantSecondary,
+							}) {
+								Draft
+							}
+						case "PUBLISHED":
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantDefault,
+							}) {
+								Published
+							}
+						case "ARCHIVED", "CLOSED":
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantDestructive,
+							}) {
+								{ utils.IfElse(string(param.Exam.Status) == "CLOSED", "Closed", "Archived") }
+							}
+					}
+				}
 			}
 			@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
 				@selectbox.Group() {

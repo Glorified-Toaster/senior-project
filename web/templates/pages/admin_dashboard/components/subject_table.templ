@@ -152,8 +152,14 @@ templ SubjectCard(subject domain.Subject) {
 			@card.Footer(card.FooterProps{
 				Class: "flex items-center justify-between",
 			}) {
-				@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-					{ string(subject.Status) }
+				if subject.Status == domain.SubjectStatusActive {
+					@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+						{ string(subject.Status) }
+					}
+				} else {
+					@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+						{ string(subject.Status) }
+					}
 				}
 				<div class="flex items-center justify-between">
 					<span class="text-sm text-muted-foreground">
@@ -267,21 +273,7 @@ templ DialogAddSubject() {
 							},
 						})
 					</div>
-					<div class="space-y-2 mb-4">
-						@form.Label(form.LabelProps{For: "total_marks"}) {
-							Total Marks
-						}
-						@input.Input(input.Props{
-							Type:        input.TypeNumber,
-							ID:          "total_marks",
-							Name:        "total_marks",
-							Placeholder: "Total marks",
-							Required:    true,
-							Attributes: templ.Attributes{
-								"min": "1",
-							},
-						})
-					</div>
+
 					<div class="space-y-2 mb-4">
 						@form.Label(form.LabelProps{For: "pass_score"}) {
 							Pass Score

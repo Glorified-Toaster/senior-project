@@ -88,7 +88,6 @@ func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 		Title:       exam.Title,
 		Description: exam.Description,
 		TotalMarks:  exam.TotalMarks,
-		PassScore:   exam.PassScore,
 		Status:      domain.ExamStatus(exam.Status),
 		CreatedBy:   exam.CreatedBy.UUID,
 		CreatedAt:   exam.CreatedAt.Time,
@@ -122,7 +121,6 @@ func (r *ExamRepository) Create(ctx context.Context, arg ports.CreateExamParams)
 		Title:       arg.Title,
 		Description: arg.Description,
 		TotalMarks:  arg.TotalMarks,
-		PassScore:   arg.PassScore,
 		Status:      sqlc.ExamStatusType(arg.Status),
 		CreatedBy:   uuid.NullUUID{UUID: arg.CreatedBy, Valid: true},
 	})
@@ -163,7 +161,6 @@ func (r *ExamRepository) Update(ctx context.Context, arg ports.UpdateExamParams)
 		Title:       arg.Title,
 		Description: arg.Description,
 		TotalMarks:  arg.TotalMarks,
-		PassScore:   arg.PassScore,
 		Status:      sqlc.ExamStatusType(arg.Status),
 	})
 	if err != nil {

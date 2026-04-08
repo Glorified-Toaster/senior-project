@@ -250,7 +250,6 @@ type Exam struct {
 	Title       string             `json:"title"`
 	Description *string            `json:"description"`
 	TotalMarks  int32              `json:"total_marks"`
-	PassScore   int32              `json:"pass_score"`
 	Status      ExamStatusType     `json:"status"`
 	CreatedBy   uuid.NullUUID      `json:"created_by"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
