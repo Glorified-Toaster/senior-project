@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 	"uot-exam/internal/domain"
+	"uot-exam/internal/ports"
 	"uot-exam/web/templates/components/toast"
 
 	"github.com/gin-gonic/gin"
@@ -168,9 +169,45 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 		return
 	}
 
-	fileName := fmt.Sprintf("report-%d.csv", time.Now().Unix())
+	fileName := fmt.Sprintf("exam-%d.csv", time.Now().Unix())
 	ctx.Header("Content-Description", "File Transfer")
 	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	ctx.Header("Content-Type", "text/csv")
 	ctx.Data(http.StatusOK, "text/csv", file.Bytes())
+}
+
+func ParseUserCSV(file *multipart.FileHeader) ([]ports.CreateUserParams, error) {
+	var users []ports.CreateUserParams
+
+	fileReader, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer fileReader.Close()
+
+	csvReader := csv.NewReader(fileReader)
+	csvReader.FieldsPerRecord = 4
+	csvReader.Read()
+
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if slices.Contains(record, "") {
+			continue
+		}
+
+		users = append(users, ports.CreateUserParams{
+			Username: record[0],
+			FullName: record[1],
+			Role:     domain.UserRole(record[2]),
+			Password: record[3],
+		})
+	}
+
+	return users, nil
 }

@@ -29,6 +29,7 @@ type UserTableProps struct {
 	AddUser       bool
 	DeletedButton bool
 	AddAPI        string
+	AddUserCSV    bool
 	HideActions   bool
 }
 
@@ -58,8 +59,33 @@ templ UserTable(props UserTableProps) {
 							})
 						</div>
 					}
+
+					if props.AddUserCSV {
+						@AddUserCSVDialog()
+					}
+
 					if props.AddUser {
-						@dialog.Dialog(){
+						@AddUserDialog()
+					}
+				</div>
+			</div>
+		}
+		@card.Content(card.ContentProps{Class: "p-4"}) {
+			@UserTableContainer(props)
+			if props.ShowAllButton {
+				@button.Button(button.Props{
+					Href:  "/admin/dashboard/users",
+					Class: "w-full",
+				}) {
+					All Users
+				}
+			}
+		}
+	}
+}
+
+templ AddUserDialog() {
+							@dialog.Dialog(){
 							@dialog.Trigger(){
 								@button.Button(button.Props{
 									Variant: button.VariantDefault,
@@ -220,19 +246,63 @@ templ UserTable(props UserTableProps) {
 							</form>
 							}
 						}
+
+}
+
+templ AddUserCSVDialog() {
+	@dialog.Dialog(){
+		@dialog.Trigger(){
+			@button.Button(button.Props{
+				Variant: button.VariantSecondary,
+				Size: button.SizeSm,
+			}) {
+				Add User Via CSV
+			}
+			}
+			@dialog.Content(){
+				@dialog.Header(){
+					@dialog.Title() {
+						Add User
 					}
-				</div>
-			</div>
-		}
-		@card.Content(card.ContentProps{Class: "p-4"}) {
-			@UserTableContainer(props)
-			if props.ShowAllButton {
-				@button.Button(button.Props{
-					Href:  "/admin/dashboard/users",
-					Class: "w-full",
-				}) {
-					All Users
+					@dialog.Description(){
+						Add a new user to the platform.
+					}
+			<form hx-post="/admin/dashboard/users/create-csv" 
+			hx-target="#users-table-container" 
+			hx-swap="outerHTML"
+			hx-encoding="multipart/form-data">
+
+			<div class="space-y-2 mb-4">
+				@form.Label(form.LabelProps{For: "csv_file"}) {
+					CSV File
 				}
+				@input.Input(input.Props{
+					ID:          "csv_file",
+					Name:        "csv_file",
+					Placeholder: "Enter CSV file",
+					Type:        input.TypeFile,
+					Required:    true,
+					FileAccept: ".csv",
+				})
+			</div>
+
+			@dialog.Footer(){
+				@dialog.Close(){
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,	
+					}) {
+						Cancel
+					}
+				}
+				@button.Button(button.Props{
+					Variant: button.VariantDefault,
+					Type:    button.TypeSubmit,
+				}){
+					Add User
+				}
+			}
+						</form>
+
 			}
 		}
 	}

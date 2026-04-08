@@ -98,6 +98,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/", r.userHandler.AdminDashboardMainRender())
 			dashboardRoutes.GET("/users", r.userHandler.UserPageRender())
 			dashboardRoutes.POST("/users/create", r.userHandler.Create())
+			dashboardRoutes.POST("/users/create-csv", r.userHandler.CreateUserCSV())
 			dashboardRoutes.GET("/users/generate-username", r.userHandler.GenerateRandomUsername())
 			dashboardRoutes.GET("/users/generate-password", r.userHandler.GenerateRandomPassword())
 			dashboardRoutes.GET("/users/deleted", r.userHandler.DeletedUsersPageRender())

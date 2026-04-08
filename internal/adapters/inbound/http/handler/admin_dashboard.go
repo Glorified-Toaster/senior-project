@@ -1250,3 +1250,65 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 		helpers.Toast(ctx, "Success", "Question updated successfully", toast.VariantSuccess)
 	}
 }
+
+func (h *UserHandler) CreateUserCSV() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		file, err := ctx.FormFile("csv_file")
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User CSV Failed", "Failed to upload file", toast.VariantError)
+			return
+		}
+		if file == nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User CSV Failed", "File is required", toast.VariantError)
+			return
+		}
+
+		users, err := helpers.ParseUserCSV(file)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User CSV Failed", "Failed to parse CSV: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		for _, user := range users {
+			_, err = h.App.CreateUser(ctx, ports.CreateUserParams{
+				Username: user.Username,
+				Password: user.Password,
+				Role:     user.Role,
+				FullName: user.FullName,
+				IsActive: true,
+			})
+			if err != nil {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Create User CSV Failed", "Failed to create user: "+err.Error(), toast.VariantError)
+				return
+			}
+		}
+
+		usersList, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
+			Limit:  12,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Create User CSV Failed", "Failed to reload users: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Reswap", "none")
+		helpers.Toast(ctx, "Success", "User created successfully", toast.VariantSuccess)
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			Users:      usersList,
+			TotalCount: int64(len(usersList)),
+			Limit:      12,
+			Offset:     0,
+			BaseURL:    "/admin/dashboard/users",
+			Search:     true,
+			SearchAPI:  "/admin/users/search",
+			AddUser:    true,
+			AddUserCSV: true,
+		}))
+	}
+}

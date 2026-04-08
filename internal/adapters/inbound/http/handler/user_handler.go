@@ -360,12 +360,9 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			return
 		}
 
-		// Keep the table showing the same number of users by re-rendering
-		// the current page of users after deletion.
 		limit := 12
 		offset := 0
 
-		// Try to get paging from query params first.
 		if limitStr := ctx.Query("limit"); limitStr != "" {
 			if parsed, err := strconv.Atoi(limitStr); err == nil {
 				limit = parsed
@@ -377,8 +374,6 @@ func (h *UserHandler) SoftDeleteUser() gin.HandlerFunc {
 			}
 		}
 
-		// If HTMX sent the current URL, prefer its query params so we
-		// stay on the same page the user is looking at.
 		if currentURL := ctx.Request.Header.Get("HX-Current-URL"); currentURL != "" {
 			if u, parseErr := url.Parse(currentURL); parseErr == nil {
 				q := u.Query()
