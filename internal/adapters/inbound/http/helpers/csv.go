@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func MapCSVToStruct(file *multipart.FileHeader) ([]domain.Question, error) {
+func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, error) {
 
 	var questions []domain.Question
 
@@ -207,6 +207,37 @@ func ParseUserCSV(file *multipart.FileHeader) ([]ports.CreateUserParams, error) 
 			Role:     domain.UserRole(record[2]),
 			Password: record[3],
 		})
+	}
+
+	return users, nil
+}
+
+func MapStudentCSVToStruct(file *multipart.FileHeader) ([]string, error) {
+	var users []string
+
+	fileReader, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer fileReader.Close()
+
+	csvReader := csv.NewReader(fileReader)
+	csvReader.FieldsPerRecord = 1
+	csvReader.Read()
+
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if slices.Contains(record, "") {
+			continue
+		}
+
+		users = append(users, record[0])
 	}
 
 	return users, nil

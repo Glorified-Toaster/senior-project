@@ -729,6 +729,7 @@ templ StudentsTab(param EditSubjectPageParam) {
 			TotalCount: param.StudentCount,
 			Limit:      param.Limit,
 			Offset:     param.Offset,
+			AddStudentCSVAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/assign-csv",
 		})
 	</div>
 

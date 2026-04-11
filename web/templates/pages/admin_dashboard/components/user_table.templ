@@ -40,6 +40,7 @@ type UserTableProps struct {
 	AddStudentAPI string
 	InstructorAssignSwapTarget string
 	StudentAssignSwapTarget string
+	AddStudentCSVAPI string
 }
 
 templ UserTableRoot(wrapperID string, props UserTableProps) {
@@ -567,7 +568,7 @@ templ AddInstructorDialog(param UserTableProps){
 			@button.Button(button.Props{
 				Variant: button.VariantDefault,
 			}) {
-				Add instructors
+				Assign instructors
 			}
 		}
 		@dialog.Content(){
@@ -652,12 +653,65 @@ templ AddStudentDialog(param UserTableProps){
 			assignSwapTarget = "#users-table-container"
 		}
 	}}
+
+	@dialog.Dialog(){
+		@dialog.Trigger(){
+			@button.Button(button.Props{
+				Variant: button.VariantSecondary,
+				Size: button.SizeSm,
+			}) {
+				Assign students via CSV
+			}
+		}
+		@dialog.Content(){
+			@dialog.Header(){
+				@dialog.Title() {
+					Assign students via CSV
+				}
+				@dialog.Description(){
+					Upload a CSV file to assign students to this subject.
+				}
+			}
+
+			<form
+				id="add-student-form-csv"
+				hx-post={param.AddStudentCSVAPI}
+				hx-target={ assignSwapTarget }
+				hx-swap="outerHTML"
+				hx-encoding="multipart/form-data"
+			>
+				@input.Input(input.Props{
+					Type:        input.TypeFile,
+					Name:        "student_csv",
+					FileAccept:      ".csv",
+					Class:       "mb-4 mt-4",
+				})
+
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Type:    button.TypeSubmit,
+					}) {
+						Assign students
+					}
+				}
+			</form>
+		}
+	}
+	
 	@dialog.Dialog(){
 		@dialog.Trigger(){
 			@button.Button(button.Props{
 				Variant: button.VariantDefault,
 			}) {
-				Add students
+				Assign students
 			}
 		}
 		@dialog.Content(){

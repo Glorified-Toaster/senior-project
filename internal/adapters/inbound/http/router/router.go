@@ -121,6 +121,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/subject/:id/students/assign", r.userHandler.AssignStudentToSubject())
 			dashboardRoutes.GET("/subject/:id/students/search", r.userHandler.SearchSubjectStudents())
 			dashboardRoutes.POST("/subject/:id/students/search", r.userHandler.SearchSubjectStudents())
+			dashboardRoutes.POST("/subject/:id/students/assign-csv", r.userHandler.AssignStudentToSubjectCSV())
 			//dashboardRoutes.POST("/subject/:id/students/unassign/:student_id", r.userHandler.UnassignStudentFromSubject())
 			dashboardRoutes.GET("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())
 			dashboardRoutes.POST("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())

@@ -462,7 +462,7 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		
+
 		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
 		availableStudents := filterAvailableUsers(allStudents, allEnrolledStudents)
 
@@ -1039,7 +1039,7 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 			return
 		}
 
-		questions, err := helpers.MapCSVToStruct(file)
+		questions, err := helpers.MapQuestionCSVToStruct(file)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to parse CSV file", toast.VariantError)
@@ -1707,5 +1707,87 @@ func subjectStudentsTableProps(subjectID uuid.UUID, students, allStudents []doma
 		TotalCount:              totalCount,
 		Limit:                   limit,
 		Offset:                  offset,
+	}
+}
+
+func (h *UserHandler) AssignStudentToSubjectCSV() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		file, err := ctx.FormFile("student_csv")
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Invalid file: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		usernames, err := helpers.MapStudentCSVToStruct(file)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Failed to parse CSV file", toast.VariantError)
+			return
+		}
+
+		var studentIDs []uuid.UUID
+		for _, username := range usernames {
+			user, err := h.App.GetUserByUsername(ctx.Request.Context(), username)
+			if err != nil {
+				continue
+			}
+			if user.Role == domain.RoleStudent {
+				studentIDs = append(studentIDs, user.ID)
+			}
+		}
+
+		if len(studentIDs) == 0 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "No valid students found in CSV", toast.VariantError)
+			return
+		}
+
+		if err := h.App.AssignStudentsToSubject(ctx, subjectID, studentIDs); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Failed to assign students: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		limitStr := ctx.DefaultQuery("limit", "12")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+		limit, _ := strconv.Atoi(limitStr)
+		offset, _ := strconv.Atoi(offsetStr)
+
+		students, err := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, int32(limit), int32(offset))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		allStudents, err := h.App.ListAllStudents(ctx.Request.Context(), ports.ListAllStudentsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		available := filterAvailableUsers(allStudents, allEnrolledStudents)
+
+		ctx.Header("Content-Type", "text/html")
+		msg := "1 student assigned successfully from CSV"
+		if len(studentIDs) != 1 {
+			msg = fmt.Sprintf("%d students assigned successfully from CSV", len(studentIDs))
+		}
+		helpers.Toast(ctx, "Success", msg, toast.VariantSuccess)
+		props := subjectStudentsTableProps(subjectID, students, available, totalCount, int32(limit), int32(offset), "")
+		render.Render(ctx, components.UserTableRoot("students-user-table-root", props))
 	}
 }
