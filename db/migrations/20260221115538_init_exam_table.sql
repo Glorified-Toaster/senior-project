@@ -10,17 +10,13 @@ CREATE EXTENSION IF NOT EXISTS "citext";
 -- ENUM TYPES
 -- =============================
 CREATE TYPE user_role_type AS ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
-
 CREATE TYPE exam_status_type AS ENUM ('DRAFT', 'PUBLISHED', 'CLOSED');
-
 CREATE TYPE subject_status_type AS ENUM ('ACTIVE', 'INACTIVE');
-
 CREATE TYPE attempt_status_type AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'GRADED', 'CANCELLED');
-
 CREATE TYPE question_type_type AS ENUM ('TEXT', 'CODE', 'IMAGE');
 
 -- =============================
--- AUDIT TRIGGER FUNCTION
+-- FUNCTIONS
 -- =============================
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
@@ -30,21 +26,41 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sync_subject_total_marks()
+RETURNS TRIGGER AS $$
+DECLARE
+    target_subject_id UUID;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        target_subject_id := OLD.subject_id;
+    ELSE
+        target_subject_id := NEW.subject_id;
+    END IF;
+
+    UPDATE subjects
+    SET total_marks = COALESCE((
+        SELECT SUM(total_marks)
+        FROM exams
+        WHERE subject_id = target_subject_id
+          AND deleted_at IS NULL
+    ), 0)
+    WHERE id = target_subject_id;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
 -- =============================
 -- USERS
 -- =============================
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     username CITEXT NOT NULL UNIQUE,
     full_name VARCHAR(255) NOT NULL,
     password_hash TEXT NOT NULL,
     role user_role_type NOT NULL DEFAULT 'STUDENT',
-
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-
     last_login TIMESTAMPTZ,
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL,
@@ -70,13 +86,18 @@ CREATE TABLE subjects (
     title VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
     duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
-    total_marks INT NOT NULL CHECK (total_marks > 0),
-    pass_score INT NOT NULL CHECK (pass_score > 0 AND pass_score <= total_marks),
+    total_marks INT NOT NULL DEFAULT 0 CHECK (total_marks >= 0),
+    pass_score INT NOT NULL CHECK (pass_score >= 0),
     status subject_status_type NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL
 );
+
+CREATE TRIGGER subjects_updated_at
+BEFORE UPDATE ON subjects
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
 -- =============================
 -- SUBJECT INSTRUCTORS (Join Table)
@@ -94,8 +115,24 @@ CREATE INDEX idx_subject_instructors_subject ON subject_instructors(subject_id) 
 CREATE INDEX idx_subject_instructors_instructor ON subject_instructors(instructor_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_subject_instructors_deleted ON subject_instructors(deleted_at) WHERE deleted_at IS NOT NULL;
 
-CREATE TRIGGER subjects_updated_at
-BEFORE UPDATE ON subjects
+-- =============================
+-- SUBJECT STUDENTS (Join Table)
+-- =============================
+CREATE TABLE subject_students ( 
+    subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    deleted_at TIMESTAMPTZ,
+    PRIMARY KEY (subject_id, student_id)
+);
+
+CREATE INDEX idx_subject_students_subject ON subject_students(subject_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_subject_students_student ON subject_students(student_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_subject_students_deleted ON subject_students(deleted_at) WHERE deleted_at IS NOT NULL;
+
+CREATE TRIGGER subject_students_updated_at
+BEFORE UPDATE ON subject_students
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
@@ -108,7 +145,6 @@ CREATE TABLE exams (
     title VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
     total_marks INT NOT NULL CHECK (total_marks > 0),
-    pass_score INT NOT NULL CHECK (pass_score > 0),
     status exam_status_type NOT NULL DEFAULT 'DRAFT',
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -124,6 +160,16 @@ CREATE TRIGGER exams_updated_at
 BEFORE UPDATE ON exams
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER sync_subject_total_marks
+AFTER INSERT OR DELETE ON exams
+FOR EACH ROW
+EXECUTE FUNCTION sync_subject_total_marks();
+
+CREATE TRIGGER sync_subject_total_marks_on_update
+AFTER UPDATE OF total_marks, deleted_at, subject_id ON exams
+FOR EACH ROW
+EXECUTE FUNCTION sync_subject_total_marks();
 
 CREATE OR REPLACE FUNCTION validate_exam_creator_role()
 RETURNS TRIGGER AS $$
@@ -142,6 +188,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 CREATE TRIGGER enforce_exam_creator_role
 BEFORE INSERT OR UPDATE OF created_by ON exams
 FOR EACH ROW
@@ -270,7 +317,9 @@ CREATE TABLE student_answers (
 
 CREATE INDEX idx_answers_attempt ON student_answers(attempt_id);
 CREATE INDEX idx_answers_question ON student_answers(question_id);
+
 -- +goose StatementEnd
+
 
 -- +goose Down
 -- +goose StatementBegin
@@ -278,21 +327,23 @@ DROP TABLE IF EXISTS student_answers CASCADE;
 DROP TABLE IF EXISTS exam_attempts CASCADE;
 DROP TABLE IF EXISTS choices CASCADE;
 DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS exams CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
+DROP TABLE IF EXISTS exams CASCADE;
 DROP TABLE IF EXISTS subject_instructors CASCADE;
+DROP TABLE IF EXISTS subject_students CASCADE;
 DROP TABLE IF EXISTS subjects CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
-DROP TRIGGER IF EXISTS check_choices_count ON choices;
+DROP FUNCTION IF EXISTS validate_exam_creator_role() CASCADE;
+DROP FUNCTION IF EXISTS check_choices_count() CASCADE;
+DROP FUNCTION IF EXISTS sync_subject_total_marks() CASCADE;
+DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
 
 DROP TYPE IF EXISTS attempt_status_type CASCADE;
 DROP TYPE IF EXISTS exam_status_type CASCADE;
 DROP TYPE IF EXISTS user_role_type CASCADE;
 DROP TYPE IF EXISTS subject_status_type CASCADE;
 DROP TYPE IF EXISTS question_type_type CASCADE;
-
-DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
 
 DROP EXTENSION IF EXISTS "citext";
 DROP EXTENSION IF EXISTS "pgcrypto";

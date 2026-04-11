@@ -69,6 +69,18 @@ func (q *Queries) CountSearchUsers(ctx context.Context, search string) (int64, e
 	return count, err
 }
 
+const countStudents = `-- name: CountStudents :one
+SELECT count(*) FROM users 
+WHERE role = 'STUDENT' AND deleted_at IS NULL
+`
+
+func (q *Queries) CountStudents(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countStudents)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NULL
@@ -288,6 +300,49 @@ func (q *Queries) ListAllInstructors(ctx context.Context, arg ListAllInstructors
 	return items, nil
 }
 
+const listAllStudents = `-- name: ListAllStudents :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
+WHERE role = 'STUDENT' AND deleted_at IS NULL
+ORDER BY last_login DESC NULLS LAST, id ASC
+LIMIT $1 OFFSET $2
+`
+
+type ListAllStudentsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAllStudents(ctx context.Context, arg ListAllStudentsParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listAllStudents, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllUsers = `-- name: ListAllUsers :many
 SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users 
 WHERE deleted_at IS NULL 
@@ -442,6 +497,56 @@ type SearchDeletedUsersParams struct {
 
 func (q *Queries) SearchDeletedUsers(ctx context.Context, arg SearchDeletedUsersParams) ([]User, error) {
 	rows, err := q.db.Query(ctx, searchDeletedUsers, arg.Limit, arg.Offset, arg.Search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.PasswordHash,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchStudents = `-- name: SearchStudents :many
+SELECT id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND role = 'STUDENT'
+    AND (
+        username ILIKE '%' || $3::text || '%'
+        OR full_name ILIKE '%' || $3::text || '%'
+    )
+ORDER BY last_login DESC NULLS LAST, id ASC
+LIMIT $1 OFFSET $2
+`
+
+type SearchStudentsParams struct {
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) SearchStudents(ctx context.Context, arg SearchStudentsParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, searchStudents, arg.Limit, arg.Offset, arg.Search)
 	if err != nil {
 		return nil, err
 	}

@@ -87,3 +87,93 @@ UPDATE subject_instructors SET deleted_at = NOW() WHERE subject_id = $1;
 
 -- name: SoftDeleteSubject :exec
 UPDATE subjects SET deleted_at = NOW() WHERE id = $1;
+
+-- name: AssignStudentToSubject :one
+INSERT INTO subject_students (subject_id, student_id)
+VALUES ($1, $2)
+RETURNING *;
+
+-- name: UnassignStudentFromSubject :one
+UPDATE subject_students SET deleted_at = NOW() WHERE subject_id = $1 AND student_id = $2 RETURNING *;
+
+-- name: ListStudentsBySubjectID :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+ORDER BY u.full_name ASC;
+
+-- name: ListStudentsBySubjectIDPaginated :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+ORDER BY u.full_name ASC
+LIMIT $2 OFFSET $3;
+
+-- name: CountStudentsBySubjectID :one
+SELECT COUNT(*)
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT';
+
+-- name: SearchStudentsBySubjectID :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+  AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%')
+ORDER BY u.full_name ASC
+LIMIT $3 OFFSET $4;
+
+-- name: CountSearchStudentsBySubjectID :one
+SELECT COUNT(*)
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+  AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%');

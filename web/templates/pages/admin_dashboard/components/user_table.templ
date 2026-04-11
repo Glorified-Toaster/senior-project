@@ -14,6 +14,7 @@ import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/selectbox"
+import "uot-exam/web/templates/utils"
 
 type UserTableProps struct {
 	Users         []domain.User
@@ -34,8 +35,11 @@ type UserTableProps struct {
 	AddInstructor bool
 	Instructors   []domain.User
 	AddInstructorAPI string
-	// InstructorAssignSwapTarget is the hx-target for assign (e.g. #instructors-user-table-root). Empty uses #users-table-container.
+	AddStudent bool
+	Students []domain.User
+	AddStudentAPI string
 	InstructorAssignSwapTarget string
+	StudentAssignSwapTarget string
 }
 
 templ UserTableRoot(wrapperID string, props UserTableProps) {
@@ -64,7 +68,7 @@ templ UserTable(props UserTableProps) {
 								Attributes: templ.Attributes{
 									"hx-post":    props.SearchAPI,
 									"hx-trigger": "keyup changed delay:300ms, search",
-									"hx-target":  "#users-table-container",
+									"hx-target":  "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"),
 									"hx-swap":    "outerHTML",
 								},
 							})
@@ -80,6 +84,9 @@ templ UserTable(props UserTableProps) {
 					}
 					if props.AddInstructor {
 						@AddInstructorDialog(props)
+					}
+					if props.AddStudent {
+						@AddStudentDialog(props)
 					}
 				</div>
 			</div>
@@ -323,7 +330,7 @@ templ AddUserCSVDialog() {
 }
 
 templ UserTableContainer(props UserTableProps) {
-	<div id="users-table-container">
+	<div id={ utils.IfElse(props.ID != "", props.ID, "users-table-container") }>
 		<div class="overflow-x-auto">
 			@table.Table() {
 				@table.Header(table.HeaderProps{Class: "border-b border-slate-200 bg-slate-50/50"}) {
@@ -365,7 +372,7 @@ templ UserTableContainer(props UserTableProps) {
 					Limit:    props.Limit,
 					Offset:   props.Offset,
 					BaseURL:  props.BaseURL,
-					HXTarget: "#users-table-container",
+					HXTarget: "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"),
 					HXSwap:   "outerHTML",
 				})
 			</div>
@@ -583,7 +590,7 @@ templ AddInstructorDialog(param UserTableProps){
 	<div class="w-full mb-4 mt-4">
 		@selectbox.SelectBox() {
 			@selectbox.Trigger(selectbox.TriggerProps{
-				ShowPills:           true,
+				ShowPills:           false,
 				Multiple:            true,
 				Name:                "instructor_id",
 				SelectedCountText:   "{n} instructors selected",
@@ -631,6 +638,96 @@ templ AddInstructorDialog(param UserTableProps){
 						Type:    button.TypeSubmit,
 					}) {
 						Assign instructors
+					}
+				}
+			</form>
+		}
+	}
+}
+
+templ AddStudentDialog(param UserTableProps){
+	{{
+		assignSwapTarget := param.StudentAssignSwapTarget
+		if assignSwapTarget == "" {
+			assignSwapTarget = "#users-table-container"
+		}
+	}}
+	@dialog.Dialog(){
+		@dialog.Trigger(){
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+			}) {
+				Add students
+			}
+		}
+		@dialog.Content(){
+			@dialog.Header(){
+				@dialog.Title() {
+					Add students
+				}
+				@dialog.Description(){
+					Select one or more students to assign to this subject.
+				}
+			}
+
+			<form
+				id="add-student-form"
+				hx-post={param.AddStudentAPI}
+				hx-target={ assignSwapTarget }
+				hx-swap="outerHTML"
+			>
+
+	<div class="w-full mb-4 mt-4">
+		@selectbox.SelectBox() {
+			@selectbox.Trigger(selectbox.TriggerProps{
+				ShowPills:           false,
+				Multiple:            true,
+				Name:                "student_id",
+				SelectedCountText:   "{n} students selected",
+			}) {
+				@selectbox.Value(selectbox.ValueProps{
+					Placeholder: "Select students…",
+				})
+			}
+			@selectbox.Content() {
+				@selectbox.Group() {
+					@selectbox.Label() {
+						Students
+					}
+					for _, student := range param.Students {
+						<div class="mt-2">
+						@selectbox.Item(selectbox.ItemProps{
+							Value:     student.ID.String(),
+						}) {
+							<div class="flex items-center gap-2">
+								{ student.FullName }
+								@badge.Badge(badge.Props{
+									Variant: badge.VariantSecondary,
+									Class: "ml-2",
+								}) {
+									{ student.Username }
+								}
+							</div>
+						}
+						</div>
+					}
+				}
+			}
+		}
+	</div>
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Type:    button.TypeSubmit,
+					}) {
+						Assign students
 					}
 				}
 			</form>

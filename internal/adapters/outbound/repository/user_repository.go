@@ -466,3 +466,82 @@ func (r *UserRepository) ListAllInstructors(ctx context.Context, arg ports.ListA
 
 	return domainUsers, nil
 }
+
+func (r *UserRepository) ListAllStudents(ctx context.Context, arg ports.ListAllStudentsParams) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	users, err := queries.ListAllStudents(ctx, sqlc.ListAllStudentsParams{
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainUsers []domain.User
+	for _, user := range users {
+		domainUsers = append(domainUsers, domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
+		})
+	}
+
+	return domainUsers, nil
+}
+
+func (r *UserRepository) CountStudents(ctx context.Context) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountStudents(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *UserRepository) SearchStudents(ctx context.Context, arg ports.SearchStudentsParams) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	users, err := queries.SearchStudents(ctx, sqlc.SearchStudentsParams{
+		Search: arg.Search,
+		Limit:  arg.Limit,
+		Offset: arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainUsers []domain.User
+	for _, user := range users {
+		domainUsers = append(domainUsers, domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Role:      domain.UserRole(user.Role),
+			IsActive:  user.IsActive,
+			LastLogin: toTimePtr(user.LastLogin),
+			CreatedAt: user.CreatedAt.Time,
+			UpdatedAt: user.UpdatedAt.Time,
+			DeletedAt: toTimePtr(user.DeletedAt),
+		})
+	}
+
+	return domainUsers, nil
+}

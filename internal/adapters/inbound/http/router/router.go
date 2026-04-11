@@ -115,7 +115,13 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/subject/edit/:id", r.userHandler.EditSubjectInfo())
 			dashboardRoutes.POST("/subject/delete/:id", r.userHandler.DeleteSubject())
 			dashboardRoutes.POST("/subject/:id/instructors/assign", r.userHandler.AssignInstructorToSubject())
+			dashboardRoutes.POST("/subject/:id/instructors/unassign/:instructor_id", r.userHandler.UnassignInstructorFromSubject())
+			dashboardRoutes.GET("/subject/:id/instructors/search", r.userHandler.SearchSubjectInstructors())
 			dashboardRoutes.POST("/subject/:id/instructors/search", r.userHandler.SearchSubjectInstructors())
+			dashboardRoutes.POST("/subject/:id/students/assign", r.userHandler.AssignStudentToSubject())
+			dashboardRoutes.GET("/subject/:id/students/search", r.userHandler.SearchSubjectStudents())
+			dashboardRoutes.POST("/subject/:id/students/search", r.userHandler.SearchSubjectStudents())
+			//dashboardRoutes.POST("/subject/:id/students/unassign/:student_id", r.userHandler.UnassignStudentFromSubject())
 			dashboardRoutes.GET("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())
 			dashboardRoutes.POST("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())
 			dashboardRoutes.POST("/exams/create", r.userHandler.CreateExam())
@@ -143,6 +149,7 @@ func (r *Router) SetupRoutes() {
 		userRoutes.GET("/username/:username", r.userHandler.GetUserByUsername())
 		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
 		userRoutes.DELETE("/delete/:id", r.userHandler.SoftDeleteUser())
+		userRoutes.POST("/toggle/:id", r.userHandler.ToggleUserActive())
 	}
 
 	r.router.NoRoute(func(c *gin.Context) {

@@ -509,3 +509,74 @@ func (h *UserHandler) GenerateRandomPassword() gin.HandlerFunc {
 		ctx.String(http.StatusOK, pass)
 	}
 }
+
+func (h *UserHandler) ToggleUserActive() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "INVALID_REQUEST", "INVALID_REQUEST", "Invalid user ID", err)
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Toggle User Failed", "Invalid user ID", toast.VariantError)
+			return
+		}
+
+		user, err := h.App.GetUserByID(ctx, id)
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to get user", err)
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Toggle User Failed", "Failed to get user", toast.VariantError)
+			return
+		}
+
+		if user.IsActive {
+			err = h.App.DisableUser(ctx, id)
+		} else {
+			err = h.App.EnableUser(ctx, id)
+		}
+
+		if err != nil {
+			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to toggle user status", err)
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Toggle User Failed", "Failed to toggle user status: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		// Reload users list
+		limit := int32(12)
+		offset := int32(0)
+
+		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
+			Limit:  limit,
+			Offset: offset,
+		})
+		if err != nil {
+			users = []domain.User{}
+		}
+
+		totalCount, err := h.App.CountUsers(ctx)
+		if err != nil {
+			totalCount = 0
+		}
+
+		action := "disabled"
+		if !user.IsActive {
+			action = "enabled"
+		}
+
+		ctx.Header("Content-Type", "text/html")
+		helpers.Toast(ctx, "Success", "User "+action+" successfully", toast.VariantSuccess)
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			Users:         users,
+			Title:         "All Users",
+			ID:            "users-table",
+			TotalCount:    totalCount,
+			Limit:         limit,
+			Offset:        offset,
+			BaseURL:       "/admin/dashboard/users",
+			Search:        true,
+			SearchAPI:     "/admin/users/search",
+			AddUser:       true,
+			DeletedButton: true,
+		}))
+	}
+}

@@ -22,4 +22,12 @@ type SubjectRepository interface {
 	CreateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error)
 	DeleteSubjectAndEnrolledInstructors(ctx context.Context, subjectID uuid.UUID) error
 	AssignInstructorToSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error
+	UnassignInstructorFromSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error
+	AssignStudentsToSubject(ctx context.Context, subjectID uuid.UUID, studentIDs []uuid.UUID) error
+	ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]domain.User, error)
+	ListStudentsBySubjectIDPaginated(ctx context.Context, subjectID uuid.UUID, limit int32, offset int32) ([]domain.User, error)
+	CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error)
+	SearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string, limit int32, offset int32) ([]domain.User, error)
+	CountSearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string) (int64, error)
+	UnassignStudentFromSubject(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) error
 }

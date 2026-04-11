@@ -312,6 +312,14 @@ type SubjectInstructor struct {
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type SubjectStudent struct {
+	SubjectID  uuid.UUID          `json:"subject_id"`
+	StudentID  uuid.UUID          `json:"student_id"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
+	AssignedBy uuid.NullUUID      `json:"assigned_by"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type User struct {
 	ID           uuid.UUID          `json:"id"`
 	Username     string             `json:"username"`

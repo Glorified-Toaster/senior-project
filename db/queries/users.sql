@@ -135,3 +135,25 @@ LIMIT $1 OFFSET $2;
 -- name: CountInstructors :one
 SELECT count(*) FROM users 
 WHERE role = 'INSTRUCTOR' AND deleted_at IS NULL;
+
+-- name: ListAllStudents :many
+SELECT * FROM users 
+WHERE role = 'STUDENT' AND deleted_at IS NULL
+ORDER BY last_login DESC NULLS LAST, id ASC
+LIMIT $1 OFFSET $2;
+
+-- name: CountStudents :one
+SELECT count(*) FROM users 
+WHERE role = 'STUDENT' AND deleted_at IS NULL;
+
+-- name: SearchStudents :many
+SELECT * FROM users
+WHERE 
+    deleted_at IS NULL 
+    AND role = 'STUDENT'
+    AND (
+        username ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR full_name ILIKE '%' || sqlc.arg(search)::text || '%'
+    )
+ORDER BY last_login DESC NULLS LAST, id ASC
+LIMIT $1 OFFSET $2;

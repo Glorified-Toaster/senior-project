@@ -36,12 +36,59 @@ func (q *Queries) AssignInstructorToSubject(ctx context.Context, arg AssignInstr
 	return i, err
 }
 
+const assignStudentToSubject = `-- name: AssignStudentToSubject :one
+INSERT INTO subject_students (subject_id, student_id)
+VALUES ($1, $2)
+RETURNING subject_id, student_id, assigned_at, assigned_by, deleted_at
+`
+
+type AssignStudentToSubjectParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	StudentID uuid.UUID `json:"student_id"`
+}
+
+func (q *Queries) AssignStudentToSubject(ctx context.Context, arg AssignStudentToSubjectParams) (SubjectStudent, error) {
+	row := q.db.QueryRow(ctx, assignStudentToSubject, arg.SubjectID, arg.StudentID)
+	var i SubjectStudent
+	err := row.Scan(
+		&i.SubjectID,
+		&i.StudentID,
+		&i.AssignedAt,
+		&i.AssignedBy,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const countDeletedSubjects = `-- name: CountDeletedSubjects :one
 SELECT COUNT(*) FROM subjects WHERE deleted_at IS NOT NULL
 `
 
 func (q *Queries) CountDeletedSubjects(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countDeletedSubjects)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countSearchStudentsBySubjectID = `-- name: CountSearchStudentsBySubjectID :one
+SELECT COUNT(*)
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+  AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%')
+`
+
+type CountSearchStudentsBySubjectIDParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	Column2   *string   `json:"column_2"`
+}
+
+func (q *Queries) CountSearchStudentsBySubjectID(ctx context.Context, arg CountSearchStudentsBySubjectIDParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchStudentsBySubjectID, arg.SubjectID, arg.Column2)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -56,6 +103,23 @@ AND deleted_at IS NULL
 
 func (q *Queries) CountSearchSubjects(ctx context.Context, title *string) (int64, error) {
 	row := q.db.QueryRow(ctx, countSearchSubjects, title)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countStudentsBySubjectID = `-- name: CountStudentsBySubjectID :one
+SELECT COUNT(*)
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+`
+
+func (q *Queries) CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countStudentsBySubjectID, subjectID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -305,6 +369,143 @@ func (q *Queries) ListInstructorsBySubjectID(ctx context.Context, subjectID uuid
 	return items, nil
 }
 
+const listStudentsBySubjectID = `-- name: ListStudentsBySubjectID :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+ORDER BY u.full_name ASC
+`
+
+type ListStudentsBySubjectIDRow struct {
+	ID         uuid.UUID          `json:"id"`
+	Username   string             `json:"username"`
+	FullName   string             `json:"full_name"`
+	Role       UserRoleType       `json:"role"`
+	IsActive   bool               `json:"is_active"`
+	LastLogin  pgtype.Timestamptz `json:"last_login"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+}
+
+func (q *Queries) ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListStudentsBySubjectIDRow, error) {
+	rows, err := q.db.Query(ctx, listStudentsBySubjectID, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStudentsBySubjectIDRow
+	for rows.Next() {
+		var i ListStudentsBySubjectIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AssignedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStudentsBySubjectIDPaginated = `-- name: ListStudentsBySubjectIDPaginated :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+ORDER BY u.full_name ASC
+LIMIT $2 OFFSET $3
+`
+
+type ListStudentsBySubjectIDPaginatedParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+type ListStudentsBySubjectIDPaginatedRow struct {
+	ID         uuid.UUID          `json:"id"`
+	Username   string             `json:"username"`
+	FullName   string             `json:"full_name"`
+	Role       UserRoleType       `json:"role"`
+	IsActive   bool               `json:"is_active"`
+	LastLogin  pgtype.Timestamptz `json:"last_login"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+}
+
+func (q *Queries) ListStudentsBySubjectIDPaginated(ctx context.Context, arg ListStudentsBySubjectIDPaginatedParams) ([]ListStudentsBySubjectIDPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listStudentsBySubjectIDPaginated, arg.SubjectID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStudentsBySubjectIDPaginatedRow
+	for rows.Next() {
+		var i ListStudentsBySubjectIDPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AssignedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const restoreSubject = `-- name: RestoreSubject :one
 UPDATE subjects SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at
 `
@@ -325,6 +526,85 @@ func (q *Queries) RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const searchStudentsBySubjectID = `-- name: SearchStudentsBySubjectID :many
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.last_login,
+    u.created_at,
+    u.updated_at,
+    ss.assigned_at,
+    u.deleted_at
+FROM subject_students ss
+INNER JOIN users u ON ss.student_id = u.id
+WHERE ss.subject_id = $1
+  AND ss.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.role = 'STUDENT'
+  AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%')
+ORDER BY u.full_name ASC
+LIMIT $3 OFFSET $4
+`
+
+type SearchStudentsBySubjectIDParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	Column2   *string   `json:"column_2"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+type SearchStudentsBySubjectIDRow struct {
+	ID         uuid.UUID          `json:"id"`
+	Username   string             `json:"username"`
+	FullName   string             `json:"full_name"`
+	Role       UserRoleType       `json:"role"`
+	IsActive   bool               `json:"is_active"`
+	LastLogin  pgtype.Timestamptz `json:"last_login"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+}
+
+func (q *Queries) SearchStudentsBySubjectID(ctx context.Context, arg SearchStudentsBySubjectIDParams) ([]SearchStudentsBySubjectIDRow, error) {
+	rows, err := q.db.Query(ctx, searchStudentsBySubjectID,
+		arg.SubjectID,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchStudentsBySubjectIDRow
+	for rows.Next() {
+		var i SearchStudentsBySubjectIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Role,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AssignedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchSubjects = `-- name: SearchSubjects :many
@@ -405,6 +685,28 @@ func (q *Queries) UnassignInstructorFromSubject(ctx context.Context, arg Unassig
 	err := row.Scan(
 		&i.SubjectID,
 		&i.InstructorID,
+		&i.AssignedAt,
+		&i.AssignedBy,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const unassignStudentFromSubject = `-- name: UnassignStudentFromSubject :one
+UPDATE subject_students SET deleted_at = NOW() WHERE subject_id = $1 AND student_id = $2 RETURNING subject_id, student_id, assigned_at, assigned_by, deleted_at
+`
+
+type UnassignStudentFromSubjectParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	StudentID uuid.UUID `json:"student_id"`
+}
+
+func (q *Queries) UnassignStudentFromSubject(ctx context.Context, arg UnassignStudentFromSubjectParams) (SubjectStudent, error) {
+	row := q.db.QueryRow(ctx, unassignStudentFromSubject, arg.SubjectID, arg.StudentID)
+	var i SubjectStudent
+	err := row.Scan(
+		&i.SubjectID,
+		&i.StudentID,
 		&i.AssignedAt,
 		&i.AssignedBy,
 		&i.DeletedAt,

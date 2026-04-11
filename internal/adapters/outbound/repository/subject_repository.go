@@ -358,3 +358,183 @@ func (r *SubjectRepository) AssignInstructorToSubject(ctx context.Context, subje
 
 	return nil
 }
+
+func (r *SubjectRepository) UnassignInstructorFromSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	_, err := queries.UnassignInstructorFromSubject(ctx, sqlc.UnassignInstructorFromSubjectParams{
+		SubjectID:    subjectID,
+		InstructorID: instructorID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *SubjectRepository) AssignStudentsToSubject(ctx context.Context, subjectID uuid.UUID, studentIDs []uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	for _, studentID := range studentIDs {
+		_, err := queries.AssignStudentToSubject(ctx, sqlc.AssignStudentToSubjectParams{
+			SubjectID: subjectID,
+			StudentID: studentID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *SubjectRepository) ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	students, err := queries.ListStudentsBySubjectID(ctx, subjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	var domainStudents []domain.User
+	for _, student := range students {
+		domainStudents = append(domainStudents, domain.User{
+			ID:        student.ID,
+			Username:  student.Username,
+			FullName:  student.FullName,
+			Role:      domain.UserRole(student.Role),
+			IsActive:  student.IsActive,
+			LastLogin: toTimePtr(student.LastLogin),
+			CreatedAt: student.CreatedAt.Time,
+			UpdatedAt: student.UpdatedAt.Time,
+			DeletedAt: toTimePtr(student.DeletedAt),
+		})
+	}
+
+	return domainStudents, nil
+}
+
+func (r *SubjectRepository) ListStudentsBySubjectIDPaginated(ctx context.Context, subjectID uuid.UUID, limit int32, offset int32) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	students, err := queries.ListStudentsBySubjectIDPaginated(ctx, sqlc.ListStudentsBySubjectIDPaginatedParams{
+		SubjectID: subjectID,
+		Limit:     limit,
+		Offset:    offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainStudents []domain.User
+	for _, student := range students {
+		domainStudents = append(domainStudents, domain.User{
+			ID:        student.ID,
+			Username:  student.Username,
+			FullName:  student.FullName,
+			Role:      domain.UserRole(student.Role),
+			IsActive:  student.IsActive,
+			LastLogin: toTimePtr(student.LastLogin),
+			CreatedAt: student.CreatedAt.Time,
+			UpdatedAt: student.UpdatedAt.Time,
+			DeletedAt: toTimePtr(student.DeletedAt),
+		})
+	}
+
+	return domainStudents, nil
+}
+
+func (r *SubjectRepository) CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountStudentsBySubjectID(ctx, subjectID)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *SubjectRepository) SearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string, limit int32, offset int32) ([]domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	students, err := queries.SearchStudentsBySubjectID(ctx, sqlc.SearchStudentsBySubjectIDParams{
+		SubjectID: subjectID,
+		Column2:   &search,
+		Limit:     limit,
+		Offset:    offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var domainStudents []domain.User
+	for _, student := range students {
+		domainStudents = append(domainStudents, domain.User{
+			ID:        student.ID,
+			Username:  student.Username,
+			FullName:  student.FullName,
+			Role:      domain.UserRole(student.Role),
+			IsActive:  student.IsActive,
+			LastLogin: toTimePtr(student.LastLogin),
+			CreatedAt: student.CreatedAt.Time,
+			UpdatedAt: student.UpdatedAt.Time,
+			DeletedAt: toTimePtr(student.DeletedAt),
+		})
+	}
+
+	return domainStudents, nil
+}
+
+func (r *SubjectRepository) CountSearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountSearchStudentsBySubjectID(ctx, sqlc.CountSearchStudentsBySubjectIDParams{
+		SubjectID: subjectID,
+		Column2:   &search,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *SubjectRepository) UnassignStudentFromSubject(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	_, err := queries.UnassignStudentFromSubject(ctx, sqlc.UnassignStudentFromSubjectParams{
+		SubjectID: subjectID,
+		StudentID: studentID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

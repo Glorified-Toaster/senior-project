@@ -33,6 +33,11 @@ type EditSubjectPageParam struct {
 	Instructors []domain.User
 	Exams       []domain.Exam
 	AllInstructors []domain.User
+	Students    []domain.User
+	AllStudents []domain.User
+	StudentCount int64
+	Limit       int32
+	Offset      int32
 }
 
 templ EditSubjectPage(param EditSubjectPageParam) {
@@ -350,7 +355,7 @@ templ InstructorsTab(param EditSubjectPageParam) {
 		@components.UserTableRoot("instructors-user-table-root", components.UserTableProps{
 			Users:     param.Instructors,
 			Title:     "Instructors",
-			BaseURL:   "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors",
+			BaseURL:   "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/search",
 			ID:        "instructors-table",
 			Search:    true,
 			SearchAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/search",
@@ -699,5 +704,32 @@ templ ExamForm(param EditSubjectPageParam) {
 }
 
 templ StudentsTab(param EditSubjectPageParam) {
+		<div class="flex flex-col gap-4">
+		@components.TotalCard(components.TotalCardProps{
+			Title:       "Students",
+			Description: "Students for this subject",
+			Icon: icon.User(icon.Props{
+				Class: "h-10 w-10",
+			}),
+			Value: fmt.Sprintf("%d", param.StudentCount),
+		})
+		@components.UserTableRoot("students-user-table-root", components.UserTableProps{
+			Users:     param.Students,
+			Title:     "Students",
+			BaseURL:   "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/search",
+			ID:        "students-table",
+			Search:    true,
+			SearchAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/search",
+			AddUser:   false,
+			AddInstructor: false,
+			AddStudent: true,
+			Students: param.AllStudents,
+			AddStudentAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/assign",
+			StudentAssignSwapTarget: "#students-user-table-root",
+			TotalCount: param.StudentCount,
+			Limit:      param.Limit,
+			Offset:     param.Offset,
+		})
+	</div>
 
 }

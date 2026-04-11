@@ -159,3 +159,83 @@ func (a *Application) AssignInstructorsToSubject(ctx context.Context, subjectID 
 		return nil
 	})
 }
+
+func (a *Application) UnassignInstructorFromSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		err := a.subjectRepo.UnassignInstructorFromSubject(txCtx, subjectID, instructorID)
+		return err
+	})
+	return err
+}
+
+func (a *Application) AssignStudentsToSubject(ctx context.Context, subjectID uuid.UUID, studentIDs []uuid.UUID) error {
+	if len(studentIDs) == 0 {
+		return nil
+	}
+	return a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		for _, id := range studentIDs {
+			if err := a.subjectRepo.AssignStudentsToSubject(txCtx, subjectID, []uuid.UUID{id}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (a *Application) ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]domain.User, error) {
+	var students []domain.User
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		students, err = a.subjectRepo.ListStudentsBySubjectID(txCtx, subjectID)
+		return err
+	})
+	return students, err
+}
+
+func (a *Application) ListStudentsBySubjectIDPaginated(ctx context.Context, subjectID uuid.UUID, limit int32, offset int32) ([]domain.User, error) {
+	var students []domain.User
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		students, err = a.subjectRepo.ListStudentsBySubjectIDPaginated(txCtx, subjectID, limit, offset)
+		return err
+	})
+	return students, err
+}
+
+func (a *Application) CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	var count int64
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = a.subjectRepo.CountStudentsBySubjectID(txCtx, subjectID)
+		return err
+	})
+	return count, err
+}
+
+func (a *Application) SearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string, limit int32, offset int32) ([]domain.User, error) {
+	var students []domain.User
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		students, err = a.subjectRepo.SearchStudentsBySubjectID(txCtx, subjectID, search, limit, offset)
+		return err
+	})
+	return students, err
+}
+
+func (a *Application) CountSearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string) (int64, error) {
+	var count int64
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = a.subjectRepo.CountSearchStudentsBySubjectID(txCtx, subjectID, search)
+		return err
+	})
+	return count, err
+}
+
+func (a *Application) UnassignStudentFromSubject(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		err := a.subjectRepo.UnassignStudentFromSubject(txCtx, subjectID, studentID)
+		return err
+	})
+	return err
+}

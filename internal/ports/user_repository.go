@@ -26,6 +26,9 @@ type UserRepository interface {
 	CountSearch(ctx context.Context, search string) (int64, error)
 	CountSearchDeleted(ctx context.Context, search string) (int64, error)
 	ListAllInstructors(ctx context.Context, arg ListAllInstructorsParams) ([]domain.User, error)
+	ListAllStudents(ctx context.Context, arg ListAllStudentsParams) ([]domain.User, error)
+	CountStudents(ctx context.Context) (int64, error)
+	SearchStudents(ctx context.Context, arg SearchStudentsParams) ([]domain.User, error)
 }
 
 type CreateUserParams struct {
@@ -55,4 +58,15 @@ type SearchUsersParams struct {
 type ListDeletedUsersParams struct {
 	Limit  int32 `json:"limit" validate:"required"`
 	Offset int32 `json:"offset" validate:"required"`
+}
+
+type ListAllStudentsParams struct {
+	Limit  int32 `json:"limit" validate:"required"`
+	Offset int32 `json:"offset" validate:"required"`
+}
+
+type SearchStudentsParams struct {
+	Search string `json:"search" validate:"required"`
+	Limit  int32  `json:"limit" validate:"required"`
+	Offset int32  `json:"offset" validate:"required"`
 }

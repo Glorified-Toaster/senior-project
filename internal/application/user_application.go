@@ -203,3 +203,27 @@ func (app *Application) ListAllInstructors(ctx context.Context, arg ports.ListAl
 	}
 	return users, nil
 }
+
+func (app *Application) ListAllStudents(ctx context.Context, arg ports.ListAllStudentsParams) ([]domain.User, error) {
+	users, err := app.userRepo.ListAllStudents(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (app *Application) CountStudents(ctx context.Context) (int64, error) {
+	count, err := app.userRepo.CountStudents(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (app *Application) SearchStudents(ctx context.Context, arg ports.SearchStudentsParams) ([]domain.User, error) {
+	users, err := app.userRepo.SearchStudents(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}

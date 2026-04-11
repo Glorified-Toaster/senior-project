@@ -16,6 +16,7 @@ import (
 	"uot-exam/web/templates/render"
 
 	"uot-exam/internal/adapters/inbound/http/helpers"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -437,7 +438,34 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		availableInstructors := filterAvailableInstructors(allInstructors, instructors)
+		availableInstructors := filterAvailableUsers(allInstructors, instructors)
+
+		limitStr := ctx.DefaultQuery("limit", "12")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+		limit, _ := strconv.Atoi(limitStr)
+		offset, _ := strconv.Atoi(offsetStr)
+
+		students, err := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), uuid.MustParse(subjectID), int32(limit), int32(offset))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		studentCount, err := h.App.CountStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		if err != nil {
+			studentCount = 0
+		}
+		allStudents, err := h.App.ListAllStudents(ctx.Request.Context(), ports.ListAllStudentsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		
+		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		availableStudents := filterAvailableUsers(allStudents, allEnrolledStudents)
+
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
 			Subject:        subject,
 			Username:       username,
@@ -446,6 +474,11 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Exams:          exams,
 			UserID:         userID,
 			AllInstructors: availableInstructors,
+			Students:       students,
+			AllStudents:    availableStudents,
+			StudentCount:   studentCount,
+			Limit:          int32(limit),
+			Offset:         int32(offset),
 		})))
 	}
 }
@@ -1288,7 +1321,7 @@ func (h *UserHandler) CreateUserCSV() gin.HandlerFunc {
 	}
 }
 
-func filterAvailableInstructors(all []domain.User, alreadyAssigned []domain.User) []domain.User {
+func filterAvailableUsers(all []domain.User, alreadyAssigned []domain.User) []domain.User {
 	if len(alreadyAssigned) == 0 {
 		return all
 	}
@@ -1305,7 +1338,7 @@ func filterAvailableInstructors(all []domain.User, alreadyAssigned []domain.User
 	return out
 }
 
-func parseInstructorIDsFromForm(raw string) ([]uuid.UUID, error) {
+func parseIDsFromForm(raw string) ([]uuid.UUID, error) {
 	parts := strings.Split(raw, ",")
 	seen := make(map[uuid.UUID]struct{})
 	ids := make([]uuid.UUID, 0, len(parts))
@@ -1342,20 +1375,24 @@ func filterUsersBySearch(users []domain.User, q string) []domain.User {
 	return out
 }
 
-func subjectInstructorsTableProps(subjectID uuid.UUID, instructors, allInstructors []domain.User) components.UserTableProps {
+func subjectInstructorsTableProps(subjectID uuid.UUID, instructors, allInstructors []domain.User, search string) components.UserTableProps {
 	sid := subjectID.String()
 	base := "/admin/dashboard/subject/" + sid
+	baseURL := base + "/instructors/search"
+	if search != "" {
+		baseURL += "?search=" + url.QueryEscape(search)
+	}
 	return components.UserTableProps{
-		Users:            instructors,
-		Title:            "Instructors",
-		BaseURL:          base + "/instructors",
-		ID:               "instructors-table",
-		Search:           true,
-		SearchAPI:        base + "/instructors/search",
-		AddUser:          false,
-		AddInstructor:    true,
-		Instructors:      allInstructors,
-		AddInstructorAPI: base + "/instructors/assign",
+		Users:                      instructors,
+		Title:                      "Instructors",
+		BaseURL:                    baseURL,
+		ID:                         "instructors-table",
+		Search:                     true,
+		SearchAPI:                  base + "/instructors/search",
+		AddUser:                    false,
+		AddInstructor:              true,
+		Instructors:                allInstructors,
+		AddInstructorAPI:           base + "/instructors/assign",
 		InstructorAssignSwapTarget: "#instructors-user-table-root",
 	}
 }
@@ -1387,10 +1424,10 @@ func (h *UserHandler) SearchSubjectInstructors() gin.HandlerFunc {
 		if err != nil {
 			allInstructors = []domain.User{}
 		}
-		available := filterAvailableInstructors(allInstructors, assigned)
+		available := filterAvailableUsers(allInstructors, assigned)
 
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, components.UserTableContainer(subjectInstructorsTableProps(subjectID, instructors, available)))
+		render.Render(ctx, components.UserTableContainer(subjectInstructorsTableProps(subjectID, instructors, available, search)))
 	}
 }
 
@@ -1414,7 +1451,7 @@ func (h *UserHandler) AssignInstructorToSubject() gin.HandlerFunc {
 			helpers.Toast(ctx, "Assign Instructors Failed", "Invalid subject ID", toast.VariantError)
 			return
 		}
-		instructorIDs, err := parseInstructorIDsFromForm(rawIDs)
+		instructorIDs, err := parseIDsFromForm(rawIDs)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Assign Instructors Failed", "Invalid instructor selection", toast.VariantError)
@@ -1446,7 +1483,7 @@ func (h *UserHandler) AssignInstructorToSubject() gin.HandlerFunc {
 			helpers.Toast(ctx, "Assign Instructors Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
 			return
 		}
-		available := filterAvailableInstructors(allInstructors, instructors)
+		available := filterAvailableUsers(allInstructors, instructors)
 
 		ctx.Header("Content-Type", "text/html")
 		msg := "1 instructor assigned successfully"
@@ -1455,7 +1492,220 @@ func (h *UserHandler) AssignInstructorToSubject() gin.HandlerFunc {
 		}
 		// Do not set HX-Reswap: none here — that suppresses swapping the refreshed table into hx-target.
 		helpers.Toast(ctx, "Success", msg, toast.VariantSuccess)
-		props := subjectInstructorsTableProps(sid, instructors, available)
+		props := subjectInstructorsTableProps(sid, instructors, available, "")
 		render.Render(ctx, components.UserTableRoot("instructors-user-table-root", props))
+	}
+}
+
+func (h *UserHandler) UnassignInstructorFromSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID := ctx.Param("id")
+		instructorID := ctx.Param("instructor_id")
+
+		if subjectID == "" || instructorID == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Subject ID and Instructor ID are required", toast.VariantError)
+			return
+		}
+
+		sid, err := uuid.Parse(subjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		iid, err := uuid.Parse(instructorID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Invalid instructor ID", toast.VariantError)
+			return
+		}
+
+		if err := h.App.UnassignInstructorFromSubject(ctx, sid, iid); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Failed to unassign instructor: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		instructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), sid)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Unassigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		allInstructors, err := h.App.ListAllInstructors(ctx.Request.Context(), ports.ListAllInstructorsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Instructor Failed", "Unassigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		available := filterAvailableUsers(allInstructors, instructors)
+
+		ctx.Header("Content-Type", "text/html")
+		helpers.Toast(ctx, "Success", "Instructor unassigned successfully", toast.VariantSuccess)
+		props := subjectInstructorsTableProps(sid, instructors, available, "")
+		render.Render(ctx, components.UserTableRoot("instructors-user-table-root", props))
+	}
+}
+
+func (h *UserHandler) AssignStudentToSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID := ctx.Param("id")
+		rawIDs := ctx.PostForm("student_id")
+		if subjectID == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Subject ID is required", toast.VariantError)
+			return
+		}
+		if strings.TrimSpace(rawIDs) == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Select at least one student", toast.VariantError)
+			return
+		}
+		sid, err := uuid.Parse(subjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+		studentIDs, err := parseIDsFromForm(rawIDs)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Invalid student selection", toast.VariantError)
+			return
+		}
+		if len(studentIDs) == 0 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Select at least one student", toast.VariantError)
+			return
+		}
+		if err := h.App.AssignStudentsToSubject(ctx, sid, studentIDs); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Failed to assign students: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		limitStr := ctx.DefaultQuery("limit", "12")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+		limit, _ := strconv.Atoi(limitStr)
+		offset, _ := strconv.Atoi(offsetStr)
+
+		students, err := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), sid, int32(limit), int32(offset))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), sid)
+		allStudents, err := h.App.ListAllStudents(ctx.Request.Context(), ports.ListAllStudentsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), sid)
+		available := filterAvailableUsers(allStudents, allEnrolledStudents)
+
+		ctx.Header("Content-Type", "text/html")
+		msg := "1 student assigned successfully"
+		if len(studentIDs) != 1 {
+			msg = fmt.Sprintf("%d students assigned successfully", len(studentIDs))
+		}
+		helpers.Toast(ctx, "Success", msg, toast.VariantSuccess)
+		props := subjectStudentsTableProps(sid, students, available, totalCount, int32(limit), int32(offset), "")
+		render.Render(ctx, components.UserTableRoot("students-user-table-root", props))
+	}
+}
+
+func (h *UserHandler) SearchSubjectStudents() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subject ID"})
+			return
+		}
+
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
+
+		limitStr := ctx.DefaultQuery("limit", "12")
+		offsetStr := ctx.DefaultQuery("offset", "0")
+		limit, _ := strconv.Atoi(limitStr)
+		offset, _ := strconv.Atoi(offsetStr)
+
+		var (
+			students   []domain.User
+			totalCount int64
+		)
+
+		if search == "" {
+			students, err = h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, int32(limit), int32(offset))
+			if err != nil {
+				students = []domain.User{}
+			}
+			totalCount, err = h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
+			if err != nil {
+				totalCount = 0
+			}
+		} else {
+			students, err = h.App.SearchStudentsBySubjectID(ctx.Request.Context(), subjectID, search, int32(limit), int32(offset))
+			if err != nil {
+				students = []domain.User{}
+			}
+			totalCount, err = h.App.CountSearchStudentsBySubjectID(ctx.Request.Context(), subjectID, search)
+			if err != nil {
+				totalCount = 0
+			}
+		}
+
+		allStudents, err := h.App.ListAllStudents(ctx.Request.Context(), ports.ListAllStudentsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			allStudents = []domain.User{}
+		}
+		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		available := filterAvailableUsers(allStudents, allEnrolledStudents)
+
+		ctx.Header("Content-Type", "text/html")
+		props := subjectStudentsTableProps(subjectID, students, available, totalCount, int32(limit), int32(offset), search)
+		render.Render(ctx, components.UserTableContainer(props))
+	}
+}
+
+func subjectStudentsTableProps(subjectID uuid.UUID, students, allStudents []domain.User, totalCount int64, limit int32, offset int32, search string) components.UserTableProps {
+	sid := subjectID.String()
+	base := "/admin/dashboard/subject/" + sid
+	baseURL := base + "/students/search"
+	if search != "" {
+		baseURL += "?search=" + url.QueryEscape(search)
+	}
+	return components.UserTableProps{
+		Users:                   students,
+		Title:                   "Students",
+		BaseURL:                 baseURL,
+		ID:                      "students-table",
+		Search:                  true,
+		SearchAPI:               base + "/students/search",
+		AddUser:                 false,
+		AddStudent:              true,
+		Students:                allStudents,
+		AddStudentAPI:           base + "/students/assign",
+		StudentAssignSwapTarget: "#students-user-table-root",
+		TotalCount:              totalCount,
+		Limit:                   limit,
+		Offset:                  offset,
 	}
 }
