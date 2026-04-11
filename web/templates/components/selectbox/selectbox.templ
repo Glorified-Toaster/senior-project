@@ -72,6 +72,8 @@ type ItemProps struct {
 	Value      string
 	Selected   bool
 	Disabled   bool
+	// PillLabel, when set, is used for the closed trigger and pills instead of the full item text (dropdown row still shows children).
+	PillLabel string
 }
 
 templ SelectBox(props ...Props) {
@@ -310,6 +312,9 @@ templ Item(props ...ItemProps) {
 		data-tui-selectbox-value={ p.Value }
 		data-tui-selectbox-selected={ strconv.FormatBool(p.Selected) }
 		data-tui-selectbox-disabled={ strconv.FormatBool(p.Disabled) }
+		if p.PillLabel != "" {
+			data-tui-selectbox-pill-label={ p.PillLabel }
+		}
 		tabindex="0"
 		{ p.Attributes... }
 	>

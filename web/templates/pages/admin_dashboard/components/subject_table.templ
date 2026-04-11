@@ -80,6 +80,14 @@ templ ExamCard(exam domain.Exam) {
 						@icon.CircleQuestionMark(icon.Props{Class: "h-4 w-4"})
 						{ 30 }
 					}
+
+					@badge.Badge(badge.Props{
+						Variant: badge.VariantOutline,
+						Class:   "mt-2",
+					}) {
+						@icon.ChartBar(icon.Props{Class: "h-4 w-4"})
+						{ fmt.Sprintf("%d", exam.TotalMarks) }
+					}
 				}
 			}
 			@card.Footer(card.FooterProps{

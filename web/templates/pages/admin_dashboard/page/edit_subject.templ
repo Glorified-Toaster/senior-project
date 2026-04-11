@@ -32,6 +32,7 @@ type EditSubjectPageParam struct {
 	Subject     domain.Subject
 	Instructors []domain.User
 	Exams       []domain.Exam
+	AllInstructors []domain.User
 }
 
 templ EditSubjectPage(param EditSubjectPageParam) {
@@ -342,19 +343,22 @@ templ InstructorsTab(param EditSubjectPageParam) {
 			Title:       "Instructors",
 			Description: "Instructors for this subject",
 			Icon: icon.User(icon.Props{
-				Class: "h-6 w-6",
+				Class: "h-10 w-10",
 			}),
-			Value: "10",
+			Value: fmt.Sprintf("%d", len(param.Instructors)),
 		})
-		@components.UserTable(components.UserTableProps{
+		@components.UserTableRoot("instructors-user-table-root", components.UserTableProps{
 			Users:     param.Instructors,
 			Title:     "Instructors",
 			BaseURL:   "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors",
 			ID:        "instructors-table",
 			Search:    true,
 			SearchAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/search",
-			AddUser:   true,
-			AddAPI:    "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/add",
+			AddUser:   false,
+			AddInstructor: true,
+			Instructors: param.AllInstructors,
+			AddInstructorAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/assign",
+			InstructorAssignSwapTarget: "#instructors-user-table-root",
 		})
 	</div>
 }
@@ -473,7 +477,7 @@ templ ExamTab(param EditSubjectPageParam) {
 		<div class="w-full mb-4">
 			@components.TotalCard(components.TotalCardProps{
 				Title:       "Total Exams",
-				Value:       "0",
+				Value:       fmt.Sprintf("%d", len(param.Exams)),
 				Description: "Total exams in this subject",
 				Icon:        icon.Book(icon.Props{Class: "h-10 w-10"}),
 			})

@@ -16,7 +16,6 @@ import (
 	"uot-exam/web/templates/render"
 
 	"uot-exam/internal/adapters/inbound/http/helpers"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -430,13 +429,23 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		allInstructors, err := h.App.ListAllInstructors(ctx.Request.Context(), ports.ListAllInstructorsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		availableInstructors := filterAvailableInstructors(allInstructors, instructors)
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
-			Subject:     subject,
-			Username:    username,
-			FullName:    fullname,
-			Instructors: instructors,
-			Exams:       exams,
-			UserID:      userID,
+			Subject:        subject,
+			Username:       username,
+			FullName:       fullname,
+			Instructors:    instructors,
+			Exams:          exams,
+			UserID:         userID,
+			AllInstructors: availableInstructors,
 		})))
 	}
 }
@@ -1276,5 +1285,177 @@ func (h *UserHandler) CreateUserCSV() gin.HandlerFunc {
 			AddUser:    true,
 			AddUserCSV: true,
 		}))
+	}
+}
+
+func filterAvailableInstructors(all []domain.User, alreadyAssigned []domain.User) []domain.User {
+	if len(alreadyAssigned) == 0 {
+		return all
+	}
+	assigned := make(map[uuid.UUID]struct{}, len(alreadyAssigned))
+	for _, u := range alreadyAssigned {
+		assigned[u.ID] = struct{}{}
+	}
+	out := make([]domain.User, 0, len(all))
+	for _, u := range all {
+		if _, ok := assigned[u.ID]; !ok {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+func parseInstructorIDsFromForm(raw string) ([]uuid.UUID, error) {
+	parts := strings.Split(raw, ",")
+	seen := make(map[uuid.UUID]struct{})
+	ids := make([]uuid.UUID, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		id, err := uuid.Parse(p)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func filterUsersBySearch(users []domain.User, q string) []domain.User {
+	q = strings.TrimSpace(q)
+	if q == "" {
+		return users
+	}
+	needle := strings.ToLower(q)
+	out := make([]domain.User, 0, len(users))
+	for _, u := range users {
+		if strings.Contains(strings.ToLower(u.FullName), needle) || strings.Contains(strings.ToLower(u.Username), needle) {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+func subjectInstructorsTableProps(subjectID uuid.UUID, instructors, allInstructors []domain.User) components.UserTableProps {
+	sid := subjectID.String()
+	base := "/admin/dashboard/subject/" + sid
+	return components.UserTableProps{
+		Users:            instructors,
+		Title:            "Instructors",
+		BaseURL:          base + "/instructors",
+		ID:               "instructors-table",
+		Search:           true,
+		SearchAPI:        base + "/instructors/search",
+		AddUser:          false,
+		AddInstructor:    true,
+		Instructors:      allInstructors,
+		AddInstructorAPI: base + "/instructors/assign",
+		InstructorAssignSwapTarget: "#instructors-user-table-root",
+	}
+}
+
+func (h *UserHandler) SearchSubjectInstructors() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subject ID"})
+			return
+		}
+
+		search := strings.TrimSpace(ctx.PostForm("search"))
+		if search == "" {
+			search = strings.TrimSpace(ctx.Query("search"))
+		}
+
+		assigned, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), subjectID)
+		if err != nil {
+			assigned = []domain.User{}
+		}
+		instructors := filterUsersBySearch(assigned, search)
+
+		allInstructors, err := h.App.ListAllInstructors(ctx.Request.Context(), ports.ListAllInstructorsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			allInstructors = []domain.User{}
+		}
+		available := filterAvailableInstructors(allInstructors, assigned)
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, components.UserTableContainer(subjectInstructorsTableProps(subjectID, instructors, available)))
+	}
+}
+
+func (h *UserHandler) AssignInstructorToSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID := ctx.Param("id")
+		rawIDs := ctx.PostForm("instructor_id")
+		if subjectID == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Subject ID is required", toast.VariantError)
+			return
+		}
+		if strings.TrimSpace(rawIDs) == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Select at least one instructor", toast.VariantError)
+			return
+		}
+		sid, err := uuid.Parse(subjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+		instructorIDs, err := parseInstructorIDsFromForm(rawIDs)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Invalid instructor selection", toast.VariantError)
+			return
+		}
+		if len(instructorIDs) == 0 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Select at least one instructor", toast.VariantError)
+			return
+		}
+		if err := h.App.AssignInstructorsToSubject(ctx, sid, instructorIDs); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Failed to assign instructors: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		instructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), sid)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		allInstructors, err := h.App.ListAllInstructors(ctx.Request.Context(), ports.ListAllInstructorsParams{
+			Limit:  1000,
+			Offset: 0,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Instructors Failed", "Assigned but failed to reload list: "+err.Error(), toast.VariantError)
+			return
+		}
+		available := filterAvailableInstructors(allInstructors, instructors)
+
+		ctx.Header("Content-Type", "text/html")
+		msg := "1 instructor assigned successfully"
+		if len(instructorIDs) != 1 {
+			msg = fmt.Sprintf("%d instructors assigned successfully", len(instructorIDs))
+		}
+		// Do not set HX-Reswap: none here — that suppresses swapping the refreshed table into hx-target.
+		helpers.Toast(ctx, "Success", msg, toast.VariantSuccess)
+		props := subjectInstructorsTableProps(sid, instructors, available)
+		render.Render(ctx, components.UserTableRoot("instructors-user-table-root", props))
 	}
 }

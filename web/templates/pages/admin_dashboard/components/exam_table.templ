@@ -75,7 +75,7 @@ templ ExamTableContainer(props ExamTableProps) {
 			@ExamTableGrid(props.Exams)
 		</div>
 		if props.TotalCount > int64(props.Limit) {
-			<div id="pagination-container" class="border-t p-4">
+			<div id="pagination-container" class="border-t p-4 mt-4">
 				@pagination.Pagination(pagination.Props{
 					Total:    props.TotalCount,
 					Limit:    props.Limit,

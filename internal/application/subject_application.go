@@ -135,3 +135,27 @@ func (a *Application) DeleteSubjectAndEnrolledInstructors(ctx context.Context, s
 	})
 	return err
 }
+
+func (a *Application) AssignInstructorToSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		err = a.subjectRepo.AssignInstructorToSubject(txCtx, subjectID, instructorID)
+		return err
+	})
+	return err
+}
+
+// AssignInstructorsToSubject assigns each instructor in one transaction; all succeed or none are persisted.
+func (a *Application) AssignInstructorsToSubject(ctx context.Context, subjectID uuid.UUID, instructorIDs []uuid.UUID) error {
+	if len(instructorIDs) == 0 {
+		return nil
+	}
+	return a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		for _, id := range instructorIDs {
+			if err := a.subjectRepo.AssignInstructorToSubject(txCtx, subjectID, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}

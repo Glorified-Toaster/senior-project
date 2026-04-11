@@ -21,4 +21,5 @@ type SubjectRepository interface {
 	ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]domain.User, error)
 	CreateSubject(ctx context.Context, subject domain.Subject) (domain.Subject, error)
 	DeleteSubjectAndEnrolledInstructors(ctx context.Context, subjectID uuid.UUID) error
+	AssignInstructorToSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error
 }

@@ -341,3 +341,20 @@ func (r *SubjectRepository) DeleteSubjectAndEnrolledInstructors(ctx context.Cont
 
 	return nil
 }
+
+func (r *SubjectRepository) AssignInstructorToSubject(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	_, err := queries.AssignInstructorToSubject(ctx, sqlc.AssignInstructorToSubjectParams{
+		SubjectID:    subjectID,
+		InstructorID: instructorID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

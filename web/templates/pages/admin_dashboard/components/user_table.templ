@@ -31,6 +31,17 @@ type UserTableProps struct {
 	AddAPI        string
 	AddUserCSV    bool
 	HideActions   bool
+	AddInstructor bool
+	Instructors   []domain.User
+	AddInstructorAPI string
+	// InstructorAssignSwapTarget is the hx-target for assign (e.g. #instructors-user-table-root). Empty uses #users-table-container.
+	InstructorAssignSwapTarget string
+}
+
+templ UserTableRoot(wrapperID string, props UserTableProps) {
+	<div id={ wrapperID }>
+		@UserTable(props)
+	</div>
 }
 
 templ UserTable(props UserTableProps) {
@@ -66,6 +77,9 @@ templ UserTable(props UserTableProps) {
 
 					if props.AddUser {
 						@AddUserDialog()
+					}
+					if props.AddInstructor {
+						@AddInstructorDialog(props)
 					}
 				</div>
 			</div>
@@ -530,5 +544,96 @@ func relativeTime(t *time.Time) string {
 		return fmt.Sprintf("%d days ago", d)
 	default:
 		return t.Format("Jan 02, 2006")
+	}
+}
+
+
+templ AddInstructorDialog(param UserTableProps){
+	{{
+		assignSwapTarget := param.InstructorAssignSwapTarget
+		if assignSwapTarget == "" {
+			assignSwapTarget = "#users-table-container"
+		}
+	}}
+	@dialog.Dialog(){
+				@dialog.Trigger(){
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+			}) {
+				Add instructors
+			}
+		}
+		@dialog.Content(){
+			@dialog.Header(){
+				@dialog.Title() {
+					Add instructors
+				}
+				@dialog.Description(){
+					Select one or more instructors to assign to this subject.
+				}
+			}
+
+			<form
+				id="add-instructor-form"
+				hx-post={param.AddInstructorAPI}
+				hx-target={ assignSwapTarget }
+				hx-swap="outerHTML"
+			>
+
+	<div class="w-full mb-4 mt-4">
+		@selectbox.SelectBox() {
+			@selectbox.Trigger(selectbox.TriggerProps{
+				ShowPills:           true,
+				Multiple:            true,
+				Name:                "instructor_id",
+				SelectedCountText:   "{n} instructors selected",
+			}) {
+				@selectbox.Value(selectbox.ValueProps{
+					Placeholder: "Select instructors…",
+				})
+			}
+			@selectbox.Content() {
+				@selectbox.Group() {
+					@selectbox.Label() {
+						Instructors
+					}
+					for _, instructor := range param.Instructors {
+						<div class="mt-2">
+						@selectbox.Item(selectbox.ItemProps{
+							Value:     instructor.ID.String(),
+						}) {
+							<div class="flex items-center gap-2">
+								{ instructor.FullName }
+								@badge.Badge(badge.Props{
+									Variant: badge.VariantSecondary,
+									Class: "ml-2",
+								}) {
+									{ instructor.Username }
+								}
+							</div>
+						}
+						</div>
+					}
+				}
+			}
+		}
+	</div>
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Type:    button.TypeSubmit,
+					}) {
+						Assign instructors
+					}
+				}
+			</form>
+		}
 	}
 }
