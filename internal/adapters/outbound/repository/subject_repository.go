@@ -538,3 +538,33 @@ func (r *SubjectRepository) UnassignStudentFromSubject(ctx context.Context, subj
 
 	return nil
 }
+
+func (r *SubjectRepository) ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Subject, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	subjects, err := queries.ListSubjectsForStudent(ctx, studentID)
+	if err != nil {
+		return nil, err
+	}
+
+	var domainSubjects []domain.Subject
+	for _, subject := range subjects {
+		domainSubjects = append(domainSubjects, domain.Subject{
+			ID:              subject.ID,
+			Title:           subject.Title,
+			Description:     subject.Description,
+			DurationMinutes: subject.DurationMinutes,
+			TotalMarks:      subject.TotalMarks,
+			PassScore:       subject.PassScore,
+			Status:          domain.SubjectStatus(subject.Status),
+			CreatedAt:       subject.CreatedAt.Time,
+			UpdatedAt:       subject.UpdatedAt.Time,
+			DeletedAt:       toTimePtr(subject.DeletedAt),
+		})
+	}
+
+	return domainSubjects, nil
+}

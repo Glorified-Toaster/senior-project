@@ -1,0 +1,166 @@
+package student_dashboard
+
+import "fmt"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/badge"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/button"
+
+templ DashboardPage(param DashboardPageParam) {
+	<div class="h-screen">
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+		@toast.Script()
+		@Navbar("/student/dashboard", "Dashboard") {
+
+		<!-- Main Content -->
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+					<div>
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.LayoutPanelTop(icon.Props{Class: "h-8 w-8"})
+							Student Dashboard
+						</h1>
+						<p class="text-slate-500 mt-1">Take Your Exams Here</p>
+					</div>
+				</div>
+
+			if len(param.Subjects) == 0 {
+				@card.Card(card.Props{}) {
+					@card.Content(card.ContentProps{Class: "p-12 text-center"}) {
+						@icon.BookOpen(icon.Props{Class: "h-12 w-12 text-slate-300 mx-auto mb-4 mt-4"})
+						<h3 class="text-lg font-semibold text-slate-600 mb-2">No Subjects Yet</h3>
+						<p class="text-slate-400 mb-4">You haven't been enrolled in any subjects. Contact your instructor.</p>
+					}
+				}
+			} else {
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					for _, info := range param.Subjects {
+						<a href={ templ.SafeURL(fmt.Sprintf("/student/subject/%s", info.Subject.ID.String())) }>
+							@card.Card(card.Props{
+								Class: "h-full hover:shadow-lg hover:border-primary/50 transition-all duration-300 group-hover:-translate-y-1",
+							}) {
+								@card.Header() {
+									<div class="flex items-start justify-between">
+										<div class="flex-1">
+											@card.Title() {
+												<span class="group-hover:text-primary transition-colors">{ info.Subject.Title }</span>
+											}
+											if info.Subject.Description != nil && *info.Subject.Description != "" {
+												@card.Description() {
+													{ *info.Subject.Description }
+												}
+											}
+										</div>
+										<div class="shrink-0 ml-2">
+											if info.SubmittedExams >= info.TotalExams && info.TotalExams > 0 {
+												@badge.Badge(badge.Props{Variant: badge.VariantDefault}) {
+													Completed
+												}
+											} else if info.SubmittedExams > 0 {
+												@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+													In Progress
+												}
+											} else {
+												@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+													Not Started
+												}
+											}
+										</div>
+									</div>
+								}
+								@card.Content() {
+									<div class="space-y-3">
+										<div class="flex items-center justify-between text-sm">
+											<span class="text-slate-500 flex items-center gap-1.5">
+												@icon.FileText(icon.Props{Class: "h-4 w-4"})
+												Exams
+											</span>
+											<span class="font-medium">
+												{ fmt.Sprintf("%d / %d submitted", info.SubmittedExams, info.TotalExams) }
+											</span>
+										</div>
+										<div class="flex items-center justify-between text-sm pt-1">
+											<span class="text-slate-500 flex items-center gap-1.5">
+												@icon.Clock(icon.Props{Class: "h-4 w-4"})
+												Duration
+											</span>
+											<span class="font-medium">{ fmt.Sprintf("%d min", info.Subject.DurationMinutes) }</span>
+										</div>
+										<div class="flex items-center justify-between text-sm">
+											<span class="text-slate-500 flex items-center gap-1.5">
+												@icon.Target(icon.Props{Class: "h-4 w-4"})
+												Pass Score
+											</span>
+											<span class="font-medium">{ fmt.Sprintf("%d / %d", info.Subject.PassScore, info.Subject.TotalMarks) }</span>
+										</div>
+										if info.SubmittedExams >= info.TotalExams && info.TotalExams > 0 {
+											<div class="pt-2">
+												@button.Button(button.Props{
+													Variant: button.VariantDefault,
+													Size:    button.SizeSm,
+													Class:   "w-full flex items-center justify-center gap-2 shadow-sm",
+													Attributes: templ.Attributes{
+														"onclick": fmt.Sprintf("event.preventDefault(); window.location.href='/student/subject/%s/result'", info.Subject.ID.String()),
+													},
+												}) {
+													@icon.Trophy(icon.Props{Class: "h-4 w-4"})
+													View Results
+												}
+											</div>
+										} else if info.TotalExams > 0 {
+											<div class="pt-2">
+												{{
+													variant := button.VariantOutline
+													if info.SubmittedExams > 0 {
+														variant = button.VariantSecondary
+													}
+												}}
+												@button.Button(button.Props{
+													Variant: variant,
+													Size:    button.SizeSm,
+													Class:   "w-full flex items-center justify-center gap-2 shadow-sm",
+													Attributes: templ.Attributes{
+														"onclick": fmt.Sprintf("event.preventDefault(); window.location.href='/student/subject/%s'", info.Subject.ID.String()),
+													},
+												}) {
+													if info.SubmittedExams > 0 {
+														@icon.RotateCcw(icon.Props{Class: "h-4 w-4"})
+														Continue
+													} else {
+														@icon.Play(icon.Props{Class: "h-4 w-4"})
+														Start
+													}
+												}
+											</div>
+										}
+									</div>
+								}
+							}
+						</a>
+					}
+				</div>
+			}
+		</main>}
+	</div>
+	<div id="toast-container"></div>
+}
+
+templ Navbar(href string, path string) {
+	<div class="flex h-full flex-col">
+		@navbar.Navbar(navbar.Props{BreadPath: []navbar.BreadPath{
+			{Href: href, Path: path},
+		}})
+		<div class="flex-1 p-6 overflow-auto">
+			{ children... }
+		</div>
+			</div>
+} 

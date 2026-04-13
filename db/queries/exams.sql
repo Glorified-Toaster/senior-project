@@ -90,3 +90,26 @@ FROM exams e
 JOIN subject_students ss ON e.subject_id = ss.subject_id
 WHERE ss.student_id = $1 AND e.deleted_at IS NULL AND ss.deleted_at IS NULL
 ORDER BY e.created_at DESC;
+
+-- name: GetAttemptByExamAndStudent :one
+SELECT * FROM exam_attempts
+WHERE exam_id = $1 AND student_id = $2
+ORDER BY started_at DESC
+LIMIT 1;
+
+-- name: CountExamsBySubject :one
+SELECT COUNT(*) FROM exams
+WHERE subject_id = $1 AND deleted_at IS NULL;
+
+-- name: CountSubmittedAttemptsBySubjectForStudent :one
+SELECT COUNT(DISTINCT ea.exam_id)
+FROM exam_attempts ea
+JOIN exams e ON ea.exam_id = e.id
+WHERE e.subject_id = $1
+  AND ea.student_id = $2
+  AND ea.status IN ('SUBMITTED', 'GRADED')
+  AND e.deleted_at IS NULL;
+
+-- name: CountPublishedExamsBySubject :one
+SELECT COUNT(*) FROM exams
+WHERE subject_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED';

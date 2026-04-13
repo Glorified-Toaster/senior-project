@@ -144,3 +144,79 @@ func (app *Application) ListAttemptsByStudent(ctx context.Context, studentID uui
 	return attempts, err
 }
 
+func (app *Application) GetAttemptByExamAndStudent(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error) {
+	var attempt domain.ExamAttempt
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		attempt, err = app.examRepo.GetAttemptByExamAndStudent(txCtx, examID, studentID)
+		return err
+	})
+	return attempt, err
+}
+
+func (app *Application) StartExamAttempt(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error) {
+	var attempt domain.ExamAttempt
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		attempt, err = app.examRepo.StartExamAttempt(txCtx, examID, studentID)
+		return err
+	})
+	return attempt, err
+}
+
+func (app *Application) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return app.examRepo.SubmitExamAttempt(txCtx, attemptID, score)
+	})
+}
+
+func (app *Application) SaveAnswer(ctx context.Context, attemptID uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID, isCorrect bool) (domain.StudentAnswer, error) {
+	var answer domain.StudentAnswer
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		answer, err = app.examRepo.SaveAnswer(txCtx, attemptID, questionID, choiceID, isCorrect)
+		return err
+	})
+	return answer, err
+}
+
+func (app *Application) ListAnswersByAttempt(ctx context.Context, attemptID uuid.UUID) ([]domain.StudentAnswer, error) {
+	var answers []domain.StudentAnswer
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		answers, err = app.examRepo.ListAnswersByAttempt(txCtx, attemptID)
+		return err
+	})
+	return answers, err
+}
+
+func (app *Application) CountExamsBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.examRepo.CountExamsBySubject(txCtx, subjectID)
+		return err
+	})
+	return count, err
+}
+
+func (app *Application) CountPublishedExamsBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.examRepo.CountPublishedBySubject(txCtx, subjectID)
+		return err
+	})
+	return count, err
+}
+
+func (app *Application) CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.examRepo.CountSubmittedAttemptsBySubjectForStudent(txCtx, subjectID, studentID)
+		return err
+	})
+	return count, err
+}
+

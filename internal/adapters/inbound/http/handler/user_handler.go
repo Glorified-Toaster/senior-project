@@ -146,20 +146,6 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		if user.Role != domain.RoleAdmin {
-			toast.Toast(toast.Props{
-				Title:         "Login Failed",
-				Description:   "Unauthorized user to access admin portal",
-				Variant:       toast.VariantError,
-				Duration:      4000,
-				ShowIndicator: true,
-				Dismissible:   true,
-				Icon:          true,
-			}).Render(ctx.Request.Context(), ctx.Writer)
-
-			return
-		}
-
 		token, err := h.jwt.GenerateToken(user)
 		if err != nil {
 			ctx.JSON(http.StatusOK, gin.H{
@@ -172,7 +158,15 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 
 		ctx.SetCookie("auth_token", token, 60*60*24, "/", "", false, true)
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		ctx.Header("HX-Redirect", "/admin/dashboard")
+
+		switch user.Role {
+		case domain.RoleAdmin:
+			ctx.Header("HX-Redirect", "/admin/dashboard")
+		case domain.RoleStudent:
+			ctx.Header("HX-Redirect", "/student/dashboard")
+		default:
+			ctx.Header("HX-Redirect", "/login")
+		}
 	}
 }
 

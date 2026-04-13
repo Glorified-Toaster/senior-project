@@ -4,6 +4,8 @@ import (
 	"uot-exam/web/templates/components/breadcrumb"
 	"uot-exam/web/templates/components/sidebar"
 	"uot-exam/web/templates/utils"
+	"uot-exam/web/templates/components/button"
+	"uot-exam/web/templates/components/icon"
 )
 
 type Props struct {
@@ -11,6 +13,7 @@ type Props struct {
 	Class      string
 	Attributes templ.Attributes
 	BreadPath  []BreadPath
+	SidebarTrigger bool
 }
 
 type BreadPath struct {
@@ -30,16 +33,34 @@ templ Navbar(props Props) {
 		{ props.Attributes... }
 	>
 		<div class="flex items-center gap-4">
-			@sidebar.Trigger(sidebar.TriggerProps{Class: "md:hidden"})
-			<div class="hidden md:flex items-center gap-2">
-				@sidebar.Trigger()
+			if props.SidebarTrigger {
+				@sidebar.Trigger(sidebar.TriggerProps{Class: "md:hidden"})
+				<div class="hidden md:flex items-center gap-2">
+					@sidebar.Trigger()
+					<div class="h-4 w-px bg-border mx-2"></div>
+					<nav class="flex items-center space-x-1 text-sm font-medium text-muted-foreground">
+						<span class="text-foreground">
+							@BreadcrumbWithIcons(props.BreadPath)
+						</span>
+					</nav>
+				</div>
+			} else {
+				@button.Button(button.Props{
+					Variant: button.VariantGhost,
+					Size:    button.SizeSm, 
+					Href:    "/logout",
+					Class:   "text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors",
+				}) {
+					@icon.LogOut(icon.Props{Class: "size-4"})
+					<span>Logout</span>
+				}
 				<div class="h-4 w-px bg-border mx-2"></div>
 				<nav class="flex items-center space-x-1 text-sm font-medium text-muted-foreground">
 					<span class="text-foreground">
 						@BreadcrumbWithIcons(props.BreadPath)
 					</span>
 				</nav>
-			</div>
+			}
 		</div>
 		<div class="flex items-center gap-2 sm:gap-4 ml-4">
 			<img src="/images/uotLogo.png" alt="Logo" class="h-14 w-auto"/>

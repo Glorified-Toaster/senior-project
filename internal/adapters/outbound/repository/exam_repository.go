@@ -292,3 +292,132 @@ func (r *ExamRepository) ListAttemptsByStudent(ctx context.Context, studentID uu
 
 	return attempts, nil
 }
+
+func (r *ExamRepository) GetAttemptByExamAndStudent(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	attempt, err := queries.GetAttemptByExamAndStudent(ctx, sqlc.GetAttemptByExamAndStudentParams{
+		ExamID:    uuid.NullUUID{UUID: examID, Valid: true},
+		StudentID: uuid.NullUUID{UUID: studentID, Valid: true},
+	})
+	if err != nil {
+		return domain.ExamAttempt{}, err
+	}
+
+	return mapSqlcAttemptToDomain(attempt), nil
+}
+
+func (r *ExamRepository) StartExamAttempt(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	attempt, err := queries.StartExamAttempt(ctx, sqlc.StartExamAttemptParams{
+		ExamID:    uuid.NullUUID{UUID: examID, Valid: true},
+		StudentID: uuid.NullUUID{UUID: studentID, Valid: true},
+	})
+	if err != nil {
+		return domain.ExamAttempt{}, err
+	}
+
+	return mapSqlcAttemptToDomain(attempt), nil
+}
+
+func (r *ExamRepository) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.SubmitExamAttempt(ctx, sqlc.SubmitExamAttemptParams{
+		ID:    attemptID,
+		Score: pgtype.Int4{Int32: score, Valid: true},
+	})
+}
+
+func mapSqlcAnswerToDomain(answer sqlc.StudentAnswer) domain.StudentAnswer {
+	var isCorrect *bool
+	if answer.IsCorrect.Valid {
+		isCorrect = &answer.IsCorrect.Bool
+	}
+	return domain.StudentAnswer{
+		ID:               answer.ID,
+		AttemptID:        answer.AttemptID.UUID,
+		QuestionID:       answer.QuestionID.UUID,
+		SelectedChoiceID: answer.SelectedChoiceID.UUID,
+		IsCorrect:        isCorrect,
+		AnsweredAt:       answer.AnsweredAt.Time,
+	}
+}
+
+func (r *ExamRepository) SaveAnswer(ctx context.Context, attemptID uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID, isCorrect bool) (domain.StudentAnswer, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	answer, err := queries.SaveAnswer(ctx, sqlc.SaveAnswerParams{
+		AttemptID:        uuid.NullUUID{UUID: attemptID, Valid: true},
+		QuestionID:       uuid.NullUUID{UUID: questionID, Valid: true},
+		SelectedChoiceID: uuid.NullUUID{UUID: choiceID, Valid: true},
+		IsCorrect:        pgtype.Bool{Bool: isCorrect, Valid: true},
+	})
+	if err != nil {
+		return domain.StudentAnswer{}, err
+	}
+
+	return mapSqlcAnswerToDomain(answer), nil
+}
+
+func (r *ExamRepository) ListAnswersByAttempt(ctx context.Context, attemptID uuid.UUID) ([]domain.StudentAnswer, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcAnswers, err := queries.ListAnswersByAttempt(ctx, uuid.NullUUID{UUID: attemptID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var answers []domain.StudentAnswer
+	for _, answer := range sqlcAnswers {
+		answers = append(answers, mapSqlcAnswerToDomain(answer))
+	}
+
+	return answers, nil
+}
+
+func (r *ExamRepository) CountExamsBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+}
+
+func (r *ExamRepository) CountPublishedBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountPublishedExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+}
+
+func (r *ExamRepository) CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountSubmittedAttemptsBySubjectForStudent(ctx, sqlc.CountSubmittedAttemptsBySubjectForStudentParams{
+		SubjectID: uuid.NullUUID{UUID: subjectID, Valid: true},
+		StudentID: uuid.NullUUID{UUID: studentID, Valid: true},
+	})
+}

@@ -45,12 +45,12 @@ func (auth *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 func handleUnauthorized(ctx *gin.Context) {
 	// For HTMX requests, we use HX-Redirect to force a full page redirect
 	if ctx.GetHeader("HX-Request") == "true" {
-		ctx.Header("HX-Redirect", "/admin/login")
+		ctx.Header("HX-Redirect", "/login")
 		ctx.AbortWithStatus(http.StatusOK) // Use 200 with HX-Redirect header
 		return
 	}
 
 	// For standard requests, use a 303 See Other redirect (avoid 301 Moved Permanently)
-	ctx.Redirect(http.StatusSeeOther, "/admin/login")
+	ctx.Redirect(http.StatusSeeOther, "/login")
 	ctx.Abort()
 }

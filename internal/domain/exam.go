@@ -49,3 +49,12 @@ type ExamAttempt struct {
 	Status      AttemptStatus
 	CreatedAt   time.Time
 }
+
+type StudentAnswer struct {
+	ID               uuid.UUID
+	AttemptID        uuid.UUID
+	QuestionID       uuid.UUID
+	SelectedChoiceID uuid.UUID
+	IsCorrect        *bool
+	AnsweredAt       time.Time
+}

@@ -405,7 +405,7 @@ func (h *UserHandler) SearchSubjects() gin.HandlerFunc {
 func (h *UserHandler) Logout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.SetCookie("auth_token", "", -1, "/", "", false, true)
-		ctx.Redirect(http.StatusSeeOther, "/admin/login")
+		ctx.Redirect(http.StatusSeeOther, "/login")
 	}
 }
 

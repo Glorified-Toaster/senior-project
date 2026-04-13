@@ -239,3 +239,13 @@ func (a *Application) UnassignStudentFromSubject(ctx context.Context, subjectID 
 	})
 	return err
 }
+
+func (a *Application) ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Subject, error) {
+	var subjects []domain.Subject
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		subjects, err = a.subjectRepo.ListSubjectsForStudent(txCtx, studentID)
+		return err
+	})
+	return subjects, err
+}

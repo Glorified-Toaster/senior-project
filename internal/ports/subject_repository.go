@@ -30,4 +30,5 @@ type SubjectRepository interface {
 	SearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string, limit int32, offset int32) ([]domain.User, error)
 	CountSearchStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID, search string) (int64, error)
 	UnassignStudentFromSubject(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) error
+	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Subject, error)
 }

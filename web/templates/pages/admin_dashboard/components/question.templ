@@ -16,6 +16,7 @@ import "strconv"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/tabs"
 import "uot-exam/web/templates/components/selectbox"
+import "uot-exam/web/templates/components/badge"
 
 type QuestionListProps struct {
 	Questions []domain.Question
@@ -46,10 +47,15 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
 		Class: "mb-6",
 	}) {
 		@card.Header() {
-			@card.Title() {
-				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-				<span class="latex-content">{ question.QuestionTitle }</span>
-			}
+			<div class="flex items-center justify-between gap-3 w-full">
+				@card.Title() {
+					<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+					<span class="latex-content">{ question.QuestionTitle }</span>
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
+					{ strconv.Itoa(question.Marks) } Marks
+				}
+			</div>
 		}
 		@card.Content() {
 			<span class="latex-content">{ question.QuestionText }</span>
@@ -115,10 +121,15 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
 		Class: "mb-6",
 	}) {
 		@card.Header() {
-			@card.Title() {
-				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-				<span class="latex-content">{ question.QuestionTitle }</span>
-			}
+			<div class="flex items-center justify-between gap-3 w-full">
+				@card.Title() {
+					<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+					<span class="latex-content">{ question.QuestionTitle }</span>
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
+					{ strconv.Itoa(question.Marks) } Marks
+				}
+			</div>
 		}
 		@card.Content() {
 			<div class="w-full rounded-md overflow-x-auto">
@@ -146,10 +157,15 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 		Class: "mb-6",
 	}) {
 		@card.Header() {
-			@card.Title() {
-				<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
-				<span class="latex-content">{ question.QuestionTitle }</span>
-			}
+			<div class="flex items-center justify-between gap-3 w-full">
+				@card.Title() {
+					<span class="font-bold">Q.{ fmt.Sprint(number) }. </span>
+					<span class="latex-content">{ question.QuestionTitle }</span>
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
+					{ strconv.Itoa(question.Marks) } Marks
+				}
+			</div>
 		}
 		@card.Content() {
 			<div class="w-full rounded-md overflow-x-auto">
@@ -340,7 +356,7 @@ templ CodeQuestionForm(question domain.Question) {
 				},
 			})
 		</div>
-
+		
 		<div>
 			@label.Label(label.Props{
 				For: "question_text",

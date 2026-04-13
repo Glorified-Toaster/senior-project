@@ -177,3 +177,13 @@ WHERE ss.subject_id = $1
   AND u.deleted_at IS NULL
   AND u.role = 'STUDENT'
   AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%');
+
+-- name: ListSubjectsForStudent :many
+SELECT s.*
+FROM subjects s
+JOIN subject_students ss ON s.id = ss.subject_id
+WHERE ss.student_id = $1
+  AND ss.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+  AND s.status = 'ACTIVE'
+ORDER BY s.title ASC;

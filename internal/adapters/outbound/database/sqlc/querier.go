@@ -16,7 +16,9 @@ type Querier interface {
 	CountDeletedSubjects(ctx context.Context) (int64, error)
 	CountDeletedUsers(ctx context.Context) (int64, error)
 	CountExams(ctx context.Context) (int64, error)
+	CountExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) (int64, error)
 	CountInstructors(ctx context.Context) (int64, error)
+	CountPublishedExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) (int64, error)
 	CountQuestions(ctx context.Context) (int64, error)
 	CountSearchDeletedUsers(ctx context.Context, search string) (int64, error)
 	CountSearchExams(ctx context.Context, dollar_1 string) (int64, error)
@@ -27,6 +29,7 @@ type Querier interface {
 	CountStudents(ctx context.Context) (int64, error)
 	CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
+	CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, arg CountSubmittedAttemptsBySubjectForStudentParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
 	CreateChoices(ctx context.Context, arg CreateChoicesParams) ([]Choice, error)
@@ -40,6 +43,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	DisableUser(ctx context.Context, id uuid.UUID) error
 	EnableUser(ctx context.Context, id uuid.UUID) error
+	GetAttemptByExamAndStudent(ctx context.Context, arg GetAttemptByExamAndStudentParams) (ExamAttempt, error)
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error)
 	GetQuestionByChecksum(ctx context.Context, checksum *string) (Question, error)
@@ -66,6 +70,7 @@ type Querier interface {
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListStudentsBySubjectIDRow, error)
 	ListStudentsBySubjectIDPaginated(ctx context.Context, arg ListStudentsBySubjectIDPaginatedParams) ([]ListStudentsBySubjectIDPaginatedRow, error)
+	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	RestoreQuestion(ctx context.Context, id uuid.UUID) error
 	RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, error)

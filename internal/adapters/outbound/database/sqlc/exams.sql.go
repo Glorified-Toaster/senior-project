@@ -23,6 +23,30 @@ func (q *Queries) CountExams(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countExamsBySubject = `-- name: CountExamsBySubject :one
+SELECT COUNT(*) FROM exams
+WHERE subject_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) CountExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countExamsBySubject, subjectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPublishedExamsBySubject = `-- name: CountPublishedExamsBySubject :one
+SELECT COUNT(*) FROM exams
+WHERE subject_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED'
+`
+
+func (q *Queries) CountPublishedExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPublishedExamsBySubject, subjectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSearchExams = `-- name: CountSearchExams :one
 SELECT COUNT(*) FROM exams 
 WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
@@ -50,6 +74,28 @@ type CountSearchExamsBySubjectParams struct {
 
 func (q *Queries) CountSearchExamsBySubject(ctx context.Context, arg CountSearchExamsBySubjectParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countSearchExamsBySubject, arg.SubjectID, arg.Column2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countSubmittedAttemptsBySubjectForStudent = `-- name: CountSubmittedAttemptsBySubjectForStudent :one
+SELECT COUNT(DISTINCT ea.exam_id)
+FROM exam_attempts ea
+JOIN exams e ON ea.exam_id = e.id
+WHERE e.subject_id = $1
+  AND ea.student_id = $2
+  AND ea.status IN ('SUBMITTED', 'GRADED')
+  AND e.deleted_at IS NULL
+`
+
+type CountSubmittedAttemptsBySubjectForStudentParams struct {
+	SubjectID uuid.NullUUID `json:"subject_id"`
+	StudentID uuid.NullUUID `json:"student_id"`
+}
+
+func (q *Queries) CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, arg CountSubmittedAttemptsBySubjectForStudentParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countSubmittedAttemptsBySubjectForStudent, arg.SubjectID, arg.StudentID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -91,6 +137,34 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getAttemptByExamAndStudent = `-- name: GetAttemptByExamAndStudent :one
+SELECT id, exam_id, student_id, started_at, submitted_at, score, status, created_at FROM exam_attempts
+WHERE exam_id = $1 AND student_id = $2
+ORDER BY started_at DESC
+LIMIT 1
+`
+
+type GetAttemptByExamAndStudentParams struct {
+	ExamID    uuid.NullUUID `json:"exam_id"`
+	StudentID uuid.NullUUID `json:"student_id"`
+}
+
+func (q *Queries) GetAttemptByExamAndStudent(ctx context.Context, arg GetAttemptByExamAndStudentParams) (ExamAttempt, error) {
+	row := q.db.QueryRow(ctx, getAttemptByExamAndStudent, arg.ExamID, arg.StudentID)
+	var i ExamAttempt
+	err := row.Scan(
+		&i.ID,
+		&i.ExamID,
+		&i.StudentID,
+		&i.StartedAt,
+		&i.SubmittedAt,
+		&i.Score,
+		&i.Status,
+		&i.CreatedAt,
 	)
 	return i, err
 }

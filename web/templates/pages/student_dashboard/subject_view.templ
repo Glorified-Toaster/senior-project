@@ -1,0 +1,226 @@
+package student_dashboard
+
+import "fmt"
+import "uot-exam/internal/domain"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/badge"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/toast"
+
+templ SubjectViewPage(param SubjectViewParam) {
+	@toast.Script()
+	<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+		<!-- Header -->
+		<header class="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<a href="/student/dashboard" class="text-slate-400 hover:text-primary transition-colors">
+						@icon.ArrowLeft(icon.Props{Class: "h-5 w-5"})
+					</a>
+					@icon.BookOpen(icon.Props{Class: "h-6 w-6 text-primary"})
+					<h1 class="text-xl font-bold text-slate-900">{ param.Subject.Title }</h1>
+				</div>
+				<div class="flex items-center gap-4">
+					if param.AllSubmitted {
+						@button.Button(button.Props{
+							Variant: button.VariantDefault,
+							Size:    button.SizeSm,
+							Class:   "flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white",
+							Attributes: templ.Attributes{
+								"onclick": fmt.Sprintf("window.location.href='/student/subject/%s/result'", param.Subject.ID.String()),
+							},
+						}) {
+							@icon.Trophy(icon.Props{Class: "h-4 w-4"})
+							View Results
+						}
+					} else if len(param.Exams) > 0 {
+						{{ 
+							var firstUnsubmittedID string
+							var isResume bool
+							for _, info := range param.Exams {
+								if info.Attempt == nil || info.Attempt.Status == domain.AttemptStatusInProgress {
+									firstUnsubmittedID = info.Exam.ID.String()
+									isResume = info.Attempt != nil && info.Attempt.Status == domain.AttemptStatusInProgress
+									break
+								}
+							}
+						}}
+						if firstUnsubmittedID != "" {
+							{{
+								variant := button.VariantOutline
+								if isResume {
+									variant = button.VariantSecondary
+								}
+							}}
+							@button.Button(button.Props{
+								Variant: variant,
+								Size:    button.SizeSm,
+								Class:   "flex items-center gap-2",
+								Attributes: templ.Attributes{
+									"hx-post": fmt.Sprintf("/student/exam/%s/start", firstUnsubmittedID),
+									"hx-swap": "none",
+								},
+							}) {
+								if isResume {
+									@icon.RotateCcw(icon.Props{Class: "h-4 w-4"})
+									Resume
+								} else {
+									@icon.Play(icon.Props{Class: "h-4 w-4"})
+									Start
+								}
+							}
+						}
+					}
+					<div class="text-right">
+						<p class="text-sm font-medium text-slate-900">{ param.Student.FullName }</p>
+						<p class="text-xs text-slate-500">{ param.Student.Username }</p>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Main Content -->
+		<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<!-- Subject Info Card -->
+			<div class="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+				@card.Card() {
+					@card.Content(card.ContentProps{Class: "p-6"}) {
+						<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+							<div class="text-center">
+								<p class="text-sm text-slate-500 mb-1">Duration</p>
+								<p class="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
+									@icon.Clock(icon.Props{Class: "h-5 w-5 text-primary"})
+									{ fmt.Sprintf("%d min", param.Subject.DurationMinutes) }
+								</p>
+							</div>
+							<div class="text-center border-x border-slate-100">
+								<p class="text-sm text-slate-500 mb-1">Total Marks</p>
+								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Subject.TotalMarks) }</p>
+							</div>
+							<div class="text-center">
+								<p class="text-sm text-slate-500 mb-1">Pass Score</p>
+								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Subject.PassScore) }</p>
+							</div>
+						</div>
+					}
+				}
+			</div>
+
+			<!-- Exams List -->
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-slate-900 mb-4">Exams</h2>
+			</div>
+
+			if len(param.Exams) == 0 {
+				@card.Card(card.Props{Class: "animate-in fade-in slide-in-from-bottom-4 duration-500"}) {
+					@card.Content(card.ContentProps{Class: "p-12 text-center"}) {
+						@icon.FileText(icon.Props{Class: "h-12 w-12 text-slate-300 mx-auto mb-4"})
+						<h3 class="text-lg font-semibold text-slate-600 mb-2">No Exams Available</h3>
+						<p class="text-slate-400">No published exams for this subject yet.</p>
+					}
+				}
+			} else {
+				<div class="space-y-4">
+					for i, info := range param.Exams {
+						<div class={ fmt.Sprintf("animate-in fade-in slide-in-from-bottom-4 duration-500 delay-%d", (i+1)*100) }>
+							@ExamCard(info, param.AllSubmitted, param.Subject.DurationMinutes)
+						</div>
+					}
+				</div>
+			}
+		</main>
+	</div>
+	<div id="toast-container"></div>
+}
+
+templ ExamCard(info ExamInfo, allSubmitted bool, durationMinutes int32) {
+	@card.Card(card.Props{
+		Class: "hover:shadow-md transition-shadow",
+	}) {
+		@card.Content(card.ContentProps{Class: "p-5"}) {
+			<div class="flex items-center justify-between">
+				<div class="flex-1">
+					<div class="flex items-center gap-3 mb-2">
+						<h3 class="font-semibold text-lg text-slate-900">{ info.Exam.Title }</h3>
+						@ExamStatusBadge(info)
+					</div>
+					if info.Exam.Description != nil && *info.Exam.Description != "" {
+						<p class="text-sm text-slate-500 mb-3">{ *info.Exam.Description }</p>
+					}
+					<div class="flex items-center gap-4 text-sm text-slate-500">
+						<span class="flex items-center gap-1">
+							@icon.Target(icon.Props{Class: "h-3.5 w-3.5"})
+							{ fmt.Sprintf("%d marks", info.Exam.TotalMarks) }
+						</span>
+						if info.Attempt != nil && allSubmitted && info.Attempt.Score != nil {
+							<span class="flex items-center gap-1 font-medium text-primary">
+								@icon.Award(icon.Props{Class: "h-3.5 w-3.5"})
+								{ fmt.Sprintf("Score: %d / %d", *info.Attempt.Score, info.Exam.TotalMarks) }
+							</span>
+						}
+					</div>
+				</div>
+				<div class="shrink-0 ml-4">
+					if info.Attempt == nil {
+						<!-- Not started -->
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+							Class: "flex items-center gap-2",
+							Attributes: templ.Attributes{
+								"hx-post": fmt.Sprintf("/student/exam/%s/start", info.Exam.ID.String()),
+								"hx-swap": "none",
+							},
+						}) {
+							@icon.Play(icon.Props{Class: "h-4 w-4"})
+							Start Exam
+						}
+					} else if info.Attempt.Status == domain.AttemptStatusInProgress {
+						<!-- In progress - resume -->
+						@button.Button(button.Props{
+							Variant: button.VariantSecondary,
+							Class: "flex items-center gap-2",
+							Attributes: templ.Attributes{
+								"hx-post": fmt.Sprintf("/student/exam/%s/start", info.Exam.ID.String()),
+								"hx-swap": "none",
+							},
+						}) {
+							@icon.RotateCcw(icon.Props{Class: "h-4 w-4"})
+							Resume
+						}
+					} else {
+						<!-- Submitted -->
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+							Disabled: true,
+							Class: "flex items-center gap-2",
+						}) {
+							@icon.Check(icon.Props{Class: "h-4 w-4"})
+							Submitted
+						}
+					}
+				</div>
+			</div>
+		}
+	}
+}
+
+templ ExamStatusBadge(info ExamInfo) {
+	if info.Attempt == nil {
+		@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+			Not Started
+		}
+	} else if info.Attempt.Status == domain.AttemptStatusInProgress {
+		@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+			In Progress
+		}
+	} else if info.Attempt.Status == domain.AttemptStatusSubmitted {
+		@badge.Badge(badge.Props{Variant: badge.VariantDefault}) {
+			Submitted
+		}
+	} else if info.Attempt.Status == domain.AttemptStatusGraded {
+		@badge.Badge(badge.Props{Class: "bg-blue-500 text-white border-transparent"}) {
+			Graded
+		}
+	}
+}

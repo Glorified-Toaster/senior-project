@@ -36,14 +36,14 @@ templ CardDefault() {
 					})
 				</div>
 				@card.Title() {
-					Admin Portal
+					Login
 				}
 				@card.Description() {
-					Login to the admin portal
+					Enter your credentials to access the portal
 				}
 			}
 			@card.Content() {
-				<form id="login-form" hx-post="api/v1/admin/login" hx-swap="innerHTML" hx-target="#toast-container">
+				<form id="login-form" hx-post="/api/v1/login" hx-swap="innerHTML" hx-target="#toast-container">
 					<div class="flex flex-col gap-4">
 						<div class="w-full max-w-sm grid gap-2">
 							@label.Label(label.Props{

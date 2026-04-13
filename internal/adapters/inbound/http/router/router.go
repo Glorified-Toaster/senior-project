@@ -74,9 +74,10 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 func (r *Router) SetupRoutes() {
 
 	// Public API
-	publicAPI := r.router.Group("/admin/api/v1")
+	publicAPI := r.router.Group("/api/v1")
 	{
-		publicAPI.POST("/admin/login", r.userHandler.Login())
+		publicAPI.POST("/login", r.userHandler.Login())
+
 	}
 
 	// Public routes
@@ -84,7 +85,9 @@ func (r *Router) SetupRoutes() {
 	{
 		publicRoutes.POST("/login", r.userHandler.Login())
 		publicRoutes.GET("/test", r.userHandler.TestPage())
-		publicRoutes.GET("/admin/login", r.userHandler.AdminLogin())
+		publicRoutes.GET("/login", r.userHandler.AdminLogin())
+		publicRoutes.GET("/logout", r.userHandler.Logout())
+
 	}
 
 	adminRoutes := r.router.Group("/admin")
@@ -112,7 +115,6 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/subjects/search", r.userHandler.SearchSubjects())
 			dashboardRoutes.POST("/subjects/search", r.userHandler.SearchSubjects())
 			dashboardRoutes.POST("/subjects/create", r.userHandler.CreateSubject())
-			dashboardRoutes.GET("/logout", r.userHandler.Logout())
 			dashboardRoutes.GET("/subject/:id", r.userHandler.EditSubjectPageRender())
 			dashboardRoutes.POST("/subject/edit/:id", r.userHandler.EditSubjectInfo())
 			dashboardRoutes.POST("/subject/delete/:id", r.userHandler.DeleteSubject())
@@ -153,6 +155,22 @@ func (r *Router) SetupRoutes() {
 		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
 		userRoutes.DELETE("/delete/:id", r.userHandler.SoftDeleteUser())
 		userRoutes.POST("/toggle/:id", r.userHandler.ToggleUserActive())
+	}
+
+	// Student routes
+	studentRoutes := r.router.Group("/student")
+	studentRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	studentRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleStudent))
+	{
+		studentRoutes.GET("/dashboard", r.userHandler.StudentDashboardRender())
+		studentRoutes.GET("/subject/:id", r.userHandler.StudentSubjectView())
+		studentRoutes.POST("/exam/:id/start", r.userHandler.StudentStartExam())
+		studentRoutes.GET("/exam/:id/take", r.userHandler.StudentExamView())
+		studentRoutes.POST("/exam/:id/answer", r.userHandler.StudentSaveAnswer())
+		studentRoutes.POST("/exam/:id/submit", r.userHandler.StudentSubmitExam())
+		studentRoutes.POST("/exam/:id/auto-submit", r.userHandler.StudentAutoSubmit())
+		studentRoutes.GET("/subject/:id/result", r.userHandler.StudentSubjectResult())
+		studentRoutes.GET("/subject/:id/pdf", r.userHandler.StudentSubjectPDF())
 	}
 
 	r.router.NoRoute(func(c *gin.Context) {

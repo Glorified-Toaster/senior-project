@@ -1,0 +1,289 @@
+package student_dashboard
+
+import "fmt"
+import "strconv"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/badge"
+import "github.com/google/uuid"
+
+templ ExamTakePage(param ExamTakeParam) {
+	@toast.Script()
+	<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" id="exam-page" 
+		data-exam-id={ param.Exam.ID.String() }
+		data-duration={ strconv.Itoa(int(param.Subject.DurationMinutes)) }
+		data-started-at={ param.Attempt.StartedAt.Format("2006-01-02T15:04:05Z07:00") }>
+		
+		<!-- Sticky Header with Timer -->
+		<header class="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
+			<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					@icon.FileText(icon.Props{Class: "h-5 w-5 text-primary"})
+					<div>
+						<h1 class="text-lg font-bold text-slate-900">{ param.Exam.Title }</h1>
+						<p class="text-xs text-slate-500">{ param.Subject.Title }</p>
+					</div>
+				</div>
+				<div class="flex items-center gap-4">
+					<!-- Timer -->
+					<div id="exam-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-900 font-mono text-lg font-bold transition-colors">
+						@icon.Clock(icon.Props{Class: "h-5 w-5"})
+						<span id="timer-display">--:--</span>
+					</div>
+					<!-- Submit Button -->
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Class: "flex items-center gap-2",
+						Attributes: templ.Attributes{
+							"id": "submit-exam-btn",
+							"hx-post": fmt.Sprintf("/student/exam/%s/submit", param.Exam.ID.String()),
+							"hx-swap": "none",
+							"hx-confirm": "Are you sure you want to submit this exam? You cannot change your answers after submission.",
+						},
+					}) {
+						@icon.Send(icon.Props{Class: "h-4 w-4"})
+						Submit Exam
+					}
+				</div>
+			</div>
+			<!-- Progress bar -->
+			<div class="h-1 bg-slate-100">
+				<div id="progress-bar" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
+			</div>
+		</header>
+
+		<!-- Questions -->
+		<main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="space-y-6">
+				for qIndex, question := range param.Questions {
+					<div class="animate-in fade-in slide-in-from-bottom-4 duration-500"
+						style={ fmt.Sprintf("animation-delay: %dms", (qIndex+1)*80) }
+						id={ "question-" + question.ID.String() }>
+						@card.Card(card.Props{
+							Class: "question-card overflow-hidden",
+						}) {
+							<div class="bg-gradient-to-r from-primary/5 to-transparent px-6 py-3 border-b">
+								<div class="flex items-center justify-between">
+									<span class="text-sm font-medium text-primary">
+										{ fmt.Sprintf("Question %d", qIndex+1) }
+									</span>
+									<div class="flex items-center gap-2">
+										@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "text-xs font-normal"}) {
+											{ fmt.Sprintf("%d marks", question.Marks) }
+										}
+										<span id={ "answered-indicator-" + question.ID.String() }
+											class={ "h-2 w-2 rounded-full transition-colors", templ.KV("bg-primary", isAnswered(param.AnsweredChoices, question.ID)), templ.KV("bg-slate-200", !isAnswered(param.AnsweredChoices, question.ID)) }>
+										</span>
+									</div>
+								</div>
+							</div>
+							@card.Content(card.ContentProps{Class: "p-6"}) {
+								<div class="mb-5">
+									<p class="text-base text-slate-900 font-medium">{ question.QuestionText }</p>
+								</div>
+								if question.QuestionImage != "" {
+									<div class="mb-5">
+										<img src={ question.QuestionImage } alt="Question image" class="max-w-full rounded-lg border"/>
+									</div>
+								}
+								<!-- Choices -->
+								<div class="space-y-3">
+									for cIndex, choice := range question.Choices {
+										<label class="block cursor-pointer group"
+											for={ fmt.Sprintf("choice-%s", choice.ID.String()) }>
+											<div class={ 
+												"flex items-center gap-3 p-3 rounded-lg border transition-all",
+												"hover:border-primary/50 hover:bg-primary/5",
+												templ.KV("border-primary bg-primary/5 ring-1 ring-primary", isSelected(param.AnsweredChoices, question.ID, choice.ID)),
+											}>
+												<input type="radio"
+													id={ fmt.Sprintf("choice-%s", choice.ID.String()) }
+													name={ fmt.Sprintf("question-%s", question.ID.String()) }
+													value={ choice.ID.String() }
+													class="peer hidden"
+													checked?={ isSelected(param.AnsweredChoices, question.ID, choice.ID) }
+													hx-post={ fmt.Sprintf("/student/exam/%s/answer", param.Exam.ID.String()) }
+													hx-vals={ fmt.Sprintf(`{"question_id": "%s", "choice_id": "%s"}`, question.ID.String(), choice.ID.String()) }
+													hx-swap="none"
+													hx-trigger="change"
+												/>
+												<div class={
+													"w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium shrink-0 transition-colors",
+													templ.KV("bg-primary text-white", isSelected(param.AnsweredChoices, question.ID, choice.ID)),
+													templ.KV("bg-slate-100 text-slate-600 group-hover:bg-primary/10", !isSelected(param.AnsweredChoices, question.ID, choice.ID)),
+												}>
+													{ string(rune('A' + cIndex)) }
+												</div>
+												<span class="text-sm text-slate-700 flex-1">{ choice.ChoiceText }</span>
+											</div>
+										</label>
+									}
+								</div>
+							}
+						}
+					</div>
+				}
+			</div>
+
+			<!-- Bottom submit button -->
+			<div class="mt-8 flex justify-center pb-8">
+				@button.Button(button.Props{
+					Variant: button.VariantDefault,
+					Class: "flex items-center gap-2 px-8 py-3",
+					Attributes: templ.Attributes{
+						"hx-post": fmt.Sprintf("/student/exam/%s/submit", param.Exam.ID.String()),
+						"hx-swap": "none",
+						"hx-confirm": "Are you sure you want to submit this exam? You cannot change your answers after submission.",
+					},
+				}) {
+					@icon.Send(icon.Props{Class: "h-4 w-4"})
+					Submit Exam
+				}
+			</div>
+		</main>
+	</div>
+	<div id="toast-container"></div>
+
+	<!-- Timer & Auto-submit Script -->
+	<script>
+	(function() {
+		const examPage = document.getElementById('exam-page');
+		const examId = examPage.dataset.examId;
+		const durationMinutes = parseInt(examPage.dataset.duration);
+		const startedAt = new Date(examPage.dataset.startedAt);
+		const timerDisplay = document.getElementById('timer-display');
+		const timerContainer = document.getElementById('exam-timer');
+		const progressBar = document.getElementById('progress-bar');
+		
+		const endTime = new Date(startedAt.getTime() + durationMinutes * 60 * 1000);
+		let warningShown5 = false;
+		let warningShown1 = false;
+		let submitted = false;
+
+		function updateTimer() {
+			if (submitted) return;
+			
+			const now = new Date();
+			const remaining = Math.max(0, endTime - now);
+			const totalSeconds = Math.floor(remaining / 1000);
+			const minutes = Math.floor(totalSeconds / 60);
+			const seconds = totalSeconds % 60;
+
+			timerDisplay.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+
+			// Progress bar
+			const totalDuration = durationMinutes * 60;
+			const elapsed = totalDuration - totalSeconds;
+			const pct = Math.min(100, (elapsed / totalDuration) * 100);
+			progressBar.style.width = pct + '%';
+
+			// Color coding
+			if (totalSeconds <= 60) {
+				timerContainer.className = timerContainer.className.replace(/bg-\S+/g, '').trim();
+				timerContainer.classList.add('bg-red-100', 'text-red-700');
+				progressBar.classList.remove('bg-primary', 'bg-yellow-500');
+				progressBar.classList.add('bg-red-500');
+			} else if (totalSeconds <= 300) {
+				timerContainer.className = timerContainer.className.replace(/bg-\S+/g, '').trim();
+				timerContainer.classList.add('bg-yellow-100', 'text-yellow-800');
+				progressBar.classList.remove('bg-primary', 'bg-red-500');
+				progressBar.classList.add('bg-yellow-500');
+			}
+
+			// Warnings
+			if (totalSeconds <= 300 && totalSeconds > 295 && !warningShown5) {
+				warningShown5 = true;
+				showToast('Warning', '5 minutes remaining!', 'warning');
+			}
+			if (totalSeconds <= 60 && totalSeconds > 55 && !warningShown1) {
+				warningShown1 = true;
+				showToast('Warning', '1 minute remaining! Your exam will be auto-submitted.', 'error');
+			}
+
+			// Auto-submit on timeout
+			if (totalSeconds <= 0) {
+				autoSubmit();
+				return;
+			}
+
+			requestAnimationFrame(function() {
+				setTimeout(updateTimer, 1000);
+			});
+		}
+
+		function showToast(title, description, variant) {
+			const container = document.getElementById('toast-container');
+			if (!container) return;
+			const colors = {
+				warning: 'border-yellow-400 bg-yellow-50',
+				error: 'border-red-400 bg-red-50'
+			};
+			const toast = document.createElement('div');
+			toast.className = 'fixed top-4 right-4 z-[100] p-4 rounded-lg border shadow-lg ' + (colors[variant] || 'border-slate-200 bg-white');
+			toast.innerHTML = '<div class="font-semibold text-sm">' + title + '</div><div class="text-sm mt-1">' + description + '</div>';
+			document.body.appendChild(toast);
+			setTimeout(() => toast.remove(), 5000);
+		}
+
+		function autoSubmit() {
+			if (submitted) return;
+			submitted = true;
+			timerDisplay.textContent = '00:00';
+			
+			navigator.sendBeacon('/student/exam/' + examId + '/auto-submit');
+			showToast('Exam Auto-Submitted', 'Time is up. Your exam has been automatically submitted.', 'warning');
+			
+			setTimeout(function() {
+				window.location.href = '/student/dashboard';
+			}, 2000);
+		}
+
+		// Auto-submit on page exit
+		window.addEventListener('beforeunload', function(e) {
+			if (!submitted) {
+				navigator.sendBeacon('/student/exam/' + examId + '/auto-submit');
+			}
+		});
+
+		// Update answered indicators on htmx:afterRequest
+		document.body.addEventListener('htmx:afterRequest', function(event) {
+			if (event.detail.successful && event.detail.requestConfig) {
+				const body = event.detail.requestConfig.parameters;
+				if (body && body.question_id) {
+					const indicator = document.getElementById('answered-indicator-' + body.question_id);
+					if (indicator) {
+						indicator.classList.remove('bg-slate-200');
+						indicator.classList.add('bg-primary');
+					}
+					updateAnsweredCount();
+				}
+			}
+		});
+
+		function updateAnsweredCount() {
+			const cards = document.querySelectorAll('.question-card');
+			let answered = 0;
+			cards.forEach(function(card) {
+				const checked = card.querySelector('input[type="radio"]:checked');
+				if (checked) answered++;
+			});
+			// Update progress text or any other UI element if needed
+		}
+
+		// Start timer
+		updateTimer();
+	})();
+	</script>
+}
+
+func isAnswered(answeredChoices map[uuid.UUID]uuid.UUID, questionID uuid.UUID) bool {
+	_, ok := answeredChoices[questionID]
+	return ok
+}
+
+func isSelected(answeredChoices map[uuid.UUID]uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID) bool {
+	selected, ok := answeredChoices[questionID]
+	return ok && selected == choiceID
+}

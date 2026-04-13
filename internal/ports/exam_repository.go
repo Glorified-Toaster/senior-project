@@ -22,6 +22,14 @@ type ExamRepository interface {
 	ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Exam, error)
 	ListExamsCreatedBy(ctx context.Context, instructorID uuid.UUID) ([]domain.Exam, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.UUID) ([]domain.ExamAttempt, error)
+	GetAttemptByExamAndStudent(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error)
+	StartExamAttempt(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error)
+	SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error
+	SaveAnswer(ctx context.Context, attemptID uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID, isCorrect bool) (domain.StudentAnswer, error)
+	ListAnswersByAttempt(ctx context.Context, attemptID uuid.UUID) ([]domain.StudentAnswer, error)
+	CountExamsBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error)
+	CountPublishedBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error)
+	CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (int64, error)
 }
 
 type SearchExamsParams struct {

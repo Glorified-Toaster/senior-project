@@ -506,6 +506,48 @@ func (q *Queries) ListStudentsBySubjectIDPaginated(ctx context.Context, arg List
 	return items, nil
 }
 
+const listSubjectsForStudent = `-- name: ListSubjectsForStudent :many
+SELECT s.id, s.title, s.description, s.duration_minutes, s.total_marks, s.pass_score, s.status, s.created_at, s.updated_at, s.deleted_at
+FROM subjects s
+JOIN subject_students ss ON s.id = ss.subject_id
+WHERE ss.student_id = $1
+  AND ss.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+  AND s.status = 'ACTIVE'
+ORDER BY s.title ASC
+`
+
+func (q *Queries) ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listSubjectsForStudent, studentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.PassScore,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const restoreSubject = `-- name: RestoreSubject :one
 UPDATE subjects SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, duration_minutes, total_marks, pass_score, status, created_at, updated_at, deleted_at
 `

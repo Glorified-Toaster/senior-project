@@ -7,7 +7,7 @@ import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/navbar"
 import "uot-exam/web/templates/components/button"
 
-templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string) {
+templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string, dashboardPath string) {
 	@sidebar.Layout() {
 		@sidebar.Sidebar(sidebar.Props{
 			Collapsible: sidebar.CollapsibleIcon,
@@ -17,7 +17,7 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 				@sidebar.Menu() {
 					@sidebar.MenuItem() {
 						@sidebar.MenuButton(sidebar.MenuButtonProps{
-							Href:    "/admin/dashboard",
+							Href:    dashboardPath,
 							Tooltip: "Dashboard",
 						}) {
 							@icon.LayoutPanelLeft(icon.Props{Class: "size-4"})
@@ -211,7 +211,10 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 		}
 		@sidebar.Inset() {
 			<div class="flex h-full flex-col">
-				@navbar.Navbar(navbar.Props{BreadPath: breadPath})
+				@navbar.Navbar(navbar.Props{
+					BreadPath:      breadPath,
+					SidebarTrigger: true,
+				})
 				<div class="flex-1 p-6 overflow-auto">
 					{ children... }
 				</div>
