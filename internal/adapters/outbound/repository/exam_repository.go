@@ -8,6 +8,7 @@ import (
 	"uot-exam/internal/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ExamRepository struct {
@@ -213,4 +214,81 @@ func (r *ExamRepository) CountSearchBySubject(ctx context.Context, subjectID uui
 		SubjectID: uuid.NullUUID{UUID: subjectID, Valid: true},
 		Column2:   search,
 	})
+}
+
+func (r *ExamRepository) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Exam, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcExams, err := queries.ListExamsForStudent(ctx, studentID)
+	if err != nil {
+		return nil, err
+	}
+
+	var exams []domain.Exam
+	for _, exam := range sqlcExams {
+		exams = append(exams, mapSqlcExamToDomain(exam))
+	}
+
+	return exams, nil
+}
+
+func (r *ExamRepository) ListExamsCreatedBy(ctx context.Context, instructorID uuid.UUID) ([]domain.Exam, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcExams, err := queries.ListExamsCreatedBy(ctx, uuid.NullUUID{UUID: instructorID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var exams []domain.Exam
+	for _, exam := range sqlcExams {
+		exams = append(exams, mapSqlcExamToDomain(exam))
+	}
+
+	return exams, nil
+}
+
+func toInt32Ptr(val pgtype.Int4) *int32 {
+	if !val.Valid {
+		return nil
+	}
+	return &val.Int32
+}
+
+func mapSqlcAttemptToDomain(attempt sqlc.ExamAttempt) domain.ExamAttempt {
+	return domain.ExamAttempt{
+		ID:          attempt.ID,
+		ExamID:      attempt.ExamID.UUID,
+		StudentID:   attempt.StudentID.UUID,
+		StartedAt:   attempt.StartedAt.Time,
+		SubmittedAt: toTimePtr(attempt.SubmittedAt),
+		Score:       toInt32Ptr(attempt.Score),
+		Status:      domain.AttemptStatus(attempt.Status),
+		CreatedAt:   attempt.CreatedAt.Time,
+	}
+}
+
+func (r *ExamRepository) ListAttemptsByStudent(ctx context.Context, studentID uuid.UUID) ([]domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcAttempts, err := queries.ListAttemptsByStudent(ctx, uuid.NullUUID{UUID: studentID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var attempts []domain.ExamAttempt
+	for _, attempt := range sqlcAttempts {
+		attempts = append(attempts, mapSqlcAttemptToDomain(attempt))
+	}
+
+	return attempts, nil
 }

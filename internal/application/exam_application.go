@@ -113,3 +113,34 @@ func (app *Application) CountSearchExamsBySubject(ctx context.Context, subjectID
 	})
 	return count, err
 }
+
+func (app *Application) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Exam, error) {
+	var exams []domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exams, err = app.examRepo.ListExamsForStudent(txCtx, studentID)
+		return err
+	})
+	return exams, err
+}
+
+func (app *Application) ListExamsCreatedBy(ctx context.Context, instructorID uuid.UUID) ([]domain.Exam, error) {
+	var exams []domain.Exam
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		exams, err = app.examRepo.ListExamsCreatedBy(txCtx, instructorID)
+		return err
+	})
+	return exams, err
+}
+
+func (app *Application) ListAttemptsByStudent(ctx context.Context, studentID uuid.UUID) ([]domain.ExamAttempt, error) {
+	var attempts []domain.ExamAttempt
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		attempts, err = app.examRepo.ListAttemptsByStudent(txCtx, studentID)
+		return err
+	})
+	return attempts, err
+}
+

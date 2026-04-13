@@ -60,6 +60,8 @@ type Querier interface {
 	ListDeletedSubjects(ctx context.Context, arg ListDeletedSubjectsParams) ([]Subject, error)
 	ListDeletedUsers(ctx context.Context, arg ListDeletedUsersParams) ([]User, error)
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
+	ListExamsCreatedBy(ctx context.Context, createdBy uuid.NullUUID) ([]Exam, error)
+	ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]Exam, error)
 	ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListInstructorsBySubjectIDRow, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListStudentsBySubjectIDRow, error)
@@ -89,6 +91,7 @@ type Querier interface {
 	UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, error)
 	UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (Question, error)
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
+	UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) (User, error)
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }

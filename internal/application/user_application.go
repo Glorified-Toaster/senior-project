@@ -25,6 +25,22 @@ func (app *Application) CreateUser(ctx context.Context, arg ports.CreateUserPara
 	return createdUser, nil
 }
 
+func (app *Application) UpdateUserInfo(ctx context.Context, arg ports.UpdateUserInfoParams) (domain.User, error) {
+	var updatedUser domain.User
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		updatedUser, err = app.userRepo.UpdateUserInfo(txCtx, arg)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return domain.User{}, err
+	}
+	return updatedUser, nil
+}
+
 func (app *Application) Login(ctx context.Context, arg ports.LoginParams) (domain.User, error) {
 	var user domain.User
 	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {

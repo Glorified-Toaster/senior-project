@@ -12,6 +12,7 @@ type UserRepository interface {
 	Login(ctx context.Context, arg LoginParams) (domain.User, error)
 	GetByUsername(ctx context.Context, username string) (domain.User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (domain.User, error)
+	UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) (domain.User, error)
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
@@ -35,6 +36,14 @@ type CreateUserParams struct {
 	Username string          `json:"username"  form:"username"  validate:"required,min=3,max=20"`
 	FullName string          `json:"full_name" form:"full_name" validate:"required,min=3,max=20"`
 	Password string          `json:"password"  form:"password"  validate:"required"`
+	Role     domain.UserRole `json:"role"      form:"role"      validate:"required"`
+	IsActive bool            `json:"is_active" form:"is_active"`
+}
+
+type UpdateUserInfoParams struct {
+	ID       uuid.UUID       `json:"id"        form:"id"        validate:"required"`
+	Username string          `json:"username"  form:"username"  validate:"required,min=3,max=20"`
+	FullName string          `json:"full_name" form:"full_name" validate:"required,min=3,max=20"`
 	Role     domain.UserRole `json:"role"      form:"role"      validate:"required"`
 	IsActive bool            `json:"is_active" form:"is_active"`
 }

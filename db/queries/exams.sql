@@ -78,3 +78,15 @@ AND deleted_at IS NULL;
 
 -- name: SoftDeleteExam :exec
 UPDATE exams SET deleted_at = NOW() WHERE id = $1;
+
+-- name: ListExamsCreatedBy :many
+SELECT * FROM exams 
+WHERE created_by = $1 AND deleted_at IS NULL 
+ORDER BY created_at DESC;
+
+-- name: ListExamsForStudent :many
+SELECT e.* 
+FROM exams e
+JOIN subject_students ss ON e.subject_id = ss.subject_id
+WHERE ss.student_id = $1 AND e.deleted_at IS NULL AND ss.deleted_at IS NULL
+ORDER BY e.created_at DESC;

@@ -171,6 +171,42 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.User
 	}, nil
 }
 
+func (r *UserRepository) UpdateUserInfo(ctx context.Context, arg ports.UpdateUserInfoParams) (domain.User, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	user, err := queries.UpdateUserInfo(ctx, sqlc.UpdateUserInfoParams{
+		ID:       arg.ID,
+		Username: arg.Username,
+		FullName: arg.FullName,
+		Role:     sqlc.UserRoleType(arg.Role),
+		IsActive: arg.IsActive,
+	})
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return domain.User{}, domain.ErrUserAlreadyExists
+		}
+		return domain.User{}, err
+	}
+
+	return domain.User{
+		ID:           user.ID,
+		Username:     user.Username,
+		FullName:     user.FullName,
+		PasswordHash: user.PasswordHash,
+		Role:         domain.UserRole(user.Role),
+		IsActive:     user.IsActive,
+		LastLogin:    toTimePtr(user.LastLogin),
+		CreatedAt:    user.CreatedAt.Time,
+		UpdatedAt:    user.UpdatedAt.Time,
+		DeletedAt:    toTimePtr(user.DeletedAt),
+	}, nil
+}
+
 // SoftDelete : soft delete a user
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	queries := r.queries

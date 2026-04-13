@@ -29,3 +29,23 @@ type Exam struct {
 	UpdatedAt   time.Time
 	DeletedAt   *time.Time
 }
+
+type AttemptStatus string
+
+const (
+	AttemptStatusInProgress AttemptStatus = "IN_PROGRESS"
+	AttemptStatusSubmitted  AttemptStatus = "SUBMITTED"
+	AttemptStatusGraded     AttemptStatus = "GRADED"
+	AttemptStatusCancelled  AttemptStatus = "CANCELLED"
+)
+
+type ExamAttempt struct {
+	ID          uuid.UUID
+	ExamID      uuid.UUID
+	StudentID   uuid.UUID
+	StartedAt   time.Time
+	SubmittedAt *time.Time
+	Score       *int32
+	Status      AttemptStatus
+	CreatedAt   time.Time
+}

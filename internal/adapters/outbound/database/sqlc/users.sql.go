@@ -636,6 +636,49 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const updateUserInfo = `-- name: UpdateUserInfo :one
+UPDATE users 
+SET username = $2, 
+    full_name = $3, 
+    role = $4, 
+    is_active = $5,
+    updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING id, username, full_name, password_hash, role, is_active, last_login, created_at, updated_at, deleted_at
+`
+
+type UpdateUserInfoParams struct {
+	ID       uuid.UUID    `json:"id"`
+	Username string       `json:"username"`
+	FullName string       `json:"full_name"`
+	Role     UserRoleType `json:"role"`
+	IsActive bool         `json:"is_active"`
+}
+
+func (q *Queries) UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserInfo,
+		arg.ID,
+		arg.Username,
+		arg.FullName,
+		arg.Role,
+		arg.IsActive,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FullName,
+		&i.PasswordHash,
+		&i.Role,
+		&i.IsActive,
+		&i.LastLogin,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const updateUserLastLogin = `-- name: UpdateUserLastLogin :exec
 UPDATE users 
 SET last_login = NOW()

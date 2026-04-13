@@ -1,3 +1,13 @@
+-- name: UpdateUserInfo :one
+UPDATE users 
+SET username = $2, 
+    full_name = $3, 
+    role = $4, 
+    is_active = $5,
+    updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;
+
 -- name: CreateUser :one
 INSERT INTO users (
     username,

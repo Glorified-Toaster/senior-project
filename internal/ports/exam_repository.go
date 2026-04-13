@@ -19,6 +19,9 @@ type ExamRepository interface {
 	ListBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.Exam, error)
 	SearchBySubject(ctx context.Context, arg SearchExamsBySubjectParams) ([]domain.Exam, error)
 	CountSearchBySubject(ctx context.Context, subjectID uuid.UUID, search string) (int64, error)
+	ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Exam, error)
+	ListExamsCreatedBy(ctx context.Context, instructorID uuid.UUID) ([]domain.Exam, error)
+	ListAttemptsByStudent(ctx context.Context, studentID uuid.UUID) ([]domain.ExamAttempt, error)
 }
 
 type SearchExamsParams struct {

@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
 	"uot-exam/web/templates/components/toast"
@@ -14,8 +16,6 @@ import (
 	"uot-exam/web/templates/pages/admin_dashboard/components"
 	"uot-exam/web/templates/pages/admin_dashboard/page"
 	"uot-exam/web/templates/render"
-
-	"uot-exam/internal/adapters/inbound/http/helpers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -1034,8 +1034,26 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		file, examID, parsedUUID, err := helpers.ParseCSVFile(ctx)
+		examID := ctx.Param("id")
+
+		if helpers.IsTrimmedEmpty(examID) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Upload Question CSV Failed", "Exam ID cannot be empty", toast.VariantError)
+			return
+		}
+
+		parsedUUID, err := uuid.Parse(examID)
+
 		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Upload Question CSV Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+
+		file, err := helpers.ParseCSVFile(ctx, "file")
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Upload Question CSV Failed", "Failed to parse CSV file", toast.VariantError)
 			return
 		}
 
@@ -1289,6 +1307,9 @@ func (h *UserHandler) CreateUserCSV() gin.HandlerFunc {
 				IsActive: true,
 			})
 			if err != nil {
+				if errors.Is(err, domain.ErrUserAlreadyExists) || strings.Contains(err.Error(), "duplicate key value") {
+					continue
+				}
 				ctx.Header("HX-Reswap", "none")
 				helpers.Toast(ctx, "Create User CSV Failed", "Failed to create user: "+err.Error(), toast.VariantError)
 				return
@@ -1305,7 +1326,6 @@ func (h *UserHandler) CreateUserCSV() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Header("HX-Reswap", "none")
 		helpers.Toast(ctx, "Success", "User created successfully", toast.VariantSuccess)
 		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
 			Users:      usersList,
@@ -1704,6 +1724,7 @@ func subjectStudentsTableProps(subjectID uuid.UUID, students, allStudents []doma
 		Students:                allStudents,
 		AddStudentAPI:           base + "/students/assign",
 		StudentAssignSwapTarget: "#students-user-table-root",
+		AddStudentCSVAPI:        base + "/students/assign-csv",
 		TotalCount:              totalCount,
 		Limit:                   limit,
 		Offset:                  offset,
@@ -1720,7 +1741,7 @@ func (h *UserHandler) AssignStudentToSubjectCSV() gin.HandlerFunc {
 			return
 		}
 
-		file, err := ctx.FormFile("student_csv")
+		file, err := helpers.ParseCSVFile(ctx, "student_csv")
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Assign Student Failed", "Invalid file: "+err.Error(), toast.VariantError)
@@ -1751,10 +1772,13 @@ func (h *UserHandler) AssignStudentToSubjectCSV() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.App.AssignStudentsToSubject(ctx, subjectID, studentIDs); err != nil {
-			ctx.Header("HX-Reswap", "none")
-			helpers.Toast(ctx, "Assign Students Failed", "Failed to assign students: "+err.Error(), toast.VariantError)
-			return
+		for _, studentID := range studentIDs {
+			err := h.App.AssignStudentsToSubject(ctx, subjectID, []uuid.UUID{studentID})
+			if err != nil && !strings.Contains(err.Error(), "duplicate key value") && !strings.Contains(err.Error(), "unique constraint") {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Assign Students Failed", "Failed to assign student: "+err.Error(), toast.VariantError)
+				return
+			}
 		}
 
 		limitStr := ctx.DefaultQuery("limit", "12")
@@ -1789,5 +1813,93 @@ func (h *UserHandler) AssignStudentToSubjectCSV() gin.HandlerFunc {
 		helpers.Toast(ctx, "Success", msg, toast.VariantSuccess)
 		props := subjectStudentsTableProps(subjectID, students, available, totalCount, int32(limit), int32(offset), "")
 		render.Render(ctx, components.UserTableRoot("students-user-table-root", props))
+	}
+}
+
+func (h *UserHandler) EditUserPageRender() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		username, fullname, userID := parseUsername(ctx)
+		if username == "" {
+			ctx.Redirect(302, "/auth/login")
+			return
+		}
+
+		adminUserClaim := domain.User{
+			ID:       userID,
+			Username: username,
+			FullName: fullname,
+		}
+
+		targetUserIDStr := ctx.Param("id")
+		targetUserID, err := uuid.Parse(targetUserIDStr)
+		if err != nil {
+			ctx.Redirect(302, "/admin/dashboard/users")
+			return
+		}
+
+		targetUser, err := h.App.GetUserByID(ctx.Request.Context(), targetUserID)
+		if err != nil {
+			ctx.Redirect(302, "/admin/dashboard/users")
+			return
+		}
+
+		var exams []domain.Exam
+		var attempts []domain.ExamAttempt
+
+		switch targetUser.Role {
+		case domain.RoleStudent:
+			exams, _ = h.App.ListExamsForStudent(ctx.Request.Context(), targetUserID)
+			attempts, _ = h.App.ListAttemptsByStudent(ctx.Request.Context(), targetUserID)
+		case domain.RoleInstructor, domain.RoleAdmin:
+			exams, _ = h.App.ListExamsCreatedBy(ctx.Request.Context(), targetUserID)
+		}
+
+		ctx.Header("Content-Type", "text/html")
+		render.Render(ctx, pages.BasePage("Edit User", page.EditUserPage(page.EditUserPageParam{
+			AdminUser:  adminUserClaim,
+			TargetUser: targetUser,
+			Exams:      exams,
+			Attempts:   attempts,
+		})))
+	}
+}
+
+func (h *UserHandler) EditUserInfo() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		targetUserIDStr := ctx.Param("id")
+		targetUserID, err := uuid.Parse(targetUserIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Failed", "Invalid user ID", toast.VariantError)
+			return
+		}
+
+		username := ctx.PostForm("username")
+		fullName := ctx.PostForm("full_name")
+		role := ctx.PostForm("role")
+		isActive := ctx.PostForm("is_active") == "true"
+
+		if username == "" || fullName == "" || role == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Failed", "Please fill in all required fields", toast.VariantError)
+			return
+		}
+
+		_, err = h.App.UpdateUserInfo(ctx.Request.Context(), ports.UpdateUserInfoParams{
+			ID:       targetUserID,
+			Username: username,
+			FullName: fullName,
+			Role:     domain.UserRole(role),
+			IsActive: isActive,
+		})
+
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Failed", "Failed to update user: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Reswap", "none")
+		helpers.Toast(ctx, "Success", "User updated successfully", toast.VariantSuccess)
 	}
 }

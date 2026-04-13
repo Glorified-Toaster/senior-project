@@ -14,10 +14,8 @@ import (
 	"time"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
-	"uot-exam/web/templates/components/toast"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, error) {
@@ -81,39 +79,6 @@ func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, erro
 	}
 
 	return questions, nil
-}
-
-func ParseCSVFile(ctx *gin.Context) (file *multipart.FileHeader, examID string, parsedUUID uuid.UUID, err error) {
-
-	file, err = ctx.FormFile("file")
-
-	if err != nil {
-		ctx.Header("HX-Reswap", "none")
-		Toast(ctx, "Upload Question CSV Failed", "Failed to get file", toast.VariantError)
-		return
-	}
-
-	examID = ctx.Param("id")
-
-	if IsTrimmedEmpty(examID) {
-		return nil, "", uuid.Nil, &domain.ErrCSVUpload{Message: "Exam ID cannot be empty"}
-	}
-
-	parsedUUID, err = uuid.Parse(examID)
-
-	if err != nil {
-		return nil, "", uuid.Nil, &domain.ErrCSVUpload{Message: "Invalid exam ID"}
-	}
-
-	if strings.ToLower(filepath.Ext(file.Filename)) != ".csv" {
-		return nil, "", uuid.Nil, &domain.ErrCSVUpload{Message: "File must be a CSV file"}
-	}
-
-	if file.Size > 8<<20 {
-		return nil, "", uuid.Nil, &domain.ErrCSVUpload{Message: "File size must be less than 8MB"}
-	}
-
-	return file, examID, parsedUUID, nil
 }
 
 func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
@@ -241,4 +206,27 @@ func MapStudentCSVToStruct(file *multipart.FileHeader) ([]string, error) {
 	}
 
 	return users, nil
+}
+
+func ParseCSVFile(ctx *gin.Context, fileName string) (file *multipart.FileHeader, err error) {
+
+	file, err = ctx.FormFile(fileName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if file == nil {
+		return nil, &domain.ErrCSVUpload{Message: "File is required"}
+	}
+
+	if strings.ToLower(filepath.Ext(file.Filename)) != ".csv" {
+		return nil, &domain.ErrCSVUpload{Message: "File must be a CSV file"}
+	}
+
+	if file.Size > 8<<20 {
+		return nil, &domain.ErrCSVUpload{Message: "File size must be less than 8MB"}
+	}
+
+	return file, nil
 }

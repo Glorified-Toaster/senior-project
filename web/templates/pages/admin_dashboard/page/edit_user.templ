@@ -1,0 +1,304 @@
+package page
+
+import "uot-exam/internal/domain"
+import "fmt"
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/label"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/selectbox"
+import "uot-exam/web/templates/components/badge"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/utils"
+
+
+type EditUserPageParam struct {
+	AdminUser   domain.User // Currently logged in admin user
+	TargetUser  domain.User // The user being edited
+	Exams       []domain.Exam
+	Attempts    []domain.ExamAttempt
+}
+
+templ EditUserPage(param EditUserPageParam) {
+	@sidebar.Script()
+	@tabs.Script()
+	@collapsible.Script()
+	@dropdown.Script()
+	@popover.Script()
+	@toast.Script()
+	@input.Script()
+	@selectbox.Script()
+	
+	@components.Sidebar("/admin/dashboard/users", []navbar.BreadPath{
+		{
+			Href: "/admin/dashboard",
+			Path: "Dashboard",
+		},
+		{
+			Href: "/admin/dashboard/users",
+			Path: "Users",
+		},
+		{
+			Href: "/admin/dashboard/user/" + param.TargetUser.ID.String(),
+			Path: param.TargetUser.Username,
+		},
+	}, param.AdminUser.Username, param.AdminUser.FullName) {
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<div>
+					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+						@icon.User(icon.Props{Class: "h-8 w-8"})
+						{ param.TargetUser.FullName }
+					</h1>
+					<p class="text-slate-500 mt-1">Manage user account and review activity</p>
+				</div>
+			</div>
+			@TabsUser(param)
+		</div>
+		<div id="toast-container"></div>
+	}
+}
+
+templ TabsUser(param EditUserPageParam) {
+	@tabs.Tabs(tabs.Props{
+		ID: "user-tabs",
+	}) {
+		@tabs.List(tabs.ListProps{
+			Class: "w-full",
+		}) {
+			@tabs.Trigger(tabs.TriggerProps{
+				Value:    "information",
+				IsActive: true,
+				TabsID:   "user-tabs",
+				Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Information
+			}
+			if param.TargetUser.Role == domain.RoleStudent || param.TargetUser.Role == domain.RoleInstructor || param.TargetUser.Role == domain.RoleAdmin {
+				@tabs.Trigger(tabs.TriggerProps{
+					Value:  "exams",
+					TabsID: "user-tabs",
+					Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+				}) {
+					if param.TargetUser.Role == domain.RoleStudent {
+						Exams
+					} else {
+						Created Exams
+					}
+				}
+			}
+			if param.TargetUser.Role == domain.RoleStudent {
+				@tabs.Trigger(tabs.TriggerProps{
+					Value:  "attempts",
+					TabsID: "user-tabs",
+					Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+				}) {
+					Attempts
+				}
+			}
+		}
+		<div class="w-full mt-2">
+			@tabs.Content(tabs.ContentProps{
+				Value:  "information",
+				TabsID: "user-tabs",
+			}) {
+				@UserInformationTab(param)
+			}
+			if param.TargetUser.Role == domain.RoleStudent || param.TargetUser.Role == domain.RoleInstructor || param.TargetUser.Role == domain.RoleAdmin {
+				@tabs.Content(tabs.ContentProps{
+					Value:  "exams",
+					TabsID: "user-tabs",
+				}) {
+					@components.ExamTable(components.ExamTableProps{
+						Exams: param.Exams,
+						Title: utils.IfElse(param.TargetUser.Role == domain.RoleStudent, "Exams", "Created Exams"),
+						Search: false,
+						CreateExam: false,
+						ShowAllButton: false,
+					})
+				}
+			}
+			if param.TargetUser.Role == domain.RoleStudent {
+				@tabs.Content(tabs.ContentProps{
+					Value:  "attempts",
+					TabsID: "user-tabs",
+				}) {
+					@AttemptTableContainer(param.Attempts)
+				}
+			}
+		</div>
+	}
+}
+
+templ UserInformationTab(param EditUserPageParam) {
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				Information 
+			}
+			@card.Description() {
+				Edit this user's basic information. Click save when you are done.
+			}
+		}
+		<form
+			id="edit_user_form"
+			hx-post={ "/admin/dashboard/user/edit/" + param.TargetUser.ID.String() }
+			hx-target="#toast-container"
+			hx-swap="none"
+		>
+			@card.Content() {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "username", Class: "mb-2"}) {
+							Username
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeText,
+							ID:          "username",
+							Name:        "username",
+							Value:       param.TargetUser.Username,
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "full_name", Class: "mb-2"}) {
+							Full Name
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeText,
+							ID:          "full_name",
+							Name:        "full_name",
+							Value:       param.TargetUser.FullName,
+							Required:    true,
+						})
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{For: "role", Class: "mb-2"}) {
+							Role
+						}
+						@selectbox.SelectBox() {
+							@selectbox.Trigger(selectbox.TriggerProps{
+								Name: "role",
+							}) {
+								@selectbox.Value(selectbox.ValueProps{
+									Placeholder: "Select user role",
+								}) {
+									{ string(param.TargetUser.Role) }
+								}
+							}
+							@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+								@selectbox.Group() {
+									@selectbox.Item(selectbox.ItemProps{Value: string(domain.RoleAdmin), Selected: param.TargetUser.Role == domain.RoleAdmin}) { @badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Admin } }
+									@selectbox.Item(selectbox.ItemProps{Value: string(domain.RoleInstructor), Selected: param.TargetUser.Role == domain.RoleInstructor}) { @badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Instructor } }
+									@selectbox.Item(selectbox.ItemProps{Value: string(domain.RoleStudent), Selected: param.TargetUser.Role == domain.RoleStudent}) { @badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Student } }
+								}
+							}
+						}
+					</div>
+					<div class="space-y-2 mb-4">
+						@label.Label(label.Props{
+							For:   "is_active",
+							Class: "cursor-pointer",
+						}) {Account Status}
+									@selectbox.SelectBox() {
+										@selectbox.Trigger(selectbox.TriggerProps{
+											Name: "is_active",
+										}) {
+											@selectbox.Value(selectbox.ValueProps{
+												Placeholder: "Select user status",
+											}) {
+												{ utils.IfElse(param.TargetUser.IsActive, "Active", "Inactive") }
+											}
+										}
+										@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+											@selectbox.Group() {
+												@selectbox.Item(selectbox.ItemProps{Value: "true", Selected: param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Active } }
+												@selectbox.Item(selectbox.ItemProps{Value: "false", Selected: !param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Inactive } }
+											}
+										}
+									}
+							
+				</div>
+			</div>
+
+				<div class="mt-6 flex justify-end">
+					@button.Button(button.Props{
+						Type: "submit",
+						Class: "flex items-center gap-2",
+					}) {
+						@icon.Save(icon.Props{Class: "h-4 w-4"})
+						Save changes
+					}
+				</div>
+			}
+		</form>
+	}
+}
+
+templ AttemptTableContainer(attempts []domain.ExamAttempt) {
+	@card.Card(card.Props{Class: "w-full overflow-hidden"}) {
+		@card.Header() {
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-2">
+					@icon.List(icon.Props{Class: "h-7 w-7"})
+					<span class="text-2xl font-bold">Exam Attempts</span>
+				</div>
+			</div>
+		}
+		@card.Content(card.ContentProps{Class: "p-4"}) {
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm text-left">
+					<thead class="text-xs uppercase bg-muted">
+						<tr>
+							<th class="px-4 py-3 font-medium">Exam ID</th>
+							<th class="px-4 py-3 font-medium">Started At</th>
+							<th class="px-4 py-3 font-medium">Status</th>
+							<th class="px-4 py-3 font-medium">Score</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-border">
+						if len(attempts) > 0 {
+							for _, attempt := range attempts {
+								<tr class="bg-card hover:bg-muted/50 transition-colors">
+									<td class="px-4 py-3 truncate max-w-[200px]">{ attempt.ExamID.String() }</td>
+									<td class="px-4 py-3">{ attempt.StartedAt.Format("Jan 02, 2006 15:04") }</td>
+									<td class="px-4 py-3">
+										switch attempt.Status {
+											case domain.AttemptStatusInProgress:
+												@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { In Progress }
+											case domain.AttemptStatusSubmitted:
+												@badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Submitted }
+											case domain.AttemptStatusGraded:
+												@badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Graded }
+										}
+									</td>
+									<td class="px-4 py-3 font-semibold">
+										if attempt.Score != nil {
+											{ fmt.Sprintf("%d", *attempt.Score) }
+										} else {
+											<span class="text-muted-foreground">-</span>
+										}
+									</td>
+								</tr>
+							}
+						} else {
+							<tr>
+								<td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
+									No attempts found
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	}
+}

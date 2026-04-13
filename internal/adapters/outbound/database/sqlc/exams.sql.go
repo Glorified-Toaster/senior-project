@@ -276,6 +276,82 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 	return items, nil
 }
 
+const listExamsCreatedBy = `-- name: ListExamsCreatedBy :many
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
+WHERE created_by = $1 AND deleted_at IS NULL 
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListExamsCreatedBy(ctx context.Context, createdBy uuid.NullUUID) ([]Exam, error) {
+	rows, err := q.db.Query(ctx, listExamsCreatedBy, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exam
+	for rows.Next() {
+		var i Exam
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Title,
+			&i.Description,
+			&i.TotalMarks,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listExamsForStudent = `-- name: ListExamsForStudent :many
+SELECT e.id, e.subject_id, e.title, e.description, e.total_marks, e.status, e.created_by, e.created_at, e.updated_at, e.deleted_at 
+FROM exams e
+JOIN subject_students ss ON e.subject_id = ss.subject_id
+WHERE ss.student_id = $1 AND e.deleted_at IS NULL AND ss.deleted_at IS NULL
+ORDER BY e.created_at DESC
+`
+
+func (q *Queries) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]Exam, error) {
+	rows, err := q.db.Query(ctx, listExamsForStudent, studentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exam
+	for rows.Next() {
+		var i Exam
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Title,
+			&i.Description,
+			&i.TotalMarks,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveAnswer = `-- name: SaveAnswer :one
 INSERT INTO student_answers (attempt_id, question_id, selected_choice_id, is_correct)
 VALUES ($1, $2, $3, $4)
