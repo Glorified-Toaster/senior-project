@@ -457,14 +457,30 @@ templ ExamInformationTab(param EditExamPageParam) {
 
 templ QuestionsTab(param EditExamPageParam) {
 
-<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 @components.TotalCard(components.TotalCardProps{
 	Title: "Total Questions",
-	Description: "Total number of questions in this exam.",
+	Description: "Number of questions in this exam.",
 	Icon: icon.BadgeQuestionMark(icon.Props{
-		Class: "h-10 w-10",
+		Class: "h-10 w-10 text-primary",
 	}),
 	Value: strconv.Itoa(len(param.Questions)),
+})
+@components.TotalCard(components.TotalCardProps{
+	Title: "Pass Score",
+	Description: "Minimum score required to pass.",
+	Icon: icon.CircleCheck(icon.Props{
+		Class: "h-10 w-10 text-green-500",
+	}),
+	Value: strconv.Itoa(int(param.Subject.PassScore)) + " / " + strconv.Itoa(int(param.Subject.TotalMarks)),
+})
+@components.TotalCard(components.TotalCardProps{
+	Title: "Total Marks",
+	Description: "Total marks available in this exam.",
+	Icon: icon.Trophy(icon.Props{
+		Class: "h-10 w-10 text-yellow-500",
+	}),
+	Value: strconv.Itoa(int(param.Exam.TotalMarks)),
 })
 </div>
 	@card.Card() {

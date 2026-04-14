@@ -478,15 +478,25 @@ templ ExamPassRateChart(title string, description string) {
 }
 
 templ ExamTab(param EditSubjectPageParam) {
-	<div class="flex gap-4">
-		<div class="w-full mb-4">
-			@components.TotalCard(components.TotalCardProps{
-				Title:       "Total Exams",
-				Value:       fmt.Sprintf("%d", len(param.Exams)),
-				Description: "Total exams in this subject",
-				Icon:        icon.Book(icon.Props{Class: "h-10 w-10"}),
-			})
-		</div>
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+		@components.TotalCard(components.TotalCardProps{
+			Title:       "Total Exams",
+			Value:       fmt.Sprintf("%d", len(param.Exams)),
+			Description: "Published and draft exams",
+			Icon:        icon.Book(icon.Props{Class: "h-10 w-10 text-primary"}),
+		})
+		@components.TotalCard(components.TotalCardProps{
+			Title:       "Pass Score",
+			Value:       fmt.Sprintf("%d / %d", param.Subject.PassScore, param.Subject.TotalMarks),
+			Description: "Minimum score to pass",
+			Icon:        icon.CircleCheck(icon.Props{Class: "h-10 w-10 text-green-500"}),
+		})
+		@components.TotalCard(components.TotalCardProps{
+			Title:       "Students",
+			Value:       fmt.Sprintf("%d", param.StudentCount),
+			Description: "Total enrolled students",
+			Icon:        icon.Users(icon.Props{Class: "h-10 w-10 text-blue-500"}),
+		})
 	</div>
 	<div class="grid grid-cols-1 md:grid-cols-2 w-full mb-4 gap-4">
 		@ExamPassRateChart("Pass Rate", "Past Exams Pass Rate")
