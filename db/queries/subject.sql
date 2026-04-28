@@ -192,3 +192,8 @@ ORDER BY s.title ASC;
 UPDATE subjects
 SET status = 'PUBLISHED', updated_at = NOW()
 WHERE id = $1;
+
+-- name: CloseSubject :exec
+UPDATE subjects
+SET status = 'CLOSED', updated_at = NOW()
+WHERE id = $1 AND status = 'PUBLISHED';

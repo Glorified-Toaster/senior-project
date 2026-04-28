@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const closePublishedExamsBySubject = `-- name: ClosePublishedExamsBySubject :exec
+UPDATE exams
+SET status = 'CLOSED', updated_at = NOW()
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL
+`
+
+func (q *Queries) ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) error {
+	_, err := q.db.Exec(ctx, closePublishedExamsBySubject, subjectID)
+	return err
+}
+
 const countExams = `-- name: CountExams :one
 SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL
 `

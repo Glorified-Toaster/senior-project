@@ -430,3 +430,12 @@ func (r *ExamRepository) PublishDraftExamsBySubject(ctx context.Context, subject
 
 	return queries.PublishDraftExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
 }
+
+func (r *ExamRepository) ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.ClosePublishedExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+}

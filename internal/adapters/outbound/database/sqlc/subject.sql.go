@@ -60,6 +60,17 @@ func (q *Queries) AssignStudentToSubject(ctx context.Context, arg AssignStudentT
 	return i, err
 }
 
+const closeSubject = `-- name: CloseSubject :exec
+UPDATE subjects
+SET status = 'CLOSED', updated_at = NOW()
+WHERE id = $1 AND status = 'PUBLISHED'
+`
+
+func (q *Queries) CloseSubject(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, closeSubject, id)
+	return err
+}
+
 const countDeletedSubjects = `-- name: CountDeletedSubjects :one
 SELECT COUNT(*) FROM subjects WHERE deleted_at IS NOT NULL
 `

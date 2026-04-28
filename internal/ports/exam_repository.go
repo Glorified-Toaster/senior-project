@@ -31,6 +31,7 @@ type ExamRepository interface {
 	CountPublishedBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error)
 	CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (int64, error)
 	PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.UUID) error
+	ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.UUID) error
 }
 
 type SearchExamsParams struct {

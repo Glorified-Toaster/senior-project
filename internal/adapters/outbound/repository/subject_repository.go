@@ -577,3 +577,12 @@ func (r *SubjectRepository) PublishSubject(ctx context.Context, id uuid.UUID) er
 
 	return queries.PublishSubject(ctx, id)
 }
+
+func (r *SubjectRepository) CloseSubject(ctx context.Context, id uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CloseSubject(ctx, id)
+}

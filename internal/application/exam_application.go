@@ -226,3 +226,9 @@ func (app *Application) PublishDraftExamsBySubject(ctx context.Context, subjectI
 	})
 }
 
+func (app *Application) ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.UUID) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return app.examRepo.ClosePublishedExamsBySubject(txCtx, subjectID)
+	})
+}
+

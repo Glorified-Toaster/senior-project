@@ -19,6 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"time"
 )
 
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
@@ -274,6 +275,12 @@ func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam ID"})
+			return
+		}
+
+		exam, err := h.App.GetExamByID(ctx.Request.Context(), id)
+		if err == nil && exam.Status != domain.ExamStatusDraft {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only draft exams can be deleted"})
 			return
 		}
 
@@ -548,12 +555,14 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		totalMarksStr := ctx.PostForm("total_marks")
 
 		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) {
+			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Exam Failed", "Missing required fields", toast.VariantError)
 			return
 		}
 
 		subjectID, err := uuid.Parse(subjectIDStr)
 		if err != nil {
+			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Exam Failed", "Invalid subject ID", toast.VariantError)
 			return
 		}
@@ -567,6 +576,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 
 		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
 		if err == nil && subject.Status == domain.SubjectStatusPublished {
+			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Exam Failed", "Subject is published and cannot be modified", toast.VariantError)
 			return
 		}
@@ -868,6 +878,13 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Edit Exam Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+
+		exam, err := h.App.GetExamByID(ctx.Request.Context(), examID)
+		if err == nil && exam.Status != domain.ExamStatusDraft {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Exam Failed", "Only draft exams can be modified", toast.VariantError)
 			return
 		}
 
@@ -1955,5 +1972,70 @@ func (h *UserHandler) EditUserInfo() gin.HandlerFunc {
 
 		ctx.Header("HX-Reswap", "none")
 		helpers.Toast(ctx, "Success", "User updated successfully", toast.VariantSuccess)
+	}
+}
+
+// AdminSubjectTrackerWS handles real-time timer sync for the admin dashboard.
+func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Status(400)
+			return
+		}
+
+		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		if err != nil || subject.Status != domain.SubjectStatusPublished {
+			return
+		}
+
+		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+		if err != nil {
+			return
+		}
+
+		var examEndTime *time.Time
+		for _, exam := range exams {
+			if exam.Status == domain.ExamStatusPublished {
+				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+				if examEndTime == nil || t.After(*examEndTime) {
+					examEndTime = &t
+				}
+			}
+		}
+
+		if examEndTime == nil {
+			return
+		}
+
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			now := time.Now()
+			remaining := int(examEndTime.Sub(now).Seconds())
+			if remaining <= 0 {
+				_ = conn.WriteJSON(map[string]interface{}{
+					"remaining_seconds": 0,
+					"auto_submit":       true,
+				})
+				break
+			} else {
+				err := conn.WriteJSON(map[string]interface{}{
+					"remaining_seconds": remaining,
+					"auto_submit":       false,
+				})
+				if err != nil {
+					break
+				}
+			}
+		}
 	}
 }

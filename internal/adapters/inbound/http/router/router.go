@@ -119,6 +119,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/subject/edit/:id", r.userHandler.EditSubjectInfo())
 			dashboardRoutes.POST("/subject/publish/:id", r.userHandler.PublishSubject())
 			dashboardRoutes.POST("/subject/delete/:id", r.userHandler.DeleteSubject())
+			dashboardRoutes.GET("/subject/:id/ws", r.userHandler.AdminSubjectTrackerWS())
 			dashboardRoutes.POST("/subject/:id/instructors/assign", r.userHandler.AssignInstructorToSubject())
 			dashboardRoutes.POST("/subject/:id/instructors/unassign/:instructor_id", r.userHandler.UnassignInstructorFromSubject())
 			dashboardRoutes.GET("/subject/:id/instructors/search", r.userHandler.SearchSubjectInstructors())

@@ -32,4 +32,5 @@ type SubjectRepository interface {
 	UnassignStudentFromSubject(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) error
 	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Subject, error)
 	PublishSubject(ctx context.Context, id uuid.UUID) error
+	CloseSubject(ctx context.Context, id uuid.UUID) error
 }

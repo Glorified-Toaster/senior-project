@@ -256,3 +256,10 @@ func (a *Application) PublishSubject(ctx context.Context, id uuid.UUID) error {
 	})
 	return err
 }
+
+func (a *Application) CloseSubject(ctx context.Context, id uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return a.subjectRepo.CloseSubject(txCtx, id)
+	})
+	return err
+}

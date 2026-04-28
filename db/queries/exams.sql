@@ -118,3 +118,8 @@ WHERE subject_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED';
 UPDATE exams
 SET status = 'PUBLISHED', updated_at = NOW()
 WHERE subject_id = $1 AND status = 'DRAFT' AND deleted_at IS NULL;
+
+-- name: ClosePublishedExamsBySubject :exec
+UPDATE exams
+SET status = 'CLOSED', updated_at = NOW()
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL;

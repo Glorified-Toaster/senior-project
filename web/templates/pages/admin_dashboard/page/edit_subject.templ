@@ -67,19 +67,77 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 			Path: param.Subject.Title,
 		},
 	}, param.Username, param.FullName, "/admin/dashboard") {
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+		<div id="subject-page" data-subject-id={ param.Subject.ID.String() } class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 				<div>
-					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-						@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
-						{ param.Subject.Title }
-					</h1>
+					<div class="flex items-center gap-4">
+						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
+							{ param.Subject.Title }
+						</h1>
+						if param.Subject.Status == domain.SubjectStatusPublished {
+							<div id="admin-subject-timer" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-primary font-mono text-lg font-bold transition-colors shadow-sm ring-1 ring-primary/10">
+								@icon.Clock(icon.Props{Class: "h-5 w-5"})
+								<span id="admin-timer-display">--:--:--</span>
+							</div>
+						}
+					</div>
 					<p class="text-slate-500 mt-1">Edit subject information</p>
 				</div>
 			</div>
 			@TabsSubject(param)
 		</div>
 		<div id="toast-container"></div>
+		if param.Subject.Status == domain.SubjectStatusPublished {
+			<script>
+			(function() {
+				const subjectPage = document.getElementById('subject-page');
+				if (!subjectPage) return;
+				const subjectId = subjectPage.dataset.subjectId;
+				const timerDisplay = document.getElementById('admin-timer-display');
+				let closed = false;
+
+				const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+				const wsUrl = protocol + '//' + window.location.host + '/admin/dashboard/subject/' + subjectId + '/ws';
+				let socket = new WebSocket(wsUrl);
+
+				socket.onmessage = function(event) {
+					if (closed) return;
+					const data = JSON.parse(event.data);
+					
+					if (data.auto_submit) {
+						closed = true;
+						if (timerDisplay) timerDisplay.textContent = '00:00:00';
+						socket.close();
+						return;
+					}
+
+					let seconds = data.remaining_seconds;
+					if (seconds <= 0) {
+						closed = true;
+						if (timerDisplay) timerDisplay.textContent = '00:00:00';
+						socket.close();
+						return;
+					}
+
+					let h = Math.floor(seconds / 3600);
+					let m = Math.floor((seconds % 3600) / 60);
+					let s = seconds % 60;
+					
+					let timeStr = "";
+					// Always show hr for admin dashboard to be clear
+					timeStr += h.toString().padStart(2, '0') + ':';
+					timeStr += m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+					
+					if (timerDisplay) timerDisplay.textContent = timeStr;
+				};
+
+				socket.onclose = function() {
+					console.log('Admin timer disconnected');
+				};
+			})();
+			</script>
+		}
 	}
 }
 

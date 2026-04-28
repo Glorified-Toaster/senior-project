@@ -194,14 +194,14 @@ templ ExamCard(info ExamInfo, allSubmitted bool, durationMinutes int32) {
 		@card.Content(card.ContentProps{Class: "p-5"}) {
 			<div class="flex items-center justify-between">
 				<div class="flex-1">
-					<div class="flex items-center gap-3 mb-2">
+					<div class="flex items-center gap-3 mb-1">
 						<h3 class="font-semibold text-lg text-slate-900">{ info.Exam.Title }</h3>
 						@ExamStatusBadge(info)
 					</div>
 					if info.Exam.Description != nil && *info.Exam.Description != "" {
 						<p class="text-sm text-slate-500 mb-3">{ *info.Exam.Description }</p>
 					}
-					<div class="flex items-center gap-4 text-sm text-slate-500">
+					<div class="flex items-center gap-4 text-sm mt-2 text-slate-500">
 						<span class="flex items-center gap-1">
 							@icon.Target(icon.Props{Class: "h-3.5 w-3.5"})
 							{ fmt.Sprintf("%d marks", info.Exam.TotalMarks) }
