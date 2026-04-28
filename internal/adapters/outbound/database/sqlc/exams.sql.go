@@ -426,6 +426,17 @@ func (q *Queries) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) 
 	return items, nil
 }
 
+const publishDraftExamsBySubject = `-- name: PublishDraftExamsBySubject :exec
+UPDATE exams
+SET status = 'PUBLISHED', updated_at = NOW()
+WHERE subject_id = $1 AND status = 'DRAFT' AND deleted_at IS NULL
+`
+
+func (q *Queries) PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) error {
+	_, err := q.db.Exec(ctx, publishDraftExamsBySubject, subjectID)
+	return err
+}
+
 const saveAnswer = `-- name: SaveAnswer :one
 INSERT INTO student_answers (attempt_id, question_id, selected_choice_id, is_correct)
 VALUES ($1, $2, $3, $4)

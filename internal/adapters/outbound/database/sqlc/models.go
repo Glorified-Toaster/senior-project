@@ -145,8 +145,9 @@ func (ns NullQuestionTypeType) Value() (driver.Value, error) {
 type SubjectStatusType string
 
 const (
-	SubjectStatusTypeACTIVE   SubjectStatusType = "ACTIVE"
-	SubjectStatusTypeINACTIVE SubjectStatusType = "INACTIVE"
+	SubjectStatusTypeACTIVE    SubjectStatusType = "ACTIVE"
+	SubjectStatusTypeINACTIVE  SubjectStatusType = "INACTIVE"
+	SubjectStatusTypePUBLISHED SubjectStatusType = "PUBLISHED"
 )
 
 func (e *SubjectStatusType) Scan(src interface{}) error {

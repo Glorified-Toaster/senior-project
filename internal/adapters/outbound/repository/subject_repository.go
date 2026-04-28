@@ -568,3 +568,12 @@ func (r *SubjectRepository) ListSubjectsForStudent(ctx context.Context, studentI
 
 	return domainSubjects, nil
 }
+
+func (r *SubjectRepository) PublishSubject(ctx context.Context, id uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.PublishSubject(ctx, id)
+}

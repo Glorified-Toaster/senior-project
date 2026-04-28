@@ -421,3 +421,12 @@ func (r *ExamRepository) CountSubmittedAttemptsBySubjectForStudent(ctx context.C
 		StudentID: uuid.NullUUID{UUID: studentID, Valid: true},
 	})
 }
+
+func (r *ExamRepository) PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.PublishDraftExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+}

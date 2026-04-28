@@ -565,6 +565,12 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		if err == nil && subject.Status == domain.SubjectStatusPublished {
+			helpers.Toast(ctx, "Create Exam Failed", "Subject is published and cannot be modified", toast.VariantError)
+			return
+		}
+
 		_, err = h.App.CreateExam(ctx, ports.CreateExamParams{
 			Title:       title,
 			SubjectID:   subjectID,
@@ -627,7 +633,13 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 			}
 		}
 
-		_, err := h.App.UpdateSubject(ctx, domain.Subject{
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(id))
+		if err == nil && subject.Status == domain.SubjectStatusPublished {
+			helpers.Toast(ctx, "Edit Subject Failed", "Subject is published and cannot be modified", toast.VariantError)
+			return
+		}
+
+		_, err = h.App.UpdateSubject(ctx, domain.Subject{
 			ID:              uuid.MustParse(id),
 			Title:           name,
 			Description:     &description,
@@ -642,6 +654,48 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 		}
 
 		helpers.Toast(ctx, "Edit Subject Success", "Subject updated successfully", toast.VariantSuccess)
+	}
+}
+
+func (h *UserHandler) PublishSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		idStr := ctx.Param("id")
+		
+		subjectID, err := uuid.Parse(idStr)
+		if err != nil {
+			helpers.Toast(ctx, "Publish Failed", "Invalid subject ID format", toast.VariantError)
+			return
+		}
+
+		// check if it exists
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		if err != nil {
+			helpers.Toast(ctx, "Publish Failed", "Subject not found", toast.VariantError)
+			return
+		}
+
+		if subject.Status == domain.SubjectStatusPublished {
+			helpers.Toast(ctx, "Notice", "Subject is already published", toast.VariantWarning)
+			return
+		}
+
+		// update the subject
+		err = h.App.PublishSubject(ctx.Request.Context(), subjectID)
+		if err != nil {
+			helpers.Toast(ctx, "Publish Failed", "Failed to update subject status: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		// update draft exams
+		err = h.App.PublishDraftExamsBySubject(ctx.Request.Context(), subjectID)
+		if err != nil {
+			helpers.Toast(ctx, "Publish Failed", "Failed to publish exams: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		// HTMX Redirect to refresh lockdown cleanly
+		ctx.Header("HX-Redirect", "/admin/dashboard/subject/"+idStr)
+		helpers.Toast(ctx, "Publish Success", "Subject and its draft exams have been published", toast.VariantSuccess)
 	}
 }
 

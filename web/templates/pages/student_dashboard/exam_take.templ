@@ -13,8 +13,8 @@ templ ExamTakePage(param ExamTakeParam) {
 	@toast.Script()
 	<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" id="exam-page" 
 		data-exam-id={ param.Exam.ID.String() }
-		data-duration={ strconv.Itoa(int(param.Subject.DurationMinutes)) }
-		data-started-at={ param.Attempt.StartedAt.Format("2006-01-02T15:04:05Z07:00") }>
+		data-subject-id={ param.Subject.ID.String() }
+		data-duration={ strconv.Itoa(int(param.Subject.DurationMinutes)) }>
 		
 		<!-- Sticky Header with Timer -->
 		<header class="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
@@ -28,7 +28,7 @@ templ ExamTakePage(param ExamTakeParam) {
 				</div>
 				<div class="flex items-center gap-4">
 					<!-- Timer -->
-					<div id="exam-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-900 font-mono text-lg font-bold transition-colors">
+					<div id="exam-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-primary font-mono text-lg font-bold shadow-sm transition-colors ring-1 ring-primary/10">
 						@icon.Clock(icon.Props{Class: "h-5 w-5"})
 						<span id="timer-display">--:--</span>
 					</div>
@@ -151,31 +151,67 @@ templ ExamTakePage(param ExamTakeParam) {
 	(function() {
 		const examPage = document.getElementById('exam-page');
 		const examId = examPage.dataset.examId;
+		const subjectId = examPage.dataset.subjectId;
 		const durationMinutes = parseInt(examPage.dataset.duration);
-		const startedAt = new Date(examPage.dataset.startedAt);
 		const timerDisplay = document.getElementById('timer-display');
 		const timerContainer = document.getElementById('exam-timer');
 		const progressBar = document.getElementById('progress-bar');
 		
-		const endTime = new Date(startedAt.getTime() + durationMinutes * 60 * 1000);
 		let warningShown5 = false;
 		let warningShown1 = false;
 		let submitted = false;
 
-		function updateTimer() {
+		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+		const wsUrl = protocol + '//' + window.location.host + '/student/subject/' + subjectId + '/ws';
+		let socket = new WebSocket(wsUrl);
+
+		function showToast(title, description, variant) {
+			const container = document.getElementById('toast-container');
+			if (!container) return;
+			const colors = {
+				warning: 'border-yellow-400 bg-yellow-50',
+				error: 'border-red-400 bg-red-50'
+			};
+			const toast = document.createElement('div');
+			toast.className = 'fixed top-4 right-4 z-[100] p-4 rounded-lg border shadow-lg ' + (colors[variant] || 'border-slate-200 bg-white');
+			toast.innerHTML = '<div class="font-semibold text-sm">' + title + '</div><div class="text-sm mt-1">' + description + '</div>';
+			document.body.appendChild(toast);
+			setTimeout(() => toast.remove(), 5000);
+		}
+
+		socket.onmessage = function(event) {
 			if (submitted) return;
+			const data = JSON.parse(event.data);
 			
-			const now = new Date();
-			const remaining = Math.max(0, endTime - now);
-			const totalSeconds = Math.floor(remaining / 1000);
-			const minutes = Math.floor(totalSeconds / 60);
+			if (data.auto_submit) {
+				submitted = true;
+				timerDisplay.textContent = '00:00';
+				socket.close();
+				
+				showToast('Exam Auto-Submitted', 'Time is up. Your exam has been automatically submitted.', 'warning');
+				
+				setTimeout(function() {
+					window.location.href = '/student/subject/' + subjectId;
+				}, 2000);
+				return;
+			}
+
+			const totalSeconds = data.remaining_seconds;
+			if (totalSeconds < 0) return;
+
+			const hours = Math.floor(totalSeconds / 3600);
+			const minutes = Math.floor((totalSeconds % 3600) / 60);
 			const seconds = totalSeconds % 60;
 
-			timerDisplay.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+			if (hours > 0) {
+				timerDisplay.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+			} else {
+				timerDisplay.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+			}
 
 			// Progress bar
 			const totalDuration = durationMinutes * 60;
-			const elapsed = totalDuration - totalSeconds;
+			const elapsed = Math.max(0, totalDuration - totalSeconds);
 			const pct = Math.min(100, (elapsed / totalDuration) * 100);
 			progressBar.style.width = pct + '%';
 
@@ -201,51 +237,11 @@ templ ExamTakePage(param ExamTakeParam) {
 				warningShown1 = true;
 				showToast('Warning', '1 minute remaining! Your exam will be auto-submitted.', 'error');
 			}
+		};
 
-			// Auto-submit on timeout
-			if (totalSeconds <= 0) {
-				autoSubmit();
-				return;
-			}
-
-			requestAnimationFrame(function() {
-				setTimeout(updateTimer, 1000);
-			});
-		}
-
-		function showToast(title, description, variant) {
-			const container = document.getElementById('toast-container');
-			if (!container) return;
-			const colors = {
-				warning: 'border-yellow-400 bg-yellow-50',
-				error: 'border-red-400 bg-red-50'
-			};
-			const toast = document.createElement('div');
-			toast.className = 'fixed top-4 right-4 z-[100] p-4 rounded-lg border shadow-lg ' + (colors[variant] || 'border-slate-200 bg-white');
-			toast.innerHTML = '<div class="font-semibold text-sm">' + title + '</div><div class="text-sm mt-1">' + description + '</div>';
-			document.body.appendChild(toast);
-			setTimeout(() => toast.remove(), 5000);
-		}
-
-		function autoSubmit() {
-			if (submitted) return;
-			submitted = true;
-			timerDisplay.textContent = '00:00';
-			
-			navigator.sendBeacon('/student/exam/' + examId + '/auto-submit');
-			showToast('Exam Auto-Submitted', 'Time is up. Your exam has been automatically submitted.', 'warning');
-			
-			setTimeout(function() {
-				window.location.href = '/student/dashboard';
-			}, 2000);
-		}
-
-		// Auto-submit on page exit
-		window.addEventListener('beforeunload', function(e) {
-			if (!submitted) {
-				navigator.sendBeacon('/student/exam/' + examId + '/auto-submit');
-			}
-		});
+		socket.onerror = function(error) {
+			console.error('Timer connection error');
+		};
 
 		// Update answered indicators on htmx:afterRequest
 		document.body.addEventListener('htmx:afterRequest', function(event) {
@@ -269,11 +265,7 @@ templ ExamTakePage(param ExamTakeParam) {
 				const checked = card.querySelector('input[type="radio"]:checked');
 				if (checked) answered++;
 			});
-			// Update progress text or any other UI element if needed
 		}
-
-		// Start timer
-		updateTimer();
 	})();
 	</script>
 }

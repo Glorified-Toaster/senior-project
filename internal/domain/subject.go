@@ -9,8 +9,9 @@ import (
 type SubjectStatus string
 
 const (
-	SubjectStatusActive   SubjectStatus = "ACTIVE"
-	SubjectStatusInactive SubjectStatus = "INACTIVE"
+	SubjectStatusActive    SubjectStatus = "ACTIVE"
+	SubjectStatusInactive  SubjectStatus = "INACTIVE"
+	SubjectStatusPublished SubjectStatus = "PUBLISHED"
 )
 
 type Subject struct {

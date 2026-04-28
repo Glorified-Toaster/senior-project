@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/johnfercher/maroto/v2"
 	"github.com/johnfercher/maroto/v2/pkg/components/code"
 	"github.com/johnfercher/maroto/v2/pkg/components/col"
@@ -107,9 +108,14 @@ func (h *UserHandler) StudentSubjectView() gin.HandlerFunc {
 
 		// Filter only published exams for students
 		var publishedExams []domain.Exam
+		var examEndTime *time.Time
 		for _, exam := range exams {
 			if exam.Status == domain.ExamStatusPublished {
 				publishedExams = append(publishedExams, exam)
+				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+				if examEndTime == nil || t.After(*examEndTime) {
+					examEndTime = &t
+				}
 			}
 		}
 
@@ -137,6 +143,7 @@ func (h *UserHandler) StudentSubjectView() gin.HandlerFunc {
 			Subject:      subject,
 			Exams:        examInfos,
 			AllSubmitted: allSubmitted,
+			ExamEndTime:  examEndTime,
 		})))
 	}
 }
@@ -434,6 +441,53 @@ func (h *UserHandler) StudentAutoSubmit() gin.HandlerFunc {
 	}
 }
 
+// StudentSubjectAutoSubmit auto-submits all in-progress exams for a given subject.
+func (h *UserHandler) StudentSubjectAutoSubmit() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		_, _, userID := parseUsername(ctx)
+
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Status(400)
+			return
+		}
+
+		exams, _ := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+		for _, exam := range exams {
+			if exam.Status != domain.ExamStatusPublished {
+				continue
+			}
+			attempt, err := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, userID)
+			if err != nil || attempt.Status != domain.AttemptStatusInProgress {
+				continue
+			}
+
+			// Calculate score
+			answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
+			questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+
+			questionMarks := make(map[uuid.UUID]int)
+			for _, q := range questions {
+				questionMarks[q.ID] = q.Marks
+			}
+
+			var totalScore int32
+			for _, answer := range answers {
+				if answer.IsCorrect != nil && *answer.IsCorrect {
+					if marks, ok := questionMarks[answer.QuestionID]; ok {
+						totalScore += int32(marks)
+					}
+				}
+			}
+
+			_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
+		}
+
+		ctx.Status(200)
+	}
+}
+
 // StudentSubjectResult renders the final result page for a subject.
 func (h *UserHandler) StudentSubjectResult() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -630,5 +684,117 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s_result.pdf", subject.Title))
 		ctx.Header("Content-Type", "application/pdf")
 		ctx.Data(200, "application/pdf", document.GetBytes())
+	}
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+// StudentSubjectTrackerWS handles real-time timer sync and auto-submit over WebSocket.
+func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		_, _, userID := parseUsername(ctx)
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Status(400)
+			return
+		}
+
+		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		// Setup timer logic loop
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		if err != nil {
+			return
+		}
+
+		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+		if err != nil {
+			return
+		}
+
+		var examEndTime *time.Time
+		for _, exam := range exams {
+			if exam.Status == domain.ExamStatusPublished {
+				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+				if examEndTime == nil || t.After(*examEndTime) {
+					examEndTime = &t
+				}
+			}
+		}
+
+		if examEndTime == nil {
+			return
+		}
+
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			now := time.Now()
+			remaining := int(examEndTime.Sub(now).Seconds())
+			if remaining <= 0 {
+				// Time up! Force submit
+				hasSubmitted := false
+				for _, exam := range exams {
+					if exam.Status != domain.ExamStatusPublished {
+						continue
+					}
+					attempt, attemptErr := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, userID)
+					if attemptErr != nil || attempt.Status != domain.AttemptStatusInProgress {
+						continue
+					}
+
+					answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
+					questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+
+					questionMarks := make(map[uuid.UUID]int)
+					for _, q := range questions {
+						questionMarks[q.ID] = q.Marks
+					}
+
+					var totalScore int32
+					for _, answer := range answers {
+						if answer.IsCorrect != nil && *answer.IsCorrect {
+							if marks, ok := questionMarks[answer.QuestionID]; ok {
+								totalScore += int32(marks)
+							}
+						}
+					}
+
+					_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
+					hasSubmitted = true
+				}
+
+				if hasSubmitted {
+					_ = conn.WriteJSON(map[string]interface{}{
+						"remaining_seconds": 0,
+						"auto_submit":       true,
+					})
+				} else {
+					_ = conn.WriteJSON(map[string]interface{}{
+						"remaining_seconds": 0,
+						"auto_submit":       false,
+					})
+				}
+				break
+			} else {
+				err := conn.WriteJSON(map[string]interface{}{
+					"remaining_seconds": remaining,
+					"auto_submit":       false,
+				})
+				if err != nil {
+					// client disconnected
+					break
+				}
+			}
+		}
 	}
 }

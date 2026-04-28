@@ -513,7 +513,7 @@ JOIN subject_students ss ON s.id = ss.subject_id
 WHERE ss.student_id = $1
   AND ss.deleted_at IS NULL
   AND s.deleted_at IS NULL
-  AND s.status = 'ACTIVE'
+  AND s.status IN ('ACTIVE', 'PUBLISHED')
 ORDER BY s.title ASC
 `
 
@@ -546,6 +546,17 @@ func (q *Queries) ListSubjectsForStudent(ctx context.Context, studentID uuid.UUI
 		return nil, err
 	}
 	return items, nil
+}
+
+const publishSubject = `-- name: PublishSubject :exec
+UPDATE subjects
+SET status = 'PUBLISHED', updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) PublishSubject(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, publishSubject, id)
+	return err
 }
 
 const restoreSubject = `-- name: RestoreSubject :one

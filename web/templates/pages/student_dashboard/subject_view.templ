@@ -7,81 +7,54 @@ import "uot-exam/web/templates/components/badge"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/navbar"
 
 templ SubjectViewPage(param SubjectViewParam) {
-	@toast.Script()
-	<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-		<!-- Header -->
-		<header class="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-				<div class="flex items-center gap-3">
-					<a href="/student/dashboard" class="text-slate-400 hover:text-primary transition-colors">
-						@icon.ArrowLeft(icon.Props{Class: "h-5 w-5"})
-					</a>
-					@icon.BookOpen(icon.Props{Class: "h-6 w-6 text-primary"})
-					<h1 class="text-xl font-bold text-slate-900">{ param.Subject.Title }</h1>
-				</div>
-				<div class="flex items-center gap-4">
-					if param.AllSubmitted {
-						@button.Button(button.Props{
-							Variant: button.VariantDefault,
-							Size:    button.SizeSm,
-							Class:   "flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white",
-							Attributes: templ.Attributes{
-								"onclick": fmt.Sprintf("window.location.href='/student/subject/%s/result'", param.Subject.ID.String()),
-							},
-						}) {
-							@icon.Trophy(icon.Props{Class: "h-4 w-4"})
-							View Results
-						}
-					} else if len(param.Exams) > 0 {
-						{{ 
-							var firstUnsubmittedID string
-							var isResume bool
-							for _, info := range param.Exams {
-								if info.Attempt == nil || info.Attempt.Status == domain.AttemptStatusInProgress {
-									firstUnsubmittedID = info.Exam.ID.String()
-									isResume = info.Attempt != nil && info.Attempt.Status == domain.AttemptStatusInProgress
-									break
-								}
-							}
-						}}
-						if firstUnsubmittedID != "" {
-							{{
-								variant := button.VariantOutline
-								if isResume {
-									variant = button.VariantSecondary
-								}
-							}}
-							@button.Button(button.Props{
-								Variant: variant,
-								Size:    button.SizeSm,
-								Class:   "flex items-center gap-2",
-								Attributes: templ.Attributes{
-									"hx-post": fmt.Sprintf("/student/exam/%s/start", firstUnsubmittedID),
-									"hx-swap": "none",
-								},
-							}) {
-								if isResume {
-									@icon.RotateCcw(icon.Props{Class: "h-4 w-4"})
-									Resume
-								} else {
-									@icon.Play(icon.Props{Class: "h-4 w-4"})
-									Start
-								}
-							}
-						}
-					}
-					<div class="text-right">
-						<p class="text-sm font-medium text-slate-900">{ param.Student.FullName }</p>
-						<p class="text-xs text-slate-500">{ param.Student.Username }</p>
-					</div>
-				</div>
-			</div>
-		</header>
+	<div class="h-screen">
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+		@toast.Script()
+		@Navbar([]navbar.BreadPath{
+			{
+				Path: "Dashboard",
+				Href: "/student/dashboard",
+			},
+			{
+				Path: param.Subject.Title,
+				Href: fmt.Sprintf("/student/subject/%s", param.Subject.ID.String()),
+			},
+		}) {
 
+			{{
+				attrs := templ.Attributes{
+					"id": "subject-page",
+					"data-subject-id": param.Subject.ID.String(),
+				}
+				if param.ExamEndTime != nil {
+					attrs["data-end-time"] = param.ExamEndTime.Format("2006-01-02T15:04:05Z07:00")
+				}
+			}}
 		<!-- Main Content -->
-		<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" { attrs... }>
+			<div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+					@icon.BookOpen(icon.Props{Class: "h-8 w-8 text-primary"})
+					{ param.Subject.Title }
+				</h1>
+				if param.ExamEndTime != nil && !param.AllSubmitted {
+					<div id="subject-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-primary font-mono text-lg font-bold transition-colors shadow-sm ring-1 ring-primary/10">
+						@icon.Clock(icon.Props{Class: "h-5 w-5"})
+						<span id="timer-display">--:--:--</span>
+					</div>
+				}
+			</div>
+
 			<!-- Subject Info Card -->
 			<div class="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 				@card.Card() {
@@ -103,12 +76,39 @@ templ SubjectViewPage(param SubjectViewParam) {
 								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Subject.PassScore) }</p>
 							</div>
 						</div>
+
+						{{
+							var hasAttempt bool
+							var submittedCount int
+							for _, info := range param.Exams {
+								if info.Attempt != nil {
+									hasAttempt = true
+									if info.Attempt.Status == domain.AttemptStatusSubmitted || info.Attempt.Status == domain.AttemptStatusGraded {
+										submittedCount++
+									}
+								}
+							}
+							progressPercent := 0
+							if len(param.Exams) > 0 {
+								progressPercent = int((float64(submittedCount) / float64(len(param.Exams))) * 100)
+							}
+						}}
+						if hasAttempt {
+							<div class="mt-4 pt-6 border-t border-slate-100">
+								<div class="flex items-center justify-end text-sm mb-2">
+									<span class="text-slate-500">{ fmt.Sprintf("%d/%d Exams", submittedCount, len(param.Exams)) }</span>
+								</div>
+								<div class="w-full bg-slate-100 rounded-full h-2.5">
+									<div class="bg-primary h-2.5 rounded-full transition-all duration-500" style={ fmt.Sprintf("width: %d%%", progressPercent) }></div>
+								</div>
+							</div>
+						}
 					}
 				}
 			</div>
 
 			<!-- Exams List -->
-			<div class="mb-6">
+			<div class="mb-4 mt-6">
 				<h2 class="text-2xl font-bold text-slate-900 mb-4">Exams</h2>
 			</div>
 
@@ -130,8 +130,61 @@ templ SubjectViewPage(param SubjectViewParam) {
 				</div>
 			}
 		</main>
+		}
 	</div>
 	<div id="toast-container"></div>
+	if param.ExamEndTime != nil && !param.AllSubmitted {
+		<script>
+		(function() {
+			const subjectPage = document.getElementById('subject-page');
+			if (!subjectPage) return;
+			const subjectId = subjectPage.dataset.subjectId;
+			const timerDisplay = document.getElementById('timer-display');
+			const timerContainer = document.getElementById('subject-timer');
+			let submitted = false;
+
+			const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+			const wsUrl = protocol + '//' + window.location.host + '/student/subject/' + subjectId + '/ws';
+			let socket = new WebSocket(wsUrl);
+
+			socket.onmessage = function(event) {
+				if (submitted) return;
+				const data = JSON.parse(event.data);
+				
+				if (data.auto_submit) {
+					submitted = true;
+					if (timerDisplay) timerDisplay.textContent = '00:00';
+					socket.close();
+					window.location.reload();
+					return;
+				}
+
+				const totalSeconds = data.remaining_seconds;
+				if (totalSeconds < 0) return;
+
+				const hours = Math.floor(totalSeconds / 3600);
+				const minutes = Math.floor((totalSeconds % 3600) / 60);
+				const seconds = totalSeconds % 60;
+				
+				if (hours > 0) {
+					timerDisplay.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+				} else {
+					timerDisplay.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+				}
+
+				// Color coding
+				if (totalSeconds <= 60 && timerContainer) {
+					timerContainer.className = timerContainer.className.replace(/bg-\S+/g, '').trim();
+					timerContainer.classList.add('bg-red-100', 'text-red-700');
+				}
+			};
+
+			socket.onerror = function(error) {
+				console.error('Timer connection error');
+			};
+		})();
+		</script>
+	}
 }
 
 templ ExamCard(info ExamInfo, allSubmitted bool, durationMinutes int32) {

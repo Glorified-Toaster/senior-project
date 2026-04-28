@@ -6,11 +6,21 @@ import "uot-exam/web/templates/components/badge"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/navbar"
 
 templ ResultPage(param ResultParam) {
 	@toast.Script()
 	<div class="min-h-screen bg-slate-50/50">
-		@Navbar("/student/dashboard", param.Subject.Title + " Results") {
+		@Navbar([]navbar.BreadPath{
+			{
+				Path: "Dashboard",
+				Href: "/student/dashboard",
+			},
+			{
+				Path: param.Subject.Title + " Results",
+				Href: fmt.Sprintf("/student/subject/%s/result", param.Subject.ID.String()),
+			},
+		}) {
 			<div class="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 				<!-- Success Header -->
 				<div class="text-center space-y-4">

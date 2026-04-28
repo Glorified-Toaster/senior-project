@@ -249,3 +249,10 @@ func (a *Application) ListSubjectsForStudent(ctx context.Context, studentID uuid
 	})
 	return subjects, err
 }
+
+func (a *Application) PublishSubject(ctx context.Context, id uuid.UUID) error {
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return a.subjectRepo.PublishSubject(txCtx, id)
+	})
+	return err
+}

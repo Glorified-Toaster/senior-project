@@ -113,3 +113,8 @@ WHERE e.subject_id = $1
 -- name: CountPublishedExamsBySubject :one
 SELECT COUNT(*) FROM exams
 WHERE subject_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED';
+
+-- name: PublishDraftExamsBySubject :exec
+UPDATE exams
+SET status = 'PUBLISHED', updated_at = NOW()
+WHERE subject_id = $1 AND status = 'DRAFT' AND deleted_at IS NULL;

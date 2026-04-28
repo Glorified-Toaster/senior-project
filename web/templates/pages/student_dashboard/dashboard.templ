@@ -19,7 +19,12 @@ templ DashboardPage(param DashboardPageParam) {
 		@dropdown.Script()
 		@popover.Script()
 		@toast.Script()
-		@Navbar("/student/dashboard", "Dashboard") {
+		@Navbar([]navbar.BreadPath{
+			{
+				Path: "Dashboard",
+				Href: "/student/dashboard",
+			},
+		}) {
 
 		<!-- Main Content -->
 		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -154,11 +159,9 @@ templ DashboardPage(param DashboardPageParam) {
 	<div id="toast-container"></div>
 }
 
-templ Navbar(href string, path string) {
+templ Navbar(breadPath []navbar.BreadPath) {
 	<div class="flex h-full flex-col">
-		@navbar.Navbar(navbar.Props{BreadPath: []navbar.BreadPath{
-			{Href: href, Path: path},
-		}})
+		@navbar.Navbar(navbar.Props{BreadPath: breadPath})
 		<div class="flex-1 p-6 overflow-auto">
 			{ children... }
 		</div>

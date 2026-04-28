@@ -1,5 +1,6 @@
 package student_dashboard
 
+import "time"
 import "uot-exam/internal/domain"
 import "github.com/google/uuid"
 
@@ -28,6 +29,7 @@ type SubjectViewParam struct {
 	Subject      domain.Subject
 	Exams        []ExamInfo
 	AllSubmitted bool
+	ExamEndTime  *time.Time
 }
 
 // ExamTakeParam holds data for the exam-taking page

@@ -220,3 +220,9 @@ func (app *Application) CountSubmittedAttemptsBySubjectForStudent(ctx context.Co
 	return count, err
 }
 
+func (app *Application) PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.UUID) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return app.examRepo.PublishDraftExamsBySubject(txCtx, subjectID)
+	})
+}
+

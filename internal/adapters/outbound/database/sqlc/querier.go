@@ -72,6 +72,8 @@ type Querier interface {
 	ListStudentsBySubjectIDPaginated(ctx context.Context, arg ListStudentsBySubjectIDPaginatedParams) ([]ListStudentsBySubjectIDPaginatedRow, error)
 	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
+	PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) error
+	PublishSubject(ctx context.Context, id uuid.UUID) error
 	RestoreQuestion(ctx context.Context, id uuid.UUID) error
 	RestoreSubject(ctx context.Context, id uuid.UUID) (Subject, error)
 	RestoreUser(ctx context.Context, id uuid.UUID) error
