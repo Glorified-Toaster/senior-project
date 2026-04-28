@@ -15,7 +15,7 @@ func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin
 	roleSet := make(map[domain.UserRole]struct{}, len(allowedRoles))
 	for _, r := range allowedRoles {
 		roleSet[r] = struct{}{}
-	}
+}
 
 	return func(c *gin.Context) {
 		// Retrieve the claims set by AuthenticationMiddleware.
