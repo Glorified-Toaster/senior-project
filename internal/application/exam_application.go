@@ -232,3 +232,12 @@ func (app *Application) ClosePublishedExamsBySubject(ctx context.Context, subjec
 	})
 }
 
+func (app *Application) ListInProgressAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error) {
+	var attempts []domain.ExamAttempt
+	var err error
+	_ = app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		attempts, err = app.examRepo.ListInProgressAttemptsByExam(txCtx, examID)
+		return err
+	})
+	return attempts, err
+}

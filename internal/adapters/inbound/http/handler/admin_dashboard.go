@@ -2022,6 +2022,57 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 			now := time.Now()
 			remaining := int(examEndTime.Sub(now).Seconds())
 			if remaining <= 0 {
+				// Auto-submit all in-progress attempts for every published exam
+				// and create+submit zero-score attempts for students who never started
+				students, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+
+				for _, exam := range exams {
+					if exam.Status != domain.ExamStatusPublished {
+						continue
+					}
+					// 1) Submit in-progress attempts
+					attempts, _ := h.App.ListInProgressAttemptsByExam(ctx.Request.Context(), exam.ID)
+					questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+
+					questionMarks := make(map[uuid.UUID]int)
+					for _, q := range questions {
+						questionMarks[q.ID] = q.Marks
+					}
+
+					// Track which students already have an attempt
+					studentsWithAttempt := make(map[uuid.UUID]bool)
+					for _, attempt := range attempts {
+						studentsWithAttempt[attempt.StudentID] = true
+						answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
+						var totalScore int32
+						for _, answer := range answers {
+							if answer.IsCorrect != nil && *answer.IsCorrect {
+								if marks, ok := questionMarks[answer.QuestionID]; ok {
+									totalScore += int32(marks)
+								}
+							}
+						}
+						_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
+					}
+
+					// 2) Create + submit zero-score attempts for students who never started
+					for _, student := range students {
+						if studentsWithAttempt[student.ID] {
+							continue
+						}
+						// Check if student already has a submitted attempt
+						existingAttempt, err := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, student.ID)
+						if err == nil && existingAttempt.Status != domain.AttemptStatusInProgress {
+							continue // already submitted/graded
+						}
+						newAttempt, err := h.App.StartExamAttempt(ctx.Request.Context(), exam.ID, student.ID)
+						if err != nil {
+							continue
+						}
+						_ = h.App.SubmitExamAttempt(ctx.Request.Context(), newAttempt.ID, 0)
+					}
+				}
+
 				_ = conn.WriteJSON(map[string]interface{}{
 					"remaining_seconds": 0,
 					"auto_submit":       true,

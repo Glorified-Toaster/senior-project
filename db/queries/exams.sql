@@ -123,3 +123,8 @@ WHERE subject_id = $1 AND status = 'DRAFT' AND deleted_at IS NULL;
 UPDATE exams
 SET status = 'CLOSED', updated_at = NOW()
 WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL;
+
+-- name: ListInProgressAttemptsByExam :many
+SELECT * FROM exam_attempts
+WHERE exam_id = $1 AND status = 'IN_PROGRESS'
+ORDER BY started_at DESC;

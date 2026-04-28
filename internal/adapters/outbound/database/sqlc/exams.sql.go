@@ -437,6 +437,41 @@ func (q *Queries) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) 
 	return items, nil
 }
 
+const listInProgressAttemptsByExam = `-- name: ListInProgressAttemptsByExam :many
+SELECT id, exam_id, student_id, started_at, submitted_at, score, status, created_at FROM exam_attempts
+WHERE exam_id = $1 AND status = 'IN_PROGRESS'
+ORDER BY started_at DESC
+`
+
+func (q *Queries) ListInProgressAttemptsByExam(ctx context.Context, examID uuid.NullUUID) ([]ExamAttempt, error) {
+	rows, err := q.db.Query(ctx, listInProgressAttemptsByExam, examID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExamAttempt
+	for rows.Next() {
+		var i ExamAttempt
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExamID,
+			&i.StudentID,
+			&i.StartedAt,
+			&i.SubmittedAt,
+			&i.Score,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const publishDraftExamsBySubject = `-- name: PublishDraftExamsBySubject :exec
 UPDATE exams
 SET status = 'PUBLISHED', updated_at = NOW()

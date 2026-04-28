@@ -439,3 +439,22 @@ func (r *ExamRepository) ClosePublishedExamsBySubject(ctx context.Context, subje
 
 	return queries.ClosePublishedExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
 }
+
+func (r *ExamRepository) ListInProgressAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcAttempts, err := queries.ListInProgressAttemptsByExam(ctx, uuid.NullUUID{UUID: examID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var attempts []domain.ExamAttempt
+	for _, attempt := range sqlcAttempts {
+		attempts = append(attempts, mapSqlcAttemptToDomain(attempt))
+	}
+
+	return attempts, nil
+}

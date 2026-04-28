@@ -75,15 +75,15 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
 							{ param.Subject.Title }
 						</h1>
-						if param.Subject.Status == domain.SubjectStatusPublished {
-							<div id="admin-subject-timer" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-primary font-mono text-lg font-bold transition-colors shadow-sm ring-1 ring-primary/10">
-								@icon.Clock(icon.Props{Class: "h-5 w-5"})
-								<span id="admin-timer-display">--:--:--</span>
-							</div>
-						}
 					</div>
 					<p class="text-slate-500 mt-1">Edit subject information</p>
 				</div>
+				if param.Subject.Status == domain.SubjectStatusPublished {
+					<div id="admin-subject-timer" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-black font-mono text-lg font-bold transition-colors shadow-sm ring-1 ring-black/10">
+						@icon.Clock(icon.Props{Class: "h-5 w-5"})
+						<span id="admin-timer-display">--:--:--</span>
+					</div>
+				}
 			</div>
 			@TabsSubject(param)
 		</div>

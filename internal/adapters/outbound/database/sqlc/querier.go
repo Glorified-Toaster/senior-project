@@ -68,6 +68,7 @@ type Querier interface {
 	ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error)
 	ListExamsCreatedBy(ctx context.Context, createdBy uuid.NullUUID) ([]Exam, error)
 	ListExamsForStudent(ctx context.Context, studentID uuid.UUID) ([]Exam, error)
+	ListInProgressAttemptsByExam(ctx context.Context, examID uuid.NullUUID) ([]ExamAttempt, error)
 	ListInstructorsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListInstructorsBySubjectIDRow, error)
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListStudentsBySubjectIDRow, error)
