@@ -568,7 +568,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
-		totalMarks, err := strconv.Atoi(totalMarksStr)
+		totalMarks, err := strconv.ParseFloat(totalMarksStr, 64)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Exam Failed", "Invalid total marks", toast.VariantError)
@@ -587,7 +587,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			SubjectID:   subjectID,
 			CreatedBy:   createdBy,
 			Description: &description,
-			TotalMarks:  int32(totalMarks),
+			TotalMarks:  totalMarks,
 			Status:      domain.ExamStatusDraft,
 		})
 		if err != nil {
@@ -627,7 +627,7 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 		passScoreStr := ctx.PostForm("pass_score")
 		statusStr := ctx.PostForm("status")
 
-		passScore, _ := strconv.Atoi(passScoreStr)
+		passScore, _ := strconv.ParseFloat(passScoreStr, 64)
 
 		var duration int32
 		if durationStr != "" {
@@ -655,7 +655,7 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 			Title:           name,
 			Description:     &description,
 			DurationMinutes: duration,
-			PassScore:       int32(passScore),
+			PassScore:       passScore,
 			Status:          domain.SubjectStatus(statusStr),
 		})
 		if err != nil {
@@ -731,7 +731,7 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 		passScoreStr := ctx.PostForm("pass_score")
 		statusStr := ctx.PostForm("status")
 
-		passScore, _ := strconv.Atoi(passScoreStr)
+		passScore, _ := strconv.ParseFloat(passScoreStr, 64)
 
 		var duration int32
 		if durationStr != "" {
@@ -752,7 +752,7 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 			Title:           name,
 			Description:     &description,
 			DurationMinutes: duration,
-			PassScore:       int32(passScore),
+			PassScore:       passScore,
 			Status:          domain.SubjectStatus(statusStr),
 		})
 		if err != nil {
@@ -889,13 +889,13 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 			return
 		}
 
-		totalMarks, _ := strconv.Atoi(totalMarksStr)
+		totalMarks, _ := strconv.ParseFloat(totalMarksStr, 64)
 
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
 			ID:          examID,
 			Title:       name,
 			Description: &description,
-			TotalMarks:  int32(totalMarks),
+			TotalMarks:  totalMarks,
 			Status:      domain.ExamStatus(statusStr),
 		})
 		if err != nil {
@@ -1018,7 +1018,7 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			return
 		}
 
-		questionMarksInt, err := strconv.Atoi(questionMarks)
+		questionMarksFloat, err := strconv.ParseFloat(questionMarks, 64)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Create Question Failed", "Invalid question marks", toast.VariantError)
@@ -1036,7 +1036,7 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			QuestionTitle: questionTitle,
 			QuestionText:  questionText,
 			QuestionType:  questionType,
-			Marks:         questionMarksInt,
+			Marks:         questionMarksFloat,
 			Choices:       choices,
 		})
 
@@ -1064,7 +1064,7 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			QuestionTitle: questionTitle,
 			QuestionText:  questionText,
 			QuestionType:  domain.QuestionType(questionType),
-			Marks:         questionMarksInt,
+			Marks:         questionMarksFloat,
 			ImageURL:      questionImageURL,
 			Checksum:      questionChecksum,
 		})
@@ -1314,9 +1314,9 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			}
 		}
 
-		questionMarksInt, _ := strconv.Atoi(questionMarks)
-		if questionMarksInt <= 0 {
-			questionMarksInt = 1
+		questionMarksFloat, _ := strconv.ParseFloat(questionMarks, 64)
+		if questionMarksFloat <= 0 {
+			questionMarksFloat = 1
 		}
 
 		if questionImage != nil {
@@ -1324,8 +1324,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 				ID:            id,
 				QuestionTitle: questionTitle,
 				QuestionText:  questionText,
-				QuestionType:  domain.QuestionType(questionType),
-				Marks:         questionMarksInt,
+				Marks:         questionMarksFloat,
 				ImageURL:      questionImageURL,
 			})
 		} else {
@@ -1334,7 +1333,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 				QuestionTitle: questionTitle,
 				QuestionText:  questionText,
 				QuestionType:  domain.QuestionType(questionType),
-				Marks:         questionMarksInt,
+				Marks:         questionMarksFloat,
 			})
 
 		}
@@ -2035,7 +2034,7 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 					attempts, _ := h.App.ListInProgressAttemptsByExam(ctx.Request.Context(), exam.ID)
 					questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
 
-					questionMarks := make(map[uuid.UUID]int)
+					questionMarks := make(map[uuid.UUID]float64)
 					for _, q := range questions {
 						questionMarks[q.ID] = q.Marks
 					}
@@ -2045,11 +2044,11 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 					for _, attempt := range attempts {
 						studentsWithAttempt[attempt.StudentID] = true
 						answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
-						var totalScore int32
+						var totalScore float64
 						for _, answer := range answers {
 							if answer.IsCorrect != nil && *answer.IsCorrect {
 								if marks, ok := questionMarks[answer.QuestionID]; ok {
-									totalScore += int32(marks)
+									totalScore += marks
 								}
 							}
 						}
@@ -2070,7 +2069,7 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 						if err != nil {
 							continue
 						}
-						_ = h.App.SubmitExamAttempt(ctx.Request.Context(), newAttempt.ID, 0)
+						_ = h.App.SubmitExamAttempt(ctx.Request.Context(), newAttempt.ID, 0.0)
 					}
 				}
 

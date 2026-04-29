@@ -23,6 +23,7 @@ import (
  "uot-exam/web/templates/components/badge"
  "uot-exam/web/templates/components/selectbox"
  "uot-exam/web/templates/components/dialog"
+ "fmt"
 )
 
 type EditExamPageParam struct {
@@ -321,11 +322,12 @@ templ ExamInformationTab(param EditExamPageParam) {
 				Type: input.TypeNumber,
 				ID: "exam_total_marks",
 				Name: "exam_total_marks",
-				Value: strconv.Itoa(int(param.Exam.TotalMarks)),
+				Value: fmt.Sprintf("%.2f", param.Exam.TotalMarks),
 				Class: "mb-4",
 				Disabled: string(param.Exam.Status) != "DRAFT",
 				Attributes: templ.Attributes{
 					"min": "0",
+					"step": "0.1",
 				},
 			})
 			</div>
@@ -510,22 +512,22 @@ templ QuestionsTab(param EditExamPageParam) {
 	}),
 	Value: strconv.Itoa(len(param.Questions)),
 })
-@components.TotalCard(components.TotalCardProps{
-	Title: "Pass Score",
-	Description: "Minimum score required to pass.",
-	Icon: icon.CircleCheck(icon.Props{
-		Class: "h-10 w-10 text-green-500",
-	}),
-	Value: strconv.Itoa(int(param.Subject.PassScore)) + " / " + strconv.Itoa(int(param.Subject.TotalMarks)),
-})
-@components.TotalCard(components.TotalCardProps{
-	Title: "Total Marks",
-	Description: "Total marks available in this exam.",
-	Icon: icon.Trophy(icon.Props{
-		Class: "h-10 w-10 text-yellow-500",
-	}),
-	Value: strconv.Itoa(int(param.Exam.TotalMarks)),
-})
+	@components.TotalCard(components.TotalCardProps{
+		Title: "Pass Score",
+		Description: "Minimum score required to pass.",
+		Icon: icon.CircleCheck(icon.Props{
+			Class: "h-10 w-10 text-green-500",
+		}),
+		Value: fmt.Sprintf("%.2f / %.2f", param.Subject.PassScore, param.Subject.TotalMarks),
+	})
+	@components.TotalCard(components.TotalCardProps{
+		Title: "Total Marks",
+		Description: "Total marks available in this exam.",
+		Icon: icon.Trophy(icon.Props{
+			Class: "h-10 w-10 text-yellow-500",
+		}),
+		Value: fmt.Sprintf("%.2f", param.Exam.TotalMarks),
+	})
 </div>
 	@card.Card() {
 		@card.Header() {

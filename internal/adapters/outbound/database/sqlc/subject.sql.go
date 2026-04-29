@@ -157,7 +157,7 @@ type CreateSubjectParams struct {
 	Title           string            `json:"title"`
 	Description     *string           `json:"description"`
 	DurationMinutes int32             `json:"duration_minutes"`
-	PassScore       int32             `json:"pass_score"`
+	PassScore       float64           `json:"pass_score"`
 	Status          SubjectStatusType `json:"status"`
 }
 
@@ -795,7 +795,7 @@ type UpdateSubjectParams struct {
 	Title           string            `json:"title"`
 	Description     *string           `json:"description"`
 	DurationMinutes int32             `json:"duration_minutes"`
-	PassScore       int32             `json:"pass_score"`
+	PassScore       float64           `json:"pass_score"`
 	Status          SubjectStatusType `json:"status"`
 }
 

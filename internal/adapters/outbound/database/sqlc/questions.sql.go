@@ -100,7 +100,7 @@ type CreateQuestionParams struct {
 	QuestionTitle string           `json:"question_title"`
 	QuestionText  string           `json:"question_text"`
 	QuestionType  QuestionTypeType `json:"question_type"`
-	Marks         int32            `json:"marks"`
+	Marks         float64          `json:"marks"`
 	QuestionImage *string          `json:"question_image"`
 	Checksum      *string          `json:"checksum"`
 }
@@ -353,7 +353,7 @@ type UpdateQuestionParams struct {
 	QuestionTitle string           `json:"question_title"`
 	QuestionText  string           `json:"question_text"`
 	QuestionType  QuestionTypeType `json:"question_type"`
-	Marks         int32            `json:"marks"`
+	Marks         float64          `json:"marks"`
 	QuestionImage *string          `json:"question_image"`
 }
 

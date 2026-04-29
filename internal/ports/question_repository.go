@@ -22,7 +22,7 @@ type UpdateQuestionParams struct {
 	QuestionTitle string
 	QuestionText  string
 	QuestionType  domain.QuestionType
-	Marks         int
+	Marks         float64
 	ImageURL      string
 }
 
@@ -31,7 +31,7 @@ type CreateQuestionParams struct {
 	QuestionTitle string
 	QuestionText  string
 	QuestionType  domain.QuestionType
-	Marks         int
+	Marks         float64
 	ImageURL      string
 	Checksum      string
 }

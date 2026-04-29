@@ -19,8 +19,8 @@ type Subject struct {
 	Title           string
 	Description     *string
 	DurationMinutes int32
-	TotalMarks      int32
-	PassScore       int32
+	TotalMarks      float64
+	PassScore       float64
 
 	Status          SubjectStatus
 	CreatedAt       time.Time

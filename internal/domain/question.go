@@ -13,7 +13,7 @@ type Question struct {
 	QuestionText  string     `json:"question_text"`
 	QuestionType  string     `json:"question_type"`
 	QuestionImage string     `json:"question_image"`
-	Marks         int        `json:"marks"`
+	Marks         float64    `json:"marks"`
 	Choices       []Choice   `json:"choices"`
 	Checksum      string     `json:"checksum"`
 	CreatedAt     time.Time  `json:"created_at"`

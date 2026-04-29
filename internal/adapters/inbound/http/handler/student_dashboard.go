@@ -364,16 +364,16 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 		questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), examID)
 
 		// Build a map of question ID to marks
-		questionMarks := make(map[uuid.UUID]int)
+		questionMarks := make(map[uuid.UUID]float64)
 		for _, q := range questions {
 			questionMarks[q.ID] = q.Marks
 		}
 
-		var totalScore int32
+		var totalScore float64
 		for _, answer := range answers {
 			if answer.IsCorrect != nil && *answer.IsCorrect {
 				if marks, ok := questionMarks[answer.QuestionID]; ok {
-					totalScore += int32(marks)
+					totalScore += marks
 				}
 			}
 		}
@@ -395,7 +395,7 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 		if totalExams > 0 && submittedExams >= totalExams {
 			ctx.Header("HX-Redirect", fmt.Sprintf("/student/subject/%s/result", exam.SubjectID.String()))
 		} else {
-			ctx.Header("HX-Redirect", "/student/dashboard")
+			ctx.Header("HX-Redirect", fmt.Sprintf("/student/subject/%s", exam.SubjectID.String()))
 		}
 	}
 }
@@ -422,16 +422,16 @@ func (h *UserHandler) StudentAutoSubmit() gin.HandlerFunc {
 		answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
 		questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), examID)
 
-		questionMarks := make(map[uuid.UUID]int)
+		questionMarks := make(map[uuid.UUID]float64)
 		for _, q := range questions {
 			questionMarks[q.ID] = q.Marks
 		}
 
-		var totalScore int32
+		var totalScore float64
 		for _, answer := range answers {
 			if answer.IsCorrect != nil && *answer.IsCorrect {
 				if marks, ok := questionMarks[answer.QuestionID]; ok {
-					totalScore += int32(marks)
+					totalScore += marks
 				}
 			}
 		}
@@ -467,16 +467,16 @@ func (h *UserHandler) StudentSubjectAutoSubmit() gin.HandlerFunc {
 			answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
 			questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
 
-			questionMarks := make(map[uuid.UUID]int)
+			questionMarks := make(map[uuid.UUID]float64)
 			for _, q := range questions {
 				questionMarks[q.ID] = q.Marks
 			}
 
-			var totalScore int32
+			var totalScore float64
 			for _, answer := range answers {
 				if answer.IsCorrect != nil && *answer.IsCorrect {
 					if marks, ok := questionMarks[answer.QuestionID]; ok {
-						totalScore += int32(marks)
+						totalScore += marks
 					}
 				}
 			}
@@ -528,22 +528,68 @@ func (h *UserHandler) StudentSubjectResult() gin.HandlerFunc {
 		// Get all exams and their attempts for the subject
 		exams, _ := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
 		var examResults []studentPages.ExamResult
-		var totalSubjectScore int32
-		var maxPossibleScore int32
+		var totalSubjectScore float64
+		var maxPossibleScore float64
 
 		for _, exam := range exams {
 			if exam.Status != domain.ExamStatusPublished {
 				continue
 			}
 			attempt, err := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, userID)
-			score := int32(0)
-			if err == nil && attempt.Score != nil {
-				score = *attempt.Score
+			score := float64(0)
+			correctQuestions := 0
+			totalQuestions := 0
+			timeSpentMinutes := float64(0)
+
+			var questionResults []studentPages.QuestionResult
+			answersMap := make(map[uuid.UUID]domain.StudentAnswer)
+
+			if err == nil {
+				if attempt.Score != nil {
+					score = *attempt.Score
+				}
+				if attempt.SubmittedAt != nil {
+					timeSpentMinutes = attempt.SubmittedAt.Sub(attempt.StartedAt).Minutes()
+				}
+				answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
+				for _, a := range answers {
+					answersMap[a.QuestionID] = a
+					if a.IsCorrect != nil && *a.IsCorrect {
+						correctQuestions++
+					}
+				}
 			}
+
+			questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+			totalQuestions = len(questions)
+
+			for i, q := range questions {
+				isCorrect := false
+				if ans, ok := answersMap[q.ID]; ok {
+					if ans.IsCorrect != nil && *ans.IsCorrect {
+						isCorrect = true
+					}
+				}
+				title := q.QuestionTitle
+				if title == "" {
+					title = fmt.Sprintf("Question %d", i+1)
+				} else {
+					title = fmt.Sprintf("Question %d: %s", i+1, title)
+				}
+				questionResults = append(questionResults, studentPages.QuestionResult{
+					Title:     title,
+					IsCorrect: isCorrect,
+				})
+			}
+
 			examResults = append(examResults, studentPages.ExamResult{
-				Title:      exam.Title,
-				Score:      score,
-				TotalMarks: exam.TotalMarks,
+				Title:            exam.Title,
+				Score:            score,
+				TotalMarks:       exam.TotalMarks,
+				CorrectQuestions: correctQuestions,
+				TotalQuestions:   totalQuestions,
+				TimeSpentMinutes: timeSpentMinutes,
+				Questions:        questionResults,
 			})
 			totalSubjectScore += score
 			maxPossibleScore += exam.TotalMarks
@@ -572,8 +618,8 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 		user, _ := h.App.GetUserByID(ctx.Request.Context(), userID)
 
 		exams, _ := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
-		var totalScore int32
-		var maxScore int32
+		var totalScore float64
+		var maxScore float64
 
 		m := maroto.New(config.NewBuilder().Build())
 
@@ -621,7 +667,8 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 		// Exam Table Header
 		m.AddRows(
 			row.New(10).Add(
-				col.New(8).Add(text.New("Exam Title", props.Text{Style: fontstyle.Bold})),
+				col.New(6).Add(text.New("Exam Title", props.Text{Style: fontstyle.Bold})),
+				col.New(2).Add(text.New("Time Spent", props.Text{Style: fontstyle.Bold, Align: align.Center})),
 				col.New(2).Add(text.New("Score", props.Text{Style: fontstyle.Bold, Align: align.Center})),
 				col.New(2).Add(text.New("Total", props.Text{Style: fontstyle.Bold, Align: align.Center})),
 			),
@@ -632,45 +679,82 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 				continue
 			}
 			attempt, err := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, userID)
-			score := int32(0)
-			if err == nil && attempt.Score != nil {
-				score = *attempt.Score
+			score := float64(0)
+			timeSpent := "N/A"
+
+			if err == nil {
+				if attempt.Score != nil {
+					score = *attempt.Score
+				}
+				if attempt.SubmittedAt != nil {
+					duration := attempt.SubmittedAt.Sub(attempt.StartedAt)
+					timeSpent = fmt.Sprintf("%dm %ds", int(duration.Minutes()), int(duration.Seconds())%60)
+				}
 			}
 			totalScore += score
 			maxScore += exam.TotalMarks
 
 			m.AddRows(
-				row.New(8).Add(
-					col.New(8).Add(text.New(exam.Title)),
-					col.New(2).Add(text.New(fmt.Sprintf("%d", score), props.Text{Align: align.Center})),
-					col.New(2).Add(text.New(fmt.Sprintf("%d", exam.TotalMarks), props.Text{Align: align.Center})),
+				row.New(10).Add(
+					col.New(6).Add(text.New(exam.Title, props.Text{Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(timeSpent, props.Text{Align: align.Center, Size: 9})),
+					col.New(2).Add(text.New(fmt.Sprintf("%.2f", score), props.Text{Align: align.Center, Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Align: align.Center, Style: fontstyle.Bold})),
 				),
 			)
+
+			// Detailed question breakdown
+			if err == nil {
+				answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
+				questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+
+				answersMap := make(map[uuid.UUID]domain.StudentAnswer)
+				for _, a := range answers {
+					answersMap[a.QuestionID] = a
+				}
+
+				for i, q := range questions {
+					status := "Incorrect"
+					statusColor := &props.Color{Red: 200, Green: 0, Blue: 0}
+					if ans, ok := answersMap[q.ID]; ok && ans.IsCorrect != nil && *ans.IsCorrect {
+						status = "Correct"
+						statusColor = &props.Color{Red: 0, Green: 150, Blue: 0}
+					}
+
+					title := q.QuestionTitle
+					if title == "" {
+						title = fmt.Sprintf("Question %d", i+1)
+					} else {
+						title = fmt.Sprintf("Question %d: %s", i+1, title)
+					}
+
+					m.AddRows(
+						row.New(6).Add(
+							col.New(1).Add(text.New("")),
+							col.New(9).Add(text.New(title, props.Text{Size: 8, Color: &props.Color{Red: 100, Green: 100, Blue: 100}})),
+							col.New(2).Add(text.New(status, props.Text{Size: 8, Align: align.Center, Color: statusColor})),
+						),
+					)
+				}
+			}
+			m.AddRows(line.NewRow(2))
 		}
 
 		// Summary
 		m.AddRows(
 			line.NewRow(2),
 			row.New(12).Add(
-				col.New(8).Add(text.New("TOTAL SCORE", props.Text{Style: fontstyle.Bold})),
-				col.New(2).Add(text.New(fmt.Sprintf("%d", totalScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
-				col.New(2).Add(text.New(fmt.Sprintf("%d", maxScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
+				col.New(8).Add(text.New("TOTAL SUBJECT SCORE", props.Text{Style: fontstyle.Bold})),
+				col.New(2).Add(text.New(fmt.Sprintf("%.2f", totalScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
+				col.New(2).Add(text.New(fmt.Sprintf("%.2f", maxScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
 			),
 		)
 
-		// QR Code for verification
 		m.AddRows(
-			row.New(40).Add(
-				col.New(12).Add(
-					code.NewBar("https://uot-exam.edu", props.Barcode{
-						Center:  true,
-						Percent: 50,
-					}),
-				),
-			),
-			row.New(10).Add(
+			row.New(20).Add(
 				col.New(12).Add(
 					text.New("Verified by UOT Exam System", props.Text{
+						Top:   10,
 						Size:  8,
 						Align: align.Center,
 						Style: fontstyle.Italic,
@@ -754,16 +838,16 @@ func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
 					answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
 					questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
 
-					questionMarks := make(map[uuid.UUID]int)
+					questionMarks := make(map[uuid.UUID]float64)
 					for _, q := range questions {
 						questionMarks[q.ID] = q.Marks
 					}
 
-					var totalScore int32
+					var totalScore float64
 					for _, answer := range answers {
 						if answer.IsCorrect != nil && *answer.IsCorrect {
 							if marks, ok := questionMarks[answer.QuestionID]; ok {
-								totalScore += int32(marks)
+								totalScore += marks
 							}
 						}
 					}

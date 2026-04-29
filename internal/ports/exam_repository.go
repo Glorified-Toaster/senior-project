@@ -24,7 +24,7 @@ type ExamRepository interface {
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.UUID) ([]domain.ExamAttempt, error)
 	GetAttemptByExamAndStudent(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error)
 	StartExamAttempt(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error)
-	SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error
+	SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score float64) error
 	SaveAnswer(ctx context.Context, attemptID uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID, isCorrect bool) (domain.StudentAnswer, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.UUID) ([]domain.StudentAnswer, error)
 	CountExamsBySubject(ctx context.Context, subjectID uuid.UUID) (int64, error)
@@ -52,7 +52,7 @@ type CreateExamParams struct {
 	SubjectID   uuid.UUID
 	Title       string
 	Description *string
-	TotalMarks  int32
+	TotalMarks  float64
 	StartTime   *string
 	EndTime     *string
 	Status      domain.ExamStatus
@@ -63,7 +63,7 @@ type UpdateExamParams struct {
 	ID          uuid.UUID
 	Title       string
 	Description *string
-	TotalMarks  int32
+	TotalMarks  float64
 	Status      domain.ExamStatus
 }
 

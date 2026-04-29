@@ -48,7 +48,7 @@ func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, erro
 			continue
 		}
 
-		marks, err := strconv.Atoi(record[1])
+		marks, err := strconv.ParseFloat(record[1], 64)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +117,7 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
 		csvWriter.Write([]string{
 			question.QuestionTitle,
-			strconv.Itoa(question.Marks),
+			fmt.Sprintf("%.2f", question.Marks),
 			question.QuestionType,
 			question.QuestionText,
 			choices[0],

@@ -164,7 +164,7 @@ func (app *Application) StartExamAttempt(ctx context.Context, examID uuid.UUID, 
 	return attempt, err
 }
 
-func (app *Application) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error {
+func (app *Application) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score float64) error {
 	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		return app.examRepo.SubmitExamAttempt(txCtx, attemptID, score)
 	})

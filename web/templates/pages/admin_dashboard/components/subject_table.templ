@@ -86,7 +86,7 @@ templ ExamCard(exam domain.Exam) {
 						Class:   "mt-2",
 					}) {
 						@icon.ChartBar(icon.Props{Class: "h-4 w-4"})
-						{ fmt.Sprintf("%d", exam.TotalMarks) }
+						{ fmt.Sprintf("%.2f", exam.TotalMarks) }
 					}
 				}
 			}
@@ -152,7 +152,7 @@ templ SubjectCard(subject domain.Subject) {
 						}
 						@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
 							@icon.ChartBar(icon.Props{Class: "h-3 w-3 mr-1"})
-							{ fmt.Sprintf("%d/%d", subject.PassScore, subject.TotalMarks) }
+							{ fmt.Sprintf("%.2f / %.2f", subject.PassScore, subject.TotalMarks) }
 						}
 					</div>
 				}
@@ -293,7 +293,8 @@ templ DialogAddSubject() {
 							Placeholder: "Passing score",
 							Required:    true,
 							Attributes: templ.Attributes{
-								"min": "1",
+								"min": "0.1",
+								"step": "0.1",
 							},
 						})
 					</div>

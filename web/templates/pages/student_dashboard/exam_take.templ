@@ -262,7 +262,7 @@ templ ExamQuestionItem(question domain.Question, choices []domain.Choice, number
 				}
 				<div class="flex items-center gap-2">
 					@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-						{ strconv.Itoa(question.Marks) } Marks
+						{ fmt.Sprintf("%.2f", question.Marks) } Marks
 					}
 					<span id={ "answered-indicator-" + question.ID.String() }
 						class={ "h-2 w-2 rounded-full transition-colors", templ.KV("bg-primary", isAnswered(param.AnsweredChoices, question.ID)), templ.KV("bg-slate-200", !isAnswered(param.AnsweredChoices, question.ID)) }>
@@ -296,7 +296,7 @@ templ ExamQuestionCodeItem(question domain.Question, choices []domain.Choice, nu
 				}
 				<div class="flex items-center gap-2">
 					@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-						{ strconv.Itoa(question.Marks) } Marks
+						{ fmt.Sprintf("%.2f", question.Marks) } Marks
 					}
 					<span id={ "answered-indicator-" + question.ID.String() }
 						class={ "h-2 w-2 rounded-full transition-colors", templ.KV("bg-primary", isAnswered(param.AnsweredChoices, question.ID)), templ.KV("bg-slate-200", !isAnswered(param.AnsweredChoices, question.ID)) }>
@@ -332,7 +332,7 @@ templ ExamImageQuestionItem(question domain.Question, choices []domain.Choice, n
 				}
 				<div class="flex items-center gap-2">
 					@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-						{ strconv.Itoa(question.Marks) } Marks
+						{ fmt.Sprintf("%.2f", question.Marks) } Marks
 					}
 					<span id={ "answered-indicator-" + question.ID.String() }
 						class={ "h-2 w-2 rounded-full transition-colors", templ.KV("bg-primary", isAnswered(param.AnsweredChoices, question.ID)), templ.KV("bg-slate-200", !isAnswered(param.AnsweredChoices, question.ID)) }>

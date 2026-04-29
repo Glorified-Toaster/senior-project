@@ -122,7 +122,7 @@ type CreateExamParams struct {
 	SubjectID   uuid.NullUUID  `json:"subject_id"`
 	Title       string         `json:"title"`
 	Description *string        `json:"description"`
-	TotalMarks  int32          `json:"total_marks"`
+	TotalMarks  float64        `json:"total_marks"`
 	Status      ExamStatusType `json:"status"`
 	CreatedBy   uuid.NullUUID  `json:"created_by"`
 }
@@ -294,18 +294,36 @@ func (q *Queries) ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullU
 }
 
 const listAttemptsByStudent = `-- name: ListAttemptsByStudent :many
-SELECT id, exam_id, student_id, started_at, submitted_at, score, status, created_at FROM exam_attempts WHERE student_id = $1 ORDER BY started_at DESC
+SELECT ea.id, ea.exam_id, ea.student_id, ea.started_at, ea.submitted_at, ea.score, ea.status, ea.created_at, e.title as exam_title, s.title as subject_title
+FROM exam_attempts ea
+JOIN exams e ON ea.exam_id = e.id
+JOIN subjects s ON e.subject_id = s.id
+WHERE ea.student_id = $1 
+ORDER BY ea.started_at DESC
 `
 
-func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ExamAttempt, error) {
+type ListAttemptsByStudentRow struct {
+	ID           uuid.UUID          `json:"id"`
+	ExamID       uuid.NullUUID      `json:"exam_id"`
+	StudentID    uuid.NullUUID      `json:"student_id"`
+	StartedAt    pgtype.Timestamptz `json:"started_at"`
+	SubmittedAt  pgtype.Timestamptz `json:"submitted_at"`
+	Score        pgtype.Float8      `json:"score"`
+	Status       AttemptStatusType  `json:"status"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ExamTitle    string             `json:"exam_title"`
+	SubjectTitle string             `json:"subject_title"`
+}
+
+func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ListAttemptsByStudentRow, error) {
 	rows, err := q.db.Query(ctx, listAttemptsByStudent, studentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ExamAttempt
+	var items []ListAttemptsByStudentRow
 	for rows.Next() {
-		var i ExamAttempt
+		var i ListAttemptsByStudentRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ExamID,
@@ -315,6 +333,8 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 			&i.Score,
 			&i.Status,
 			&i.CreatedAt,
+			&i.ExamTitle,
+			&i.SubjectTitle,
 		); err != nil {
 			return nil, err
 		}
@@ -657,8 +677,8 @@ WHERE id = $2
 `
 
 type SubmitExamAttemptParams struct {
-	Score pgtype.Int4 `json:"score"`
-	ID    uuid.UUID   `json:"id"`
+	Score pgtype.Float8 `json:"score"`
+	ID    uuid.UUID     `json:"id"`
 }
 
 func (q *Queries) SubmitExamAttempt(ctx context.Context, arg SubmitExamAttemptParams) error {
@@ -681,7 +701,7 @@ type UpdateExamParams struct {
 	ID          uuid.UUID      `json:"id"`
 	Title       string         `json:"title"`
 	Description *string        `json:"description"`
-	TotalMarks  int32          `json:"total_marks"`
+	TotalMarks  float64        `json:"total_marks"`
 	Status      ExamStatusType `json:"status"`
 }
 

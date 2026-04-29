@@ -9,6 +9,7 @@ type Variant string
 const (
 	VariantDefault     Variant = "default"
 	VariantSecondary   Variant = "secondary"
+	VariantSuccess     Variant = "success"
 	VariantDestructive Variant = "destructive"
 	VariantOutline     Variant = "outline"
 )
@@ -53,6 +54,8 @@ func (p Props) variantClasses() string {
 		return "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground"
 	case VariantSecondary:
 		return "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90"
+	case VariantSuccess:
+		return "border-transparent bg-[#16a34a] text-white [a&]:hover:bg-emerald-700/90"
 	default:
 		return "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90"
 	}

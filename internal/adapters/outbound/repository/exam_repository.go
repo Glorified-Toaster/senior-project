@@ -254,11 +254,11 @@ func (r *ExamRepository) ListExamsCreatedBy(ctx context.Context, instructorID uu
 	return exams, nil
 }
 
-func toInt32Ptr(val pgtype.Int4) *int32 {
+func toFloat64Ptr(val pgtype.Float8) *float64 {
 	if !val.Valid {
 		return nil
 	}
-	return &val.Int32
+	return &val.Float64
 }
 
 func mapSqlcAttemptToDomain(attempt sqlc.ExamAttempt) domain.ExamAttempt {
@@ -268,9 +268,24 @@ func mapSqlcAttemptToDomain(attempt sqlc.ExamAttempt) domain.ExamAttempt {
 		StudentID:   attempt.StudentID.UUID,
 		StartedAt:   attempt.StartedAt.Time,
 		SubmittedAt: toTimePtr(attempt.SubmittedAt),
-		Score:       toInt32Ptr(attempt.Score),
+		Score:       toFloat64Ptr(attempt.Score),
 		Status:      domain.AttemptStatus(attempt.Status),
 		CreatedAt:   attempt.CreatedAt.Time,
+	}
+}
+
+func mapSqlcAttemptRowToDomain(attempt sqlc.ListAttemptsByStudentRow) domain.ExamAttempt {
+	return domain.ExamAttempt{
+		ID:           attempt.ID,
+		ExamID:       attempt.ExamID.UUID,
+		StudentID:    attempt.StudentID.UUID,
+		StartedAt:    attempt.StartedAt.Time,
+		SubmittedAt:  toTimePtr(attempt.SubmittedAt),
+		Score:        toFloat64Ptr(attempt.Score),
+		Status:       domain.AttemptStatus(attempt.Status),
+		CreatedAt:    attempt.CreatedAt.Time,
+		ExamTitle:    attempt.ExamTitle,
+		SubjectTitle: attempt.SubjectTitle,
 	}
 }
 
@@ -287,7 +302,7 @@ func (r *ExamRepository) ListAttemptsByStudent(ctx context.Context, studentID uu
 
 	var attempts []domain.ExamAttempt
 	for _, attempt := range sqlcAttempts {
-		attempts = append(attempts, mapSqlcAttemptToDomain(attempt))
+		attempts = append(attempts, mapSqlcAttemptRowToDomain(attempt))
 	}
 
 	return attempts, nil
@@ -327,7 +342,7 @@ func (r *ExamRepository) StartExamAttempt(ctx context.Context, examID uuid.UUID,
 	return mapSqlcAttemptToDomain(attempt), nil
 }
 
-func (r *ExamRepository) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score int32) error {
+func (r *ExamRepository) SubmitExamAttempt(ctx context.Context, attemptID uuid.UUID, score float64) error {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
@@ -335,7 +350,7 @@ func (r *ExamRepository) SubmitExamAttempt(ctx context.Context, attemptID uuid.U
 
 	return queries.SubmitExamAttempt(ctx, sqlc.SubmitExamAttemptParams{
 		ID:    attemptID,
-		Score: pgtype.Int4{Int32: score, Valid: true},
+		Score: pgtype.Float8{Float64: score, Valid: true},
 	})
 }
 

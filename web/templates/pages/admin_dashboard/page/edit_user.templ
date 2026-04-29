@@ -258,7 +258,8 @@ templ AttemptTableContainer(attempts []domain.ExamAttempt) {
 				<table class="w-full text-sm text-left">
 					<thead class="text-xs uppercase bg-muted">
 						<tr>
-							<th class="px-4 py-3 font-medium">Exam ID</th>
+							<th class="px-4 py-3 font-medium">Subject</th>
+							<th class="px-4 py-3 font-medium">Exam Name</th>
 							<th class="px-4 py-3 font-medium">Started At</th>
 							<th class="px-4 py-3 font-medium">Status</th>
 							<th class="px-4 py-3 font-medium">Score</th>
@@ -268,7 +269,8 @@ templ AttemptTableContainer(attempts []domain.ExamAttempt) {
 						if len(attempts) > 0 {
 							for _, attempt := range attempts {
 								<tr class="bg-card hover:bg-muted/50 transition-colors">
-									<td class="px-4 py-3 truncate max-w-[200px]">{ attempt.ExamID.String() }</td>
+									<td class="px-4 py-3 truncate max-w-[200px] font-medium text-slate-900">{ attempt.SubjectTitle }</td>
+									<td class="px-4 py-3 truncate max-w-[200px] font-medium text-slate-900">{ attempt.ExamTitle }</td>
 									<td class="px-4 py-3">{ attempt.StartedAt.Format("Jan 02, 2006 15:04") }</td>
 									<td class="px-4 py-3">
 										switch attempt.Status {
@@ -282,7 +284,7 @@ templ AttemptTableContainer(attempts []domain.ExamAttempt) {
 									</td>
 									<td class="px-4 py-3 font-semibold">
 										if attempt.Score != nil {
-											{ fmt.Sprintf("%d", *attempt.Score) }
+											{ fmt.Sprintf("%.2f", *attempt.Score) }
 										} else {
 											<span class="text-muted-foreground">-</span>
 										}
@@ -291,7 +293,7 @@ templ AttemptTableContainer(attempts []domain.ExamAttempt) {
 							}
 						} else {
 							<tr>
-								<td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
+								<td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
 									No attempts found
 								</td>
 							</tr>

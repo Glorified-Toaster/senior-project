@@ -42,11 +42,21 @@ type ExamTakeParam struct {
 	AnsweredChoices map[uuid.UUID]uuid.UUID
 }
 
+// QuestionResult holds the result of a single question
+type QuestionResult struct {
+	Title     string
+	IsCorrect bool
+}
+
 // ExamResult holds results for a single exam for the result page
 type ExamResult struct {
-	Title      string
-	Score      int32
-	TotalMarks int32
+	Title            string
+	Score            float64
+	TotalMarks       float64
+	CorrectQuestions int
+	TotalQuestions   int
+	TimeSpentMinutes float64
+	Questions        []QuestionResult
 }
 
 // ResultParam holds data for the subject result page
@@ -54,6 +64,6 @@ type ResultParam struct {
 	Student           domain.User
 	Subject           domain.Subject
 	ExamResults       []ExamResult
-	TotalSubjectScore int32
-	MaxPossibleScore  int32
+	TotalSubjectScore float64
+	MaxPossibleScore  float64
 }

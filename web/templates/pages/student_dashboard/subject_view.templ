@@ -69,11 +69,11 @@ templ SubjectViewPage(param SubjectViewParam) {
 							</div>
 							<div class="text-center border-x border-slate-100">
 								<p class="text-sm text-slate-500 mb-1">Total Marks</p>
-								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Subject.TotalMarks) }</p>
+								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Subject.TotalMarks) }</p>
 							</div>
 							<div class="text-center">
 								<p class="text-sm text-slate-500 mb-1">Pass Score</p>
-								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Subject.PassScore) }</p>
+								<p class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Subject.PassScore) }</p>
 							</div>
 						</div>
 
@@ -113,7 +113,7 @@ templ SubjectViewPage(param SubjectViewParam) {
 			</div>
 
 			if len(param.Exams) == 0 {
-				@card.Card(card.Props{Class: "animate-in fade-in slide-in-from-bottom-4 duration-500"}) {
+				@card.Card(card.Props{Class: "animate-in fade-in slide-in-from-bottom-4 duration-500 p-5"}) {
 					@card.Content(card.ContentProps{Class: "p-12 text-center"}) {
 						@icon.FileText(icon.Props{Class: "h-12 w-12 text-slate-300 mx-auto mb-4"})
 						<h3 class="text-lg font-semibold text-slate-600 mb-2">No Exams Available</h3>
@@ -204,12 +204,12 @@ templ ExamCard(info ExamInfo, allSubmitted bool, durationMinutes int32) {
 					<div class="flex items-center gap-4 text-sm mt-2 text-slate-500">
 						<span class="flex items-center gap-1">
 							@icon.Target(icon.Props{Class: "h-3.5 w-3.5"})
-							{ fmt.Sprintf("%d marks", info.Exam.TotalMarks) }
+							{ fmt.Sprintf("%.2f marks", info.Exam.TotalMarks) }
 						</span>
 						if info.Attempt != nil && allSubmitted && info.Attempt.Score != nil {
 							<span class="flex items-center gap-1 font-medium text-primary">
 								@icon.Award(icon.Props{Class: "h-3.5 w-3.5"})
-								{ fmt.Sprintf("Score: %d / %d", *info.Attempt.Score, info.Exam.TotalMarks) }
+								{ fmt.Sprintf("Score: %.2f / %.2f", *info.Attempt.Score, info.Exam.TotalMarks) }
 							</span>
 						}
 					</div>

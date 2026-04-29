@@ -44,7 +44,12 @@ WHERE id = $2;
 SELECT * FROM exam_attempts WHERE id = $1;
 
 -- name: ListAttemptsByStudent :many
-SELECT * FROM exam_attempts WHERE student_id = $1 ORDER BY started_at DESC;
+SELECT ea.*, e.title as exam_title, s.title as subject_title
+FROM exam_attempts ea
+JOIN exams e ON ea.exam_id = e.id
+JOIN subjects s ON e.subject_id = s.id
+WHERE ea.student_id = $1 
+ORDER BY ea.started_at DESC;
 
 
 -- name: SaveAnswer :one

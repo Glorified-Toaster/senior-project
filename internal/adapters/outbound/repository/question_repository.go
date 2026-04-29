@@ -30,7 +30,7 @@ func (r *QuestionRepository) Create(ctx context.Context, arg ports.CreateQuestio
 		QuestionTitle: arg.QuestionTitle,
 		QuestionText:  arg.QuestionText,
 		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
-		Marks:         int32(arg.Marks),
+		Marks:         arg.Marks,
 		QuestionImage: &arg.ImageURL,
 		Checksum:      &arg.Checksum,
 	})
@@ -99,7 +99,7 @@ func mapSqlcQuestionToDomain(question sqlc.Question) domain.Question {
 		QuestionText:  question.QuestionText,
 		QuestionType:  string(question.QuestionType),
 		QuestionImage: imageURL,
-		Marks:         int(question.Marks),
+		Marks:         question.Marks,
 		CreatedAt:     question.CreatedAt.Time,
 		UpdatedAt:     question.UpdatedAt.Time,
 		DeletedAt:     &question.DeletedAt.Time,
@@ -173,7 +173,7 @@ func (r *QuestionRepository) Update(ctx context.Context, arg ports.UpdateQuestio
 		QuestionTitle: arg.QuestionTitle,
 		QuestionText:  arg.QuestionText,
 		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
-		Marks:         int32(arg.Marks),
+		Marks:         arg.Marks,
 		QuestionImage: &arg.ImageURL,
 	})
 	if err != nil {

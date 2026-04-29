@@ -20,7 +20,7 @@ type Exam struct {
 	Title       string
 	ExamID      string
 	Description *string
-	TotalMarks  int32
+	TotalMarks  float64
 	StartTime   time.Time
 	EndTime     time.Time
 	Status      ExamStatus
@@ -40,14 +40,16 @@ const (
 )
 
 type ExamAttempt struct {
-	ID          uuid.UUID
-	ExamID      uuid.UUID
-	StudentID   uuid.UUID
-	StartedAt   time.Time
-	SubmittedAt *time.Time
-	Score       *int32
-	Status      AttemptStatus
-	CreatedAt   time.Time
+	ID           uuid.UUID
+	ExamID       uuid.UUID
+	StudentID    uuid.UUID
+	StartedAt    time.Time
+	SubmittedAt  *time.Time
+	Score        *float64
+	Status       AttemptStatus
+	CreatedAt    time.Time
+	ExamTitle    string
+	SubjectTitle string
 }
 
 type StudentAnswer struct {

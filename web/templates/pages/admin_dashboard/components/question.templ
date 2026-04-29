@@ -53,7 +53,7 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
 					<span class="latex-content">{ question.QuestionTitle }</span>
 				}
 				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-					{ strconv.Itoa(question.Marks) } Marks
+					{ fmt.Sprintf("%.2f", question.Marks) } Marks
 				}
 			</div>
 		}
@@ -127,7 +127,7 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
 					<span class="latex-content">{ question.QuestionTitle }</span>
 				}
 				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-					{ strconv.Itoa(question.Marks) } Marks
+					{ fmt.Sprintf("%.2f", question.Marks) } Marks
 				}
 			</div>
 		}
@@ -163,7 +163,7 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 					<span class="latex-content">{ question.QuestionTitle }</span>
 				}
 				@badge.Badge(badge.Props{Variant: badge.VariantSecondary, Class: "ml-auto"}) {
-					{ strconv.Itoa(question.Marks) } Marks
+					{ fmt.Sprintf("%.2f", question.Marks) } Marks
 				}
 			</div>
 		}
@@ -350,9 +350,10 @@ templ CodeQuestionForm(question domain.Question) {
 				ID: "question_marks",
 				Name: "question_marks",
 				Class: "mb-4",
-				Value: strconv.Itoa(utils.IfElse(question.Marks > 0, question.Marks, 1)),
+				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
 				Attributes: templ.Attributes{
-					"min": "1",
+					"min": "0.1",
+					"step": "0.1",
 				},
 			})
 		</div>
@@ -413,9 +414,10 @@ templ ImageQuestionForm(question domain.Question , imgReq bool) {
 				ID: "question_marks",
 				Name: "question_marks",
 				Class: "mb-4",
-				Value: strconv.Itoa(utils.IfElse(question.Marks > 0, question.Marks, 1)),
+				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
 				Attributes: templ.Attributes{
-					"min": "1",
+					"min": "0.1",
+					"step": "0.1",
 				},
 			})
 		</div>
@@ -688,7 +690,8 @@ templ TextQuestionForm(question domain.Question, id string) {
 				Class: "mb-4",
 				Value: "1",
 				Attributes: templ.Attributes{
-					"min": "1",
+					"min": "0.1",
+					"step": "0.1",
 				},
 			})
 		</div>

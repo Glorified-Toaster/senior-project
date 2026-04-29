@@ -250,7 +250,7 @@ type Exam struct {
 	SubjectID   uuid.NullUUID      `json:"subject_id"`
 	Title       string             `json:"title"`
 	Description *string            `json:"description"`
-	TotalMarks  int32              `json:"total_marks"`
+	TotalMarks  float64            `json:"total_marks"`
 	Status      ExamStatusType     `json:"status"`
 	CreatedBy   uuid.NullUUID      `json:"created_by"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
@@ -264,7 +264,7 @@ type ExamAttempt struct {
 	StudentID   uuid.NullUUID      `json:"student_id"`
 	StartedAt   pgtype.Timestamptz `json:"started_at"`
 	SubmittedAt pgtype.Timestamptz `json:"submitted_at"`
-	Score       pgtype.Int4        `json:"score"`
+	Score       pgtype.Float8      `json:"score"`
 	Status      AttemptStatusType  `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
@@ -277,7 +277,7 @@ type Question struct {
 	QuestionType  QuestionTypeType   `json:"question_type"`
 	QuestionImage *string            `json:"question_image"`
 	Checksum      *string            `json:"checksum"`
-	Marks         int32              `json:"marks"`
+	Marks         float64            `json:"marks"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
@@ -297,8 +297,8 @@ type Subject struct {
 	Title           string             `json:"title"`
 	Description     *string            `json:"description"`
 	DurationMinutes int32              `json:"duration_minutes"`
-	TotalMarks      int32              `json:"total_marks"`
-	PassScore       int32              `json:"pass_score"`
+	TotalMarks      float64            `json:"total_marks"`
+	PassScore       float64            `json:"pass_score"`
 	Status          SubjectStatusType  `json:"status"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
