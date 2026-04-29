@@ -139,6 +139,7 @@ templ DeletedUsersContent(params AdminDashboardParam) {
 			</div>
 			@components.UserTable(components.UserTableProps{
 				Title:         "Deleted Users",
+				ID:            "deleted-users-table-container",
 				Users:         params.DeletedUsers,
 				TotalCount:    params.DeletedUsersCount,
 				Limit:         12,
@@ -148,5 +149,6 @@ templ DeletedUsersContent(params AdminDashboardParam) {
 				SearchAPI:     "/admin/dashboard/users/deleted/search",
 				AddUser:       false,
 				DeletedButton: true,
+				RestoreButton: true,
 			})
 }

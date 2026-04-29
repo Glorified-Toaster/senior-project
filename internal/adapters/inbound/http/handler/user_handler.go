@@ -260,7 +260,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}, false))
+			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false))
 			return
 		}
 
@@ -444,11 +444,13 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			totalCount, _ := h.App.CountDeletedUsers(ctx)
 			ctx.Header("Content-Type", "text/html")
 			render.Render(ctx, components.UserTableContainer(components.UserTableProps{
-				Users:      users,
-				TotalCount: totalCount,
-				Limit:      int32(limit),
-				Offset:     int32(offset),
-				BaseURL:    "/admin/dashboard/users/deleted",
+				ID:            "deleted-users-table-container",
+				Users:         users,
+				TotalCount:    totalCount,
+				Limit:         int32(limit),
+				Offset:        int32(offset),
+				BaseURL:       "/admin/dashboard/users/deleted",
+				RestoreButton: true,
 			}))
 			return
 		}
@@ -468,6 +470,7 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			users = []domain.User{}
 		}
 		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			ID:            "deleted-users-table-container",
 			Users:         users,
 			TotalCount:    totalCount,
 			Limit:         int32(limit),
@@ -476,6 +479,7 @@ func (h *UserHandler) SearchDeletedUsers() gin.HandlerFunc {
 			Search:        true,
 			SearchAPI:     "/admin/users/search-deleted",
 			ShowAllButton: false,
+			RestoreButton: true,
 		}))
 	}
 }
@@ -571,6 +575,48 @@ func (h *UserHandler) ToggleUserActive() gin.HandlerFunc {
 			SearchAPI:     "/admin/users/search",
 			AddUser:       true,
 			DeletedButton: true,
+		}))
+	}
+}
+
+func (h *UserHandler) RestoreUser() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Restore User Failed", "Invalid user ID", toast.VariantError)
+			return
+		}
+
+		if err = h.App.RestoreUser(ctx, id); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Restore User Failed", "Failed to restore user: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		// Reload deleted users list
+		deletedUsers, err := h.App.ListDeletedUsers(ctx, ports.ListDeletedUsersParams{
+			Limit:  12,
+			Offset: 0,
+		})
+		if err != nil {
+			deletedUsers = []domain.User{}
+		}
+
+		totalCount, _ := h.App.CountDeletedUsers(ctx)
+
+		ctx.Header("Content-Type", "text/html")
+		helpers.Toast(ctx, "User Restored", "The user has been restored successfully.", toast.VariantSuccess)
+		render.Render(ctx, components.UserTableContainer(components.UserTableProps{
+			ID:            "deleted-users-table-container",
+			Users:         deletedUsers,
+			TotalCount:    totalCount,
+			Limit:         12,
+			Offset:        0,
+			BaseURL:       "/admin/dashboard/users/deleted",
+			Search:        true,
+			SearchAPI:     "/admin/dashboard/users/deleted/search",
+			RestoreButton: true,
 		}))
 	}
 }

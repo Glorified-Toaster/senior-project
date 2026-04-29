@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "citext";
 -- =============================
 CREATE TYPE user_role_type AS ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
 CREATE TYPE exam_status_type AS ENUM ('DRAFT', 'PUBLISHED', 'CLOSED');
-CREATE TYPE subject_status_type AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE subject_status_type AS ENUM ('ACTIVE', 'INACTIVE', 'PUBLISHED');
 CREATE TYPE attempt_status_type AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'GRADED', 'CANCELLED');
 CREATE TYPE question_type_type AS ENUM ('TEXT', 'CODE', 'IMAGE');
 
@@ -43,8 +43,65 @@ BEGIN
         FROM exams
         WHERE subject_id = target_subject_id
           AND deleted_at IS NULL
+          AND status = 'PUBLISHED'
     ), 0)
     WHERE id = target_subject_id;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION redistribute_exam_marks()
+RETURNS TRIGGER AS $$
+DECLARE
+    target_exam_id UUID;
+    v_total_marks INT;
+    v_q_count INT;
+    v_base_mark INT;
+    v_remainder INT;
+BEGIN
+    IF pg_trigger_depth() > 1 THEN
+        RETURN NULL;
+    END IF;
+
+    IF TG_TABLE_NAME = 'exams' THEN
+        target_exam_id := NEW.id;
+        v_total_marks := NEW.total_marks;
+    ELSIF TG_TABLE_NAME = 'questions' THEN
+        IF TG_OP = 'DELETE' THEN
+            target_exam_id := OLD.exam_id;
+        ELSE
+            target_exam_id := NEW.exam_id;
+        END IF;
+        
+        SELECT total_marks INTO v_total_marks FROM exams WHERE id = target_exam_id;
+    END IF;
+
+    IF target_exam_id IS NULL OR v_total_marks IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT COUNT(*) INTO v_q_count 
+    FROM questions 
+    WHERE exam_id = target_exam_id AND deleted_at IS NULL;
+
+    IF v_q_count > 0 THEN
+        v_base_mark := v_total_marks / v_q_count;
+        v_remainder := v_total_marks % v_q_count;
+
+        WITH ranked_questions AS (
+            SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC) as row_num
+            FROM questions
+            WHERE exam_id = target_exam_id AND deleted_at IS NULL
+        )
+        UPDATE questions q
+        SET marks = CASE 
+            WHEN r.row_num <= v_remainder THEN v_base_mark + 1
+            ELSE v_base_mark
+        END
+        FROM ranked_questions r
+        WHERE q.id = r.id;
+    END IF;
 
     RETURN NULL;
 END;
@@ -167,9 +224,14 @@ FOR EACH ROW
 EXECUTE FUNCTION sync_subject_total_marks();
 
 CREATE TRIGGER sync_subject_total_marks_on_update
-AFTER UPDATE OF total_marks, deleted_at, subject_id ON exams
+AFTER UPDATE OF total_marks, deleted_at, subject_id, status ON exams
 FOR EACH ROW
 EXECUTE FUNCTION sync_subject_total_marks();
+
+CREATE TRIGGER trigger_redistribute_on_exam_update
+AFTER UPDATE OF total_marks ON exams
+FOR EACH ROW
+EXECUTE FUNCTION redistribute_exam_marks();
 
 CREATE OR REPLACE FUNCTION validate_exam_creator_role()
 RETURNS TRIGGER AS $$
@@ -232,6 +294,11 @@ CREATE TRIGGER questions_updated_at
 BEFORE UPDATE ON questions
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trigger_redistribute_on_question_change
+AFTER INSERT OR DELETE OR UPDATE OF exam_id, deleted_at ON questions
+FOR EACH ROW
+EXECUTE FUNCTION redistribute_exam_marks();
 
 -- =============================
 -- CHOICES
@@ -316,7 +383,7 @@ CREATE TABLE student_answers (
 );
 
 CREATE INDEX idx_answers_attempt ON student_answers(attempt_id);
-CREATE INDEX idx_answers_question ON student_answers(question_id);
+CREATE INDEX idx_answers_question ON student_answers(question_id); 
 
 -- +goose StatementEnd
 
@@ -338,6 +405,7 @@ DROP FUNCTION IF EXISTS validate_exam_creator_role() CASCADE;
 DROP FUNCTION IF EXISTS check_choices_count() CASCADE;
 DROP FUNCTION IF EXISTS sync_subject_total_marks() CASCADE;
 DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS redistribute_exam_marks() CASCADE;
 
 DROP TYPE IF EXISTS attempt_status_type CASCADE;
 DROP TYPE IF EXISTS exam_status_type CASCADE;

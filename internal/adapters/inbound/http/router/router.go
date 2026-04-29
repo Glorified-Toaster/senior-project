@@ -157,6 +157,7 @@ func (r *Router) SetupRoutes() {
 		userRoutes.GET("/list-all", r.userHandler.ListAllUsers())
 		userRoutes.DELETE("/delete/:id", r.userHandler.SoftDeleteUser())
 		userRoutes.POST("/toggle/:id", r.userHandler.ToggleUserActive())
+		userRoutes.POST("/restore/:id", r.userHandler.RestoreUser())
 	}
 
 	// Student routes

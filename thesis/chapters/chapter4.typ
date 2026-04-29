@@ -11,26 +11,26 @@ This section evaluates this system's architecture (*Hexagonal Architecture*) aga
     [Feature], [MVC], [Hexagonal Architecture],
     [Coupling],
     [
- The model is tightly coupled to the view and controller.
+      The model is tightly coupled to the view and controller.
     ],
     [
- The core domain is decoupled from the dependencies of the other system layers.
+      The core domain is decoupled from the dependencies of the other system layers.
     ],
 
     [Testability],
     [
- Hard to test due to the tight coupling between layers. If a function that requires a database connection is tested, it must have a database connection.
+      Hard to test due to the tight coupling between layers. If a function that requires a database connection is tested, it must have a database connection.
     ],
     [
- Easy to test due to the separation of concerns and layers. A mock database connection can be used to test the same function without a database connection.
+      Easy to test due to the separation of concerns and layers. A mock database connection can be used to test the same function without a database connection.
     ],
 
     [Replaceability],
     [
- Changing the database or web framework requires a system-wide rewrite.
+      Changing the database or web framework requires a system-wide rewrite.
     ],
     [
- Changing the database or web framework is easy and requires rewriting only the adapters without touching the core domain of the system.
+      Changing the database or web framework is easy and requires rewriting only the adapters without touching the core domain of the system.
     ],
 
     [Complexity], [Lower initial complexity], [Higher initial complexity],
@@ -41,7 +41,7 @@ This section evaluates this system's architecture (*Hexagonal Architecture*) aga
 )
 
 The hexagonal architecture approach seems at first glance to be more complex and more verbose than the traditional *MVC*. But, it provides a better architectural solution when the codebase grows, and the system becomes more _complex_.
-
+#pagebreak()
 == Performance Evaluation
 The system performance was evaluated using:
 
@@ -57,7 +57,7 @@ The hardware used for the evaluation is:
 
 The *k6* script is as follows:
 
-```JavaScript
+```javascript
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
@@ -76,6 +76,7 @@ export default function () {
  sleep(1);
 }
 ```
+#pagebreak()
 === Response Time
 A different request endpoint was tested and aggregated into a *_CSV_* file, then visualized.
 #figure(
@@ -104,7 +105,7 @@ A different request endpoint was tested and aggregated into a *_CSV_* file, then
     [Type safety], [Dynamic typing], [Dynamic typing], [Strong static typing],
     [Binary size],
     [
- N/A],
+      N/A],
     [N/A],
     [60MB \ (self-contained \ binary)],
 
@@ -146,3 +147,4 @@ The previous system had only one type of question, and it was simply the text qu
 
 === Manual Data Entry
 The previous system had no mechanism to automate the data entry process. This system is solving this problem by implementing a *CSV* _import/export_ feature to add questions, exams, users, and subjects to the system.
+

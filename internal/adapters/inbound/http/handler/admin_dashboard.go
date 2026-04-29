@@ -17,9 +17,10 @@ import (
 	"uot-exam/web/templates/pages/admin_dashboard/page"
 	"uot-exam/web/templates/render"
 
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"time"
 )
 
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
@@ -670,7 +671,7 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 func (h *UserHandler) PublishSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		idStr := ctx.Param("id")
-		
+
 		subjectID, err := uuid.Parse(idStr)
 		if err != nil {
 			helpers.Toast(ctx, "Publish Failed", "Invalid subject ID format", toast.VariantError)

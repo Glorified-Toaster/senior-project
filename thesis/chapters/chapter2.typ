@@ -265,7 +265,7 @@ CREATE TYPE user_role_type AS
 ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
 ```
 
-== User Interface 
+== User Interface
 The user interface is designed using *Tailwind CSS* and *TemplUI* component library with *HTMX* for the interactivity. The UI is designed to be _user-friendly_.
 
 The Use of *TemplUI* component library gives the UI a modern and unified look and feel. The library provides a high level and customizable components.

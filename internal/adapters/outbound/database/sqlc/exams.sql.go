@@ -486,6 +486,8 @@ func (q *Queries) PublishDraftExamsBySubject(ctx context.Context, subjectID uuid
 const saveAnswer = `-- name: SaveAnswer :one
 INSERT INTO student_answers (attempt_id, question_id, selected_choice_id, is_correct)
 VALUES ($1, $2, $3, $4)
+ON CONFLICT (attempt_id, question_id) 
+DO UPDATE SET selected_choice_id = EXCLUDED.selected_choice_id, is_correct = EXCLUDED.is_correct, answered_at = NOW()
 RETURNING id, attempt_id, question_id, selected_choice_id, is_correct, answered_at
 `
 

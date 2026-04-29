@@ -395,7 +395,7 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 		if totalExams > 0 && submittedExams >= totalExams {
 			ctx.Header("HX-Redirect", fmt.Sprintf("/student/subject/%s/result", exam.SubjectID.String()))
 		} else {
-			ctx.Header("HX-Redirect", fmt.Sprintf("/student/subject/%s", exam.SubjectID.String()))
+			ctx.Header("HX-Redirect", "/student/dashboard")
 		}
 	}
 }
@@ -663,7 +663,7 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 			row.New(40).Add(
 				col.New(12).Add(
 					code.NewBar("https://uot-exam.edu", props.Barcode{
-						Center: true,
+						Center:  true,
 						Percent: 50,
 					}),
 				),
@@ -680,7 +680,7 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 		)
 
 		document, _ := m.Generate()
-		
+
 		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s_result.pdf", subject.Title))
 		ctx.Header("Content-Type", "application/pdf")
 		ctx.Data(200, "application/pdf", document.GetBytes())
@@ -742,7 +742,6 @@ func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
 			remaining := int(examEndTime.Sub(now).Seconds())
 			if remaining <= 0 {
 				// Time up! Force submit
-				hasSubmitted := false
 				for _, exam := range exams {
 					if exam.Status != domain.ExamStatusPublished {
 						continue
@@ -770,20 +769,12 @@ func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
 					}
 
 					_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
-					hasSubmitted = true
 				}
 
-				if hasSubmitted {
-					_ = conn.WriteJSON(map[string]interface{}{
-						"remaining_seconds": 0,
-						"auto_submit":       true,
-					})
-				} else {
-					_ = conn.WriteJSON(map[string]interface{}{
-						"remaining_seconds": 0,
-						"auto_submit":       false,
-					})
-				}
+				_ = conn.WriteJSON(map[string]interface{}{
+					"remaining_seconds": 0,
+					"auto_submit":       true,
+				})
 				break
 			} else {
 				err := conn.WriteJSON(map[string]interface{}{

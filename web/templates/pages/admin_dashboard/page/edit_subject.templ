@@ -2,6 +2,7 @@ package page
 
 import "uot-exam/internal/domain"
 import "fmt"
+import "time"
 import "uot-exam/web/templates/pages/admin_dashboard/components"
 import "uot-exam/web/templates/components/navbar"
 import "uot-exam/web/templates/components/sidebar"
@@ -245,14 +246,14 @@ templ InformationTab(param EditSubjectPageParam) {
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="space-y-2 mb-4">
 						@label.Label(label.Props{For: "duration_minutes", Class: "mb-2"}) {
-							Duration (Minutes)
+							Duration (HH:MM)
 						}
-						@input.Input(input.Props{
-							Type:        input.TypeNumber,
+						@timepicker.TimePicker(timepicker.Props{
 							ID:          "duration_minutes",
 							Name:        "duration_minutes",
-							Value:       fmt.Sprintf("%d", param.Subject.DurationMinutes),
-							Required:    true,
+							Value:       time.Date(0, 1, 1, int(param.Subject.DurationMinutes/60), int(param.Subject.DurationMinutes%60), 0, 0, time.UTC),
+							Use12Hours:  false,
+							Placeholder: "Select duration",
 							Disabled:    param.Subject.Status == domain.SubjectStatusPublished,
 						})
 					</div>
