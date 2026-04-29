@@ -15,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/johnfercher/maroto/v2"
-	"github.com/johnfercher/maroto/v2/pkg/components/code"
 	"github.com/johnfercher/maroto/v2/pkg/components/col"
 	"github.com/johnfercher/maroto/v2/pkg/components/image"
 	"github.com/johnfercher/maroto/v2/pkg/components/line"
@@ -623,55 +622,101 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 
 		m := maroto.New(config.NewBuilder().Build())
 
-		// Header
 		m.AddRows(
-			row.New(30).Add(
+			row.New(5).Add(
 				col.New(12).Add(
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{
+						Size:  6,
+						Align: align.Right,
+						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
+					}),
+				),
+			),
+		)
+
+		// Header Bar
+		m.AddRows(
+			row.New(20).Add(
+				col.New(4).Add(
 					image.NewFromFile("./web/static/images/uotLogo.png", props.Rect{
 						Center:  true,
-						Percent: 80,
+						Percent: 90,
 					}),
 				),
-			),
-			row.New(20).Add(
-				col.New(12).Add(
-					text.New("Certificate of Completion", props.Text{
+				col.New(8).Add(
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{
+						Size:  14,
+						Style: fontstyle.Bold,
+						Align: align.Right,
 						Top:   5,
-						Size:  16,
+						Color: &props.Color{Red: 30, Green: 58, Blue: 138}, // Dark Blue
+					}),
+				),
+			),
+			line.NewRow(1),
+		)
+
+		m.AddRows(row.New(10))
+
+		// Title Section
+		m.AddRows(
+			row.New(15).Add(
+				col.New(12).Add(
+					text.New("EXAM REPORT", props.Text{
+						Size:  20,
 						Style: fontstyle.Bold,
 						Align: align.Center,
+						Color: &props.Color{Red: 15, Green: 23, Blue: 42}, // Slate 900
 					}),
 				),
 			),
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("Subject: %s", subject.Title), props.Text{
+					text.New(subject.Title, props.Text{
 						Size:  12,
-						Style: fontstyle.Bold,
+						Style: fontstyle.BoldItalic,
 						Align: align.Center,
+						Color: &props.Color{Red: 71, Green: 85, Blue: 105}, // Slate 600
 					}),
 				),
 			),
-			line.NewRow(2),
-			row.New(10).Add(
-				col.New(6).Add(
-					text.New(fmt.Sprintf("Student Name: %s", user.FullName), props.Text{Size: 10}),
-				),
-				col.New(6).Add(
-					text.New(fmt.Sprintf("Date: %s", time.Now().Format("2006-01-02")), props.Text{Size: 10, Align: align.Right}),
-				),
-			),
-			line.NewRow(5),
 		)
+
+		m.AddRows(row.New(10))
+
+		// Student Info Box
+		m.AddRows(
+			row.New(8).Add(
+				col.New(12).Add(
+					text.New("STUDENT INFORMATION", props.Text{Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+			row.New(18).Add(
+				col.New(4).Add(
+					text.New("Full Name", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
+					text.New(user.FullName, props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
+				),
+				col.New(4).Add(
+					text.New("Student ID", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(user.Username, props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(4).Add(
+					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(time.Now().Format("Jan 02, 2006 15:04"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+		)
+
+		m.AddRows(row.New(15))
 
 		// Exam Table Header
 		m.AddRows(
 			row.New(10).Add(
-				col.New(6).Add(text.New("Exam Title", props.Text{Style: fontstyle.Bold})),
-				col.New(2).Add(text.New("Time Spent", props.Text{Style: fontstyle.Bold, Align: align.Center})),
-				col.New(2).Add(text.New("Score", props.Text{Style: fontstyle.Bold, Align: align.Center})),
-				col.New(2).Add(text.New("Total", props.Text{Style: fontstyle.Bold, Align: align.Center})),
-			),
+				col.New(5).Add(text.New("EXAM COMPONENT", props.Text{Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
+				col.New(2).Add(text.New("DURATION", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("SCORE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(3).Add(text.New("WEIGHT", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 30, Green: 41, Blue: 59}}), // Slate 800
 		)
 
 		for _, exam := range exams {
@@ -694,13 +739,14 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 			totalScore += score
 			maxScore += exam.TotalMarks
 
+			// Exam Title Row
 			m.AddRows(
-				row.New(10).Add(
-					col.New(6).Add(text.New(exam.Title, props.Text{Style: fontstyle.Bold})),
-					col.New(2).Add(text.New(timeSpent, props.Text{Align: align.Center, Size: 9})),
-					col.New(2).Add(text.New(fmt.Sprintf("%.2f", score), props.Text{Align: align.Center, Style: fontstyle.Bold})),
-					col.New(2).Add(text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Align: align.Center, Style: fontstyle.Bold})),
-				),
+				row.New(12).Add(
+					col.New(5).Add(text.New(exam.Title, props.Text{Size: 10, Style: fontstyle.Bold, Top: 2, Left: 3})),
+					col.New(2).Add(text.New(timeSpent, props.Text{Align: align.Center, Size: 9, Top: 2})),
+					col.New(2).Add(text.New(fmt.Sprintf("%.2f", score), props.Text{Align: align.Center, Size: 10, Style: fontstyle.Bold, Top: 2, Color: &props.Color{Red: 30, Green: 58, Blue: 138}})),
+					col.New(3).Add(text.New(fmt.Sprintf("%.2f marks", exam.TotalMarks), props.Text{Align: align.Center, Size: 9, Top: 2, Color: &props.Color{Red: 71, Green: 85, Blue: 105}, Right: 3})),
+				).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 241, Green: 245, Blue: 249}}), // Slate 100
 			)
 
 			// Detailed question breakdown
@@ -715,10 +761,12 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 
 				for i, q := range questions {
 					status := "Incorrect"
-					statusColor := &props.Color{Red: 200, Green: 0, Blue: 0}
+					qScore := 0.0
+					statusColor := &props.Color{Red: 185, Green: 28, Blue: 28} // Red 700
 					if ans, ok := answersMap[q.ID]; ok && ans.IsCorrect != nil && *ans.IsCorrect {
 						status = "Correct"
-						statusColor = &props.Color{Red: 0, Green: 150, Blue: 0}
+						qScore = q.Marks
+						statusColor = &props.Color{Red: 21, Green: 128, Blue: 61} // Green 700
 					}
 
 					title := q.QuestionTitle
@@ -728,36 +776,64 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 						title = fmt.Sprintf("Question %d: %s", i+1, title)
 					}
 
+					rowStyle := &props.Cell{BackgroundColor: &props.Color{Red: 255, Green: 255, Blue: 255}}
+					if i%2 == 1 {
+						rowStyle.BackgroundColor = &props.Color{Red: 250, Green: 250, Blue: 250}
+					}
+
 					m.AddRows(
-						row.New(6).Add(
+						row.New(8).Add(
 							col.New(1).Add(text.New("")),
-							col.New(9).Add(text.New(title, props.Text{Size: 8, Color: &props.Color{Red: 100, Green: 100, Blue: 100}})),
-							col.New(2).Add(text.New(status, props.Text{Size: 8, Align: align.Center, Color: statusColor})),
-						),
+							col.New(7).Add(text.New(title, props.Text{Size: 8, Color: &props.Color{Red: 51, Green: 65, Blue: 85}, Top: 2, Left: 2})),
+							col.New(2).Add(text.New(status, props.Text{Size: 8, Align: align.Center, Color: statusColor, Top: 2})),
+							col.New(2).Add(text.New(fmt.Sprintf("%.2f / %.2f", qScore, q.Marks), props.Text{Size: 8, Align: align.Center, Color: statusColor, Top: 2, Right: 3})),
+						).WithStyle(rowStyle),
 					)
 				}
 			}
-			m.AddRows(line.NewRow(2))
+			m.AddRows(row.New(5))
 		}
 
-		// Summary
+		m.AddRows(row.New(10))
+
+		// Summary Section
 		m.AddRows(
-			line.NewRow(2),
-			row.New(12).Add(
-				col.New(8).Add(text.New("TOTAL SUBJECT SCORE", props.Text{Style: fontstyle.Bold})),
-				col.New(2).Add(text.New(fmt.Sprintf("%.2f", totalScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
-				col.New(2).Add(text.New(fmt.Sprintf("%.2f", maxScore), props.Text{Style: fontstyle.Bold, Align: align.Center})),
+			row.New(20).Add(
+				col.New(7).Add(text.New("FINAL ASSESSMENT SUMMARY", props.Text{Size: 10, Style: fontstyle.Bold, Top: 6, Left: 3})),
+				col.New(2).Add(
+					text.New("TOTAL SCORE", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Align: align.Right, Top: 3}),
+					text.New(fmt.Sprintf("%.2f", totalScore), props.Text{Size: 12, Style: fontstyle.Bold, Align: align.Right, Top: 10, Color: &props.Color{Red: 15, Green: 23, Blue: 42}}),
+				),
+				col.New(3).Add(
+					text.New("MAX POSSIBLE", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Align: align.Right, Top: 3, Right: 3}),
+					text.New(fmt.Sprintf("/ %.2f", maxScore), props.Text{Size: 12, Style: fontstyle.Bold, Align: align.Right, Top: 10, Color: &props.Color{Red: 71, Green: 85, Blue: 105}, Right: 3}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+		)
+
+		m.AddRows(row.New(40))
+
+		// Signature Section
+		m.AddRows(
+			row.New(20).Add(
+				col.New(7).Add(text.New("")),
+				col.New(5).Add(
+					line.New(props.Line{Thickness: 0.5, Color: &props.Color{Red: 148, Green: 163, Blue: 184}}),
+					text.New("Examiner Official Signature", props.Text{Size: 8, Align: align.Center, Top: 4, Color: &props.Color{Red: 71, Green: 85, Blue: 105}}),
+				),
 			),
 		)
 
+		// Footer
 		m.AddRows(
-			row.New(20).Add(
+			row.New(30).Add(
 				col.New(12).Add(
-					text.New("Verified by UOT Exam System", props.Text{
-						Top:   10,
-						Size:  8,
+					text.New("VERIFIED BY UOT EXAMINATION MANAGEMENT SYSTEM", props.Text{
+						Size:  7,
 						Align: align.Center,
-						Style: fontstyle.Italic,
+						Style: fontstyle.Bold,
+						Top:   2,
+						Color: &props.Color{Red: 30, Green: 58, Blue: 138},
 					}),
 				),
 			),
