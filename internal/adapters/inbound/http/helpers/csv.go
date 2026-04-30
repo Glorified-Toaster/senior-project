@@ -230,3 +230,42 @@ func ParseCSVFile(ctx *gin.Context, fileName string) (file *multipart.FileHeader
 
 	return file, nil
 }
+
+func ExportStudentsCSV(ctx *gin.Context, students []domain.User) {
+	file := &bytes.Buffer{}
+	csvWriter := csv.NewWriter(file)
+
+	csvWriter.Write([]string{
+		"Full Name",
+		"Username",
+		"Role",
+		"Status",
+		"Created At",
+	})
+
+	for _, student := range students {
+		status := "Disabled"
+		if student.IsActive {
+			status = "Enabled"
+		}
+		csvWriter.Write([]string{
+			student.FullName,
+			student.Username,
+			string(student.Role),
+			status,
+			student.CreatedAt.Format("Jan 02, 2006"),
+		})
+	}
+
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	fileName := fmt.Sprintf("students-%d.csv", time.Now().Unix())
+	ctx.Header("Content-Description", "File Transfer")
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	ctx.Header("Content-Type", "text/csv")
+	ctx.Data(http.StatusOK, "text/csv", file.Bytes())
+}

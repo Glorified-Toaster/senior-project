@@ -581,3 +581,15 @@ func (r *UserRepository) SearchStudents(ctx context.Context, arg ports.SearchStu
 
 	return domainUsers, nil
 }
+
+func (r *UserRepository) UpdatePassword(ctx context.Context, id uuid.UUID, hashedPassword string) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+		ID:           id,
+		PasswordHash: hashedPassword,
+	})
+}

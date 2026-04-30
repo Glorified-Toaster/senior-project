@@ -156,8 +156,14 @@ templ StudentsTab(param SubjectViewParam) {
 			AddStudent: true,
 			Students: param.AllStudents,
 			AddStudentAPI: "/instructor/subject/" + param.Subject.ID.String() + "/students/assign",
+			AddStudentCSVAPI: "/instructor/subject/" + param.Subject.ID.String() + "/students/upload-csv",
 			StudentAssignSwapTarget: "#students-user-table-root",
+			ExportURL:   "/instructor/subject/" + param.Subject.ID.String() + "/students/export",
+			UnassignAPI: "/instructor/subject/" + param.Subject.ID.String() + "/students/unassign/:user_id",
             HideActions: true,
+			TotalCount: param.TotalCount,
+			Limit:      param.Limit,
+			Offset:     param.Offset,
 		})
 	</div>
 }

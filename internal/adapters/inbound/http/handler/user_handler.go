@@ -262,7 +262,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false))
+			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false, "", ""))
 			return
 		}
 
@@ -620,5 +620,66 @@ func (h *UserHandler) RestoreUser() gin.HandlerFunc {
 			SearchAPI:     "/admin/dashboard/users/deleted/search",
 			RestoreButton: true,
 		}))
+	}
+}
+
+func (h *UserHandler) ExportSubjectStudentsCSV() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		if helpers.IsTrimmedEmpty(subjectIDStr) {
+			return
+		}
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			return
+		}
+
+		students, err := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		if err != nil {
+			students = []domain.User{}
+		}
+
+		helpers.ExportStudentsCSV(ctx, students)
+	}
+}
+
+func (h *UserHandler) UpdateUserPassword() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Password Failed", "Invalid user ID", toast.VariantError)
+			return
+		}
+
+		newPassword := ctx.PostForm("new_password")
+		confirmPassword := ctx.PostForm("confirm_password")
+
+		if helpers.IsTrimmedEmpty(newPassword) || helpers.IsTrimmedEmpty(confirmPassword) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Password Failed", "Both password fields are required", toast.VariantError)
+			return
+		}
+
+		if newPassword != confirmPassword {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Password Failed", "Passwords do not match", toast.VariantError)
+			return
+		}
+
+		if len(newPassword) < 8 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Password Failed", "Password must be at least 8 characters", toast.VariantError)
+			return
+		}
+
+		if err := h.App.UpdateUserPassword(ctx, id, newPassword); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Password Failed", err.Error(), toast.VariantError)
+			return
+		}
+
+		helpers.Toast(ctx, "Password Updated", "Successfully updated user password", toast.VariantSuccess)
+		ctx.Header("HX-Trigger", "close-dialog")
 	}
 }

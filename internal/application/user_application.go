@@ -5,6 +5,7 @@ import (
 
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
+	"uot-exam/internal/utils/password"
 
 	"github.com/google/uuid"
 )
@@ -242,4 +243,14 @@ func (app *Application) SearchStudents(ctx context.Context, arg ports.SearchStud
 		return nil, err
 	}
 	return users, nil
+}
+
+func (app *Application) UpdateUserPassword(ctx context.Context, id uuid.UUID, newPassword string) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		hashedPassword, err := password.Hash(newPassword)
+		if err != nil {
+			return err
+		}
+		return app.userRepo.UpdatePassword(txCtx, id, hashedPassword)
+	})
 }

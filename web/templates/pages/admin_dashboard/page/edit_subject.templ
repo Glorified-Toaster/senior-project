@@ -471,6 +471,7 @@ templ InstructorsTab(param EditSubjectPageParam) {
 			Instructors: param.AllInstructors,
 			AddInstructorAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/assign",
 			InstructorAssignSwapTarget: "#instructors-user-table-root",
+			UnassignAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/instructors/unassign/:user_id",
 		})
 	</div>
 }
@@ -847,6 +848,8 @@ templ StudentsTab(param EditSubjectPageParam) {
 			Limit:      param.Limit,
 			Offset:     param.Offset,
 			AddStudentCSVAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/assign-csv",
+			ExportURL:   "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/export",
+			UnassignAPI: "/admin/dashboard/subject/" + param.Subject.ID.String() + "/students/unassign/:user_id",
 		})
 	</div>
 

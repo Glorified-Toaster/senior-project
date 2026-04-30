@@ -19,5 +19,8 @@ type SubjectViewParam struct {
 	Subject     domain.Subject
 	Exams       []domain.Exam
 	Students    []domain.User
+	TotalCount  int64
+	Limit       int32
+	Offset      int32
 	AllStudents []domain.User
 }

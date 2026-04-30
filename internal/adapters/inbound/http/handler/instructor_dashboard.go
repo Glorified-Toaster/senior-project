@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"strconv"
 	"strings"
 )
 
@@ -100,7 +101,15 @@ func (h *UserHandler) InstructorSubjectView() gin.HandlerFunc {
 			exams = []domain.Exam{}
 		}
 
-		students, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		limit := int32(10)
+		offset := int32(0)
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+		if l, err := strconv.Atoi(limitStr); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(offsetStr); err == nil { offset = int32(o) }
+
+		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, limit, offset)
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
 		allStudents, _ := h.App.SearchStudents(ctx.Request.Context(), ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
 
 		ctx.Header("Content-Type", "text/html")
@@ -109,6 +118,9 @@ func (h *UserHandler) InstructorSubjectView() gin.HandlerFunc {
 			Subject:    subject,
 			Exams:       exams,
 			Students:    students,
+			TotalCount:  totalCount,
+			Limit:       limit,
+			Offset:      offset,
 			AllStudents: allStudents,
 		})))
 	}
@@ -193,6 +205,7 @@ func (h *UserHandler) SearchInstructorSubjects() gin.HandlerFunc {
 		}
 
 		search := ctx.PostForm("search")
+		if search == "" { search = ctx.Query("search") }
 		subjects, err := h.App.ListSubjectsForInstructor(ctx.Request.Context(), userID)
 		if err != nil {
 			subjects = []domain.Subject{}
@@ -226,7 +239,16 @@ func (h *UserHandler) SearchSubjectStudentsInstructor() gin.HandlerFunc {
 		}
 
 		search := ctx.PostForm("search")
-		students, err := h.App.SearchStudentsBySubjectID(ctx.Request.Context(), subjectID, search, 100, 0)
+		if search == "" { search = ctx.Query("search") }
+		limit := int32(10)
+		offset := int32(0)
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+		if l, err := strconv.Atoi(limitStr); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(offsetStr); err == nil { offset = int32(o) }
+
+		students, err := h.App.SearchStudentsBySubjectID(ctx.Request.Context(), subjectID, search, limit, offset)
+		totalCount, _ := h.App.CountSearchStudentsBySubjectID(ctx.Request.Context(), subjectID, search)
 		if err != nil {
 			students = []domain.User{}
 		}
@@ -235,17 +257,23 @@ func (h *UserHandler) SearchSubjectStudentsInstructor() gin.HandlerFunc {
 
 		ctx.Header("Content-Type", "text/html")
 		adminComponents.UserTableContainer(adminComponents.UserTableProps{
-			Users:     students,
-			Title:     "Students",
-			BaseURL:   "/instructor/subject/" + subjectIDStr + "/students/search",
-			ID:        "students-table",
-			Search:    true,
-			SearchAPI: "/instructor/subject/" + subjectIDStr + "/students/search",
-			AddStudent: true,
-			Students: allStudents,
-			AddStudentAPI: "/instructor/subject/" + subjectIDStr + "/students/assign",
+			Users:                   students,
+			Title:                   "Students",
+			BaseURL:                 "/instructor/subject/" + subjectIDStr + "/students/search",
+			ID:                      "students-table",
+			Search:                  true,
+			SearchAPI:               "/instructor/subject/" + subjectIDStr + "/students/search",
+			TotalCount:              totalCount,
+			Limit:                   limit,
+			Offset:                  offset,
+			AddStudent:              true,
+			Students:                allStudents,
+			AddStudentAPI:           "/instructor/subject/" + subjectIDStr + "/students/assign",
+			AddStudentCSVAPI:        "/instructor/subject/" + subjectIDStr + "/students/upload-csv",
 			StudentAssignSwapTarget: "#students-user-table-root",
-            HideActions: true,
+			ExportURL:               "/instructor/subject/" + subjectIDStr + "/students/export",
+			UnassignAPI:             "/instructor/subject/" + subjectIDStr + "/students/unassign/:user_id",
+			HideActions:             true,
 		}).Render(ctx.Request.Context(), ctx.Writer)
 	}
 }
@@ -287,22 +315,192 @@ func (h *UserHandler) AssignStudentToSubjectInstructor() gin.HandlerFunc {
 		helpers.Toast(ctx, "Students Assigned", "Successfully assigned students to the subject", toast.VariantSuccess)
 
 		// Re-render the entire root to refresh the list
-		students, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		limit := int32(10)
+		offset := int32(0)
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+		if l, err := strconv.Atoi(limitStr); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(offsetStr); err == nil { offset = int32(o) }
+
+		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, limit, offset)
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
 		allStudents, _ := h.App.SearchStudents(ctx.Request.Context(), ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
 
 		ctx.Header("Content-Type", "text/html")
 		adminComponents.UserTableRoot("students-user-table-root", adminComponents.UserTableProps{
-			Users:     students,
-			Title:     "Students",
-			BaseURL:   "/instructor/subject/" + subjectIDStr + "/students/search",
-			ID:        "students-table",
-			Search:    true,
-			SearchAPI: "/instructor/subject/" + subjectIDStr + "/students/search",
-			AddStudent: true,
-			Students: allStudents,
-			AddStudentAPI: "/instructor/subject/" + subjectIDStr + "/students/assign",
+			Users:                   students,
+			Title:                   "Students",
+			BaseURL:                 "/instructor/subject/" + subjectIDStr + "/students/search",
+			ID:                      "students-table",
+			Search:                  true,
+			SearchAPI:               "/instructor/subject/" + subjectIDStr + "/students/search",
+			TotalCount:              totalCount,
+			Limit:                   limit,
+			Offset:                  offset,
+			AddStudent:              true,
+			Students:                allStudents,
+			AddStudentAPI:           "/instructor/subject/" + subjectIDStr + "/students/assign",
+			AddStudentCSVAPI:        "/instructor/subject/" + subjectIDStr + "/students/upload-csv",
 			StudentAssignSwapTarget: "#students-user-table-root",
-            HideActions: true,
+			ExportURL:               "/instructor/subject/" + subjectIDStr + "/students/export",
+			UnassignAPI:             "/instructor/subject/" + subjectIDStr + "/students/unassign/:user_id",
+			HideActions:             true,
+		}).Render(ctx.Request.Context(), ctx.Writer)
+	}
+}
+
+// UnassignStudentFromSubjectInstructor handles unassigning a student from a subject in the instructor dashboard.
+func (h *UserHandler) UnassignStudentFromSubjectInstructor() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		studentIDStr := ctx.Param("user_id")
+
+		if subjectIDStr == "" || studentIDStr == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Subject ID and Student ID are required", toast.VariantError)
+			return
+		}
+
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		studentID, err := uuid.Parse(studentIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Invalid student ID", toast.VariantError)
+			return
+		}
+
+		if err := h.App.UnassignStudentFromSubject(ctx, subjectID, studentID); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", err.Error(), toast.VariantError)
+			return
+		}
+
+		helpers.Toast(ctx, "Student Unassigned", "Successfully unassigned student from the subject", toast.VariantSuccess)
+
+		// Re-render the entire root to refresh the list
+		limit := int32(10)
+		offset := int32(0)
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+		if l, err := strconv.Atoi(limitStr); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(offsetStr); err == nil { offset = int32(o) }
+
+		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, limit, offset)
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		allStudents, _ := h.App.SearchStudents(ctx.Request.Context(), ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
+
+		ctx.Header("Content-Type", "text/html")
+		adminComponents.UserTableRoot("students-user-table-root", adminComponents.UserTableProps{
+			Users:                   students,
+			Title:                   "Students",
+			BaseURL:                 "/instructor/subject/" + subjectIDStr + "/students/search",
+			ID:                      "students-table",
+			Search:                  true,
+			SearchAPI:               "/instructor/subject/" + subjectIDStr + "/students/search",
+			TotalCount:              totalCount,
+			Limit:                   limit,
+			Offset:                  offset,
+			AddStudent:              true,
+			Students:                allStudents,
+			AddStudentAPI:           "/instructor/subject/" + subjectIDStr + "/students/assign",
+			AddStudentCSVAPI:        "/instructor/subject/" + subjectIDStr + "/students/upload-csv",
+			StudentAssignSwapTarget: "#students-user-table-root",
+			UnassignAPI:             "/instructor/subject/" + subjectIDStr + "/students/unassign/:user_id",
+			ExportURL:               "/instructor/subject/" + subjectIDStr + "/students/export",
+			HideActions:             true,
+		}).Render(ctx.Request.Context(), ctx.Writer)
+	}
+}
+
+// AssignStudentToSubjectCSVInstructor handles assigning students to a subject via CSV in the instructor dashboard.
+func (h *UserHandler) AssignStudentToSubjectCSVInstructor() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		file, err := helpers.ParseCSVFile(ctx, "student_csv")
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Invalid file: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		usernames, err := helpers.MapStudentCSVToStruct(file)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "Failed to parse CSV file", toast.VariantError)
+			return
+		}
+
+		var studentIDs []uuid.UUID
+		for _, username := range usernames {
+			user, err := h.App.GetUserByUsername(ctx.Request.Context(), username)
+			if err != nil {
+				continue
+			}
+			if user.Role == domain.RoleStudent {
+				studentIDs = append(studentIDs, user.ID)
+			}
+		}
+
+		if len(studentIDs) == 0 {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Student Failed", "No valid students found in CSV", toast.VariantError)
+			return
+		}
+
+		err = h.App.AssignStudentsToSubject(ctx.Request.Context(), subjectID, studentIDs)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Assign Students Failed", err.Error(), toast.VariantError)
+			return
+		}
+
+		// Success toast
+		helpers.Toast(ctx, "Students Assigned", "Successfully assigned students to the subject", toast.VariantSuccess)
+
+		// Re-render the entire root to refresh the list
+		limit := int32(10)
+		offset := int32(0)
+		limitStr := ctx.Query("limit")
+		offsetStr := ctx.Query("offset")
+		if l, err := strconv.Atoi(limitStr); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(offsetStr); err == nil { offset = int32(o) }
+
+		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), subjectID, limit, offset)
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		allStudents, _ := h.App.SearchStudents(ctx.Request.Context(), ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
+
+		ctx.Header("Content-Type", "text/html")
+		adminComponents.UserTableRoot("students-user-table-root", adminComponents.UserTableProps{
+			Users:                   students,
+			Title:                   "Students",
+			BaseURL:                 "/instructor/subject/" + subjectIDStr + "/students/search",
+			ID:                      "students-table",
+			Search:                  true,
+			SearchAPI:               "/instructor/subject/" + subjectIDStr + "/students/search",
+			TotalCount:              totalCount,
+			Limit:                   limit,
+			Offset:                  offset,
+			AddStudent:              true,
+			Students:                allStudents,
+			AddStudentAPI:           "/instructor/subject/" + subjectIDStr + "/students/assign",
+			AddStudentCSVAPI:        "/instructor/subject/" + subjectIDStr + "/students/upload-csv",
+			StudentAssignSwapTarget: "#students-user-table-root",
+			ExportURL:               "/instructor/subject/" + subjectIDStr + "/students/export",
+			UnassignAPI:             "/instructor/subject/" + subjectIDStr + "/students/unassign/:user_id",
+			HideActions:             true,
 		}).Render(ctx.Request.Context(), ctx.Writer)
 	}
 }

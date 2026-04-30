@@ -167,3 +167,8 @@ WHERE
     )
 ORDER BY last_login DESC NULLS LAST, id ASC
 LIMIT $1 OFFSET $2;
+-- name: UpdateUserPassword :exec
+UPDATE users 
+SET password_hash = $2, 
+    updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL;

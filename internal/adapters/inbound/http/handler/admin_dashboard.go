@@ -1599,7 +1599,7 @@ func (h *UserHandler) AssignInstructorToSubject() gin.HandlerFunc {
 func (h *UserHandler) UnassignInstructorFromSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		subjectID := ctx.Param("id")
-		instructorID := ctx.Param("instructor_id")
+		instructorID := ctx.Param("user_id")
 
 		if subjectID == "" || instructorID == "" {
 			ctx.Header("HX-Reswap", "none")
@@ -2096,5 +2096,60 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 				}
 			}
 		}
+	}
+}
+
+func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID := ctx.Param("id")
+		studentID := ctx.Param("user_id")
+
+		if subjectID == "" || studentID == "" {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Subject ID and Student ID are required", toast.VariantError)
+			return
+		}
+
+		sid, err := uuid.Parse(subjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		stid, err := uuid.Parse(studentID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", "Invalid student ID", toast.VariantError)
+			return
+		}
+
+		if err := h.App.UnassignStudentFromSubject(ctx, sid, stid); err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Unassign Student Failed", err.Error(), toast.VariantError)
+			return
+		}
+
+		helpers.Toast(ctx, "Student Unassigned", "Successfully unassigned student from the subject", toast.VariantSuccess)
+
+		// Re-render the table
+		students, _ := h.App.ListStudentsBySubjectID(ctx, sid)
+		allStudents, _ := h.App.SearchStudents(ctx, ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
+
+		ctx.Header("Content-Type", "text/html")
+		components.UserTableContainer(components.UserTableProps{
+			Users:       students,
+			Title:       "Students",
+			BaseURL:     "/admin/dashboard/subject/" + subjectID + "/students/search",
+			ID:          "students-table",
+			Search:      true,
+			SearchAPI:   "/admin/dashboard/subject/" + subjectID + "/students/search",
+			AddStudent:  true,
+			Students:    allStudents,
+			AddStudentAPI: "/admin/dashboard/subject/" + subjectID + "/students/assign",
+			StudentAssignSwapTarget: "#students-table-container",
+			UnassignAPI: "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
+			ExportURL:   "/admin/dashboard/subject/" + subjectID + "/students/export",
+		}).Render(ctx, ctx.Writer)
 	}
 }

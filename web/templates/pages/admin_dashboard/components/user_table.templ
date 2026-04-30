@@ -1,4 +1,5 @@
 package components
+import "strings"
 
 import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/icon"
@@ -42,6 +43,8 @@ type UserTableProps struct {
 	InstructorAssignSwapTarget string
 	StudentAssignSwapTarget string
 	AddStudentCSVAPI string
+	ExportURL string
+	UnassignAPI string
 }
 
 templ UserTableRoot(wrapperID string, props UserTableProps) {
@@ -89,6 +92,20 @@ templ UserTable(props UserTableProps) {
 					}
 					if props.AddStudent {
 						@AddStudentDialog(props)
+					}
+					if props.ExportURL != "" {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+							Size:    button.SizeSm,
+							Href:    props.ExportURL,
+							Class:   "flex items-center gap-2",
+							Attributes: templ.Attributes{
+								"download": "",
+							},
+						}) {
+							@icon.Download(icon.Props{Class: "h-4 w-4"})
+							Export
+						}
 					}
 				</div>
 			</div>
@@ -363,7 +380,7 @@ templ UserTableContainer(props UserTableProps) {
 					</tr>
 				}
 				@table.Body(table.BodyProps{ID: "user-table-body", Class: "divide-y divide-slate-100"}) {
-				@UserTableRows(props.Users, props.HideActions, props.RestoreButton)
+				@UserTableBody(props)
 				}
 			}
 		</div>
@@ -396,7 +413,11 @@ templ UserTableContainerWithDeleteToast(props UserTableProps) {
 	@UserTableContainer(props)
 }
 
-templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool) {
+templ UserTableBody(props UserTableProps) {
+	@UserTableRows(props.Users, props.HideActions, props.RestoreButton, props.UnassignAPI, "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"))
+}
+
+templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, unassignAPI string, swapTarget string) {
 	if len(users) == 0 {
 		<tr>
 			<td colspan="7" class="p-16 text-center">
@@ -487,8 +508,23 @@ templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool) {
 										}
 									}
 								}
-							</div>
-							if !restoreButton && user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
+							if unassignAPI != "" {
+								@button.Button(button.Props{
+									Variant:    button.VariantGhost,
+									Class:      "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100",
+									Attributes: templ.Attributes{
+										"title":     "Unassign",
+										"hx-post":   strings.Replace(unassignAPI, ":user_id", user.ID.String(), 1),
+										"hx-target": swapTarget,
+										"hx-swap":   "outerHTML",
+										"hx-confirm": "Are you sure you want to unassign this user?",
+									},
+								}) {
+									@icon.UserMinus(icon.Props{Class: "w-3.5 h-3.5 text-red-500"})
+								}
+							}
+						</div>
+						if !restoreButton && user.ID.String() != "" && user.ID.String() != "00000000-0000-0000-0000-000000000000" {
 								@dialog.Dialog(dialog.Props{ID: fmt.Sprintf("delete-user-%s", user.ID.String())}) {
 									@dialog.Content(dialog.ContentProps{HideCloseButton: true, DisableAutoFocus: true}) {
 										@dialog.Header() {
