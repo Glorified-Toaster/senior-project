@@ -55,21 +55,32 @@ templ UserTableRoot(wrapperID string, props UserTableProps) {
 
 templ UserTable(props UserTableProps) {
 	@card.Card(card.Props{Class: "w-full overflow-hidden"}) {
-		@card.Header() {
-			<div class="flex items-center justify-between">
-				<div class="flex items-center gap-2">
-					@icon.Users(icon.Props{Class: "h-7 w-7"})
-					<span class="text-2xl font-bold">
-						{ props.Title }
-					</span>
+		@card.Header(card.HeaderProps{Class: "p-0"}) {
+			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50 p-4 rounded-t-xl">
+				<div class="flex items-center gap-3">
+					<div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm ">
+						@icon.Users(icon.Props{Class: "h-6 w-6"})
+					</div>
+					<div>
+						<h3 class="text-xl font-bold text-slate-800 tracking-tight">
+							{ props.Title }
+						</h3>
+						if props.TotalCount > 0 {
+							<p class="text-xs text-slate-500 font-medium">{ fmt.Sprintf("%d total records", props.TotalCount) }</p>
+						}
+					</div>
 				</div>
-				<div class="flex items-center gap-2">
+				<div class="flex flex-wrap items-center gap-2">
 					if props.Search {
-						<div>
+						<div class="relative group">
+							<div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+								@icon.Search(icon.Props{Class: "h-4 w-4"})
+							</div>
 							@input.Input(input.Props{
 								Type:        input.TypeSearch,
 								Name:        "search",
 								Placeholder: "Search users...",
+								Class:       "pl-9 bg-white border-slate-200 focus:border-primary/50 focus:ring-primary/20 transition-all sm:w-64",
 								Attributes: templ.Attributes{
 									"hx-post":    props.SearchAPI,
 									"hx-trigger": "keyup changed delay:300ms, search",
@@ -80,33 +91,39 @@ templ UserTable(props UserTableProps) {
 						</div>
 					}
 
-					if props.AddUserCSV {
-						@AddUserCSVDialog()
-					}
-
-					if props.AddUser {
-						@AddUserDialog()
-					}
-					if props.AddInstructor {
-						@AddInstructorDialog(props)
-					}
-					if props.AddStudent {
-						@AddStudentDialog(props)
-					}
-					if props.ExportURL != "" {
-						@button.Button(button.Props{
-							Variant: button.VariantOutline,
-							Size:    button.SizeSm,
-							Href:    props.ExportURL,
-							Class:   "flex items-center gap-2",
-							Attributes: templ.Attributes{
-								"download": "",
-							},
-						}) {
-							@icon.Download(icon.Props{Class: "h-4 w-4"})
-							Export
+					<div class="flex items-center gap-2">
+						if props.AddStudent {
+							@AddStudentDialog(props)
 						}
-					}
+
+						if props.AddUserCSV {
+							@AddUserCSVDialog()
+						}
+
+						if props.AddUser {
+							@AddUserDialog()
+						}
+						
+						if props.AddInstructor {
+							@AddInstructorDialog(props)
+						}
+						
+						if props.ExportURL != "" {
+							@button.Button(button.Props{
+								Variant: button.VariantOutline,
+								Size:    button.SizeSm,
+								Href:    props.ExportURL,
+								Class:   "flex items-center gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm transition-all",
+								Attributes: templ.Attributes{
+									"download": "",
+									"title": "Export to CSV",
+								},
+							}) {
+								@icon.Download(icon.Props{Class: "h-4 w-4"})
+								<span class="hidden sm:inline">Export</span>
+							}
+						}
+					</div>
 				</div>
 			</div>
 		}
@@ -290,60 +307,77 @@ templ AddUserDialog() {
 }
 
 templ AddUserCSVDialog() {
-	@dialog.Dialog(){
-		@dialog.Trigger(){
+	@dialog.Dialog(dialog.Props{
+		ID: "add-user-csv-dialog",
+	}) {
+		@dialog.Trigger() {
 			@button.Button(button.Props{
-				Variant: button.VariantSecondary,
-				Size: button.SizeSm,
+				Variant: button.VariantOutline,
+				Size:    button.SizeSm,
+				Class:   "flex items-center gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm transition-all",
+				Attributes: templ.Attributes{"title": "Add Users via CSV"},
 			}) {
-				Add User Via CSV
+				@icon.FilePlus(icon.Props{Class: "h-4 w-4"})
+				<span class="hidden sm:inline">Add Users CSV</span>
 			}
-			}
-			@dialog.Content(){
-				@dialog.Header(){
-					@dialog.Title() {
-						Add User
-					}
-					@dialog.Description(){
-						Add a new user to the platform.
-					}
-			<form hx-post="/admin/dashboard/users/create-csv" 
-			hx-target="#users-table-container" 
-			hx-swap="outerHTML"
-			hx-encoding="multipart/form-data">
-
-			<div class="space-y-2 mb-4">
-				@form.Label(form.LabelProps{For: "csv_file"}) {
-					CSV File
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add Users via CSV
 				}
-				@input.Input(input.Props{
-					ID:          "csv_file",
-					Name:        "csv_file",
-					Placeholder: "Enter CSV file",
-					Type:        input.TypeFile,
-					Required:    true,
-					FileAccept: ".csv",
-				})
-			</div>
-
-			@dialog.Footer(){
-				@dialog.Close(){
+				@dialog.Description() {
+					Bulk import new users to the platform by uploading a CSV file.
+				}
+			}
+			<form
+				id="add-user-csv-form"
+				hx-post="/admin/dashboard/users/create-csv"
+				hx-encoding="multipart/form-data"
+				hx-target="#users-table-container"
+				hx-swap="outerHTML"
+			>
+				<div class="space-y-4 py-4">
+					<div class="space-y-2">
+						@form.Label(form.LabelProps{For: "csv_file", Class: "text-sm font-medium"}) {
+							Select CSV File
+						}
+						<div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/50 transition-all cursor-pointer group">
+							@icon.Upload(icon.Props{Class: "h-8 w-8 text-slate-400 group-hover:text-primary mb-2"})
+							<p class="text-sm text-slate-500 text-center">Click to browse or drag and drop your CSV file here</p>
+							<input 
+								type="file" 
+								id="csv_file" 
+								name="csv_file" 
+								accept=".csv" 
+								required 
+								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							/>
+						</div>
+						<p class="text-[10px] text-slate-400">The CSV should contain: full_name, username, role.</p>
+					</div>
+				</div>
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
 					@button.Button(button.Props{
-						Variant: button.VariantOutline,	
+						Variant: button.VariantDefault,
+						Type:    button.TypeSubmit,
+						Form:    "add-user-csv-form",
+						Class:   "flex items-center gap-2",
 					}) {
-						Cancel
+						@icon.Check(icon.Props{Class: "h-4 w-4"})
+						Import Users
 					}
 				}
-				@button.Button(button.Props{
-					Variant: button.VariantDefault,
-					Type:    button.TypeSubmit,
-				}){
-					Add User
-				}
-			}
-						</form>
-
-			}
+			</form>
 		}
 	}
 }
@@ -414,10 +448,10 @@ templ UserTableContainerWithDeleteToast(props UserTableProps) {
 }
 
 templ UserTableBody(props UserTableProps) {
-	@UserTableRows(props.Users, props.HideActions, props.RestoreButton, props.UnassignAPI, "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"))
+	@UserTableRows(props.Users, props.HideActions, props.RestoreButton, props.UnassignAPI, "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"), props.Limit, props.Offset)
 }
 
-templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, unassignAPI string, swapTarget string) {
+templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, unassignAPI string, swapTarget string, limit int32, offset int32) {
 	if len(users) == 0 {
 		<tr>
 			<td colspan="7" class="p-16 text-center">
@@ -514,7 +548,7 @@ templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, u
 									Class:      "w-8 h-8 cursor-pointer flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100",
 									Attributes: templ.Attributes{
 										"title":     "Unassign",
-										"hx-post":   strings.Replace(unassignAPI, ":user_id", user.ID.String(), 1),
+										"hx-post":   fmt.Sprintf("%s?limit=%d&offset=%d", strings.Replace(unassignAPI, ":user_id", user.ID.String(), 1), limit, offset),
 										"hx-target": swapTarget,
 										"hx-swap":   "outerHTML",
 										"hx-confirm": "Are you sure you want to unassign this user?",
@@ -696,6 +730,7 @@ templ AddStudentDialog(param UserTableProps){
 				Variant: button.VariantSecondary,
 				Size: button.SizeSm,
 			}) {
+				@icon.Upload(icon.Props{Class: "h-4 w-4"})
 				Assign students via CSV
 			}
 		}
@@ -819,6 +854,81 @@ templ AddStudentDialog(param UserTableProps){
 						Type:    button.TypeSubmit,
 					}) {
 						Assign students
+					}
+				}
+			</form>
+		}
+	}
+}
+templ AddStudentCSVDialog(param UserTableProps) {
+	@dialog.Dialog(dialog.Props{
+		ID: "add-student-csv-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantOutline,
+				Size:    button.SizeSm,
+				Class:   "flex items-center gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm transition-all",
+				Attributes: templ.Attributes{"title": "Assign via CSV"},
+			}) {
+				@icon.FileUp(icon.Props{Class: "h-4 w-4"})
+				<span class="hidden sm:inline">Assign CSV</span>
+			}
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Assign Students via CSV
+				}
+				@dialog.Description() {
+					Upload a CSV file containing student usernames to assign them to this subject.
+				}
+			}
+			<form
+				id="add-student-csv-form"
+				hx-post={ param.AddStudentCSVAPI }
+				hx-encoding="multipart/form-data"
+				hx-target={ utils.IfElse(param.StudentAssignSwapTarget != "", param.StudentAssignSwapTarget, "#" + utils.IfElse(param.ID != "", param.ID, "users-table-container")) }
+				hx-swap="outerHTML"
+			>
+				<div class="space-y-4 py-4">
+					<div class="space-y-2">
+						@form.Label(form.LabelProps{For: "student_csv", Class: "text-sm font-medium"}) {
+							Select CSV File
+						}
+						<div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/50 transition-all cursor-pointer group">
+							@icon.Upload(icon.Props{Class: "h-8 w-8 text-slate-400 group-hover:text-primary mb-2"})
+							<p class="text-sm text-slate-500 text-center">Click to browse or drag and drop your CSV file here</p>
+							<input 
+								type="file" 
+								id="student_csv" 
+								name="student_csv" 
+								accept=".csv" 
+								required 
+								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							/>
+						</div>
+						<p class="text-[10px] text-slate-400">The CSV should have a 'username' column.</p>
+					</div>
+				</div>
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Type:    button.TypeSubmit,
+						Form:    "add-student-csv-form",
+						Class:   "flex items-center gap-2",
+					}) {
+						@icon.Check(icon.Props{Class: "h-4 w-4"})
+						Upload & Assign
 					}
 				}
 			</form>

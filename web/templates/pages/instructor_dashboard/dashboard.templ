@@ -37,6 +37,15 @@ templ DashboardPage(param DashboardPageParam) {
 						</h1>
 						<p class="text-slate-500 mt-1">Manage Your Assigned Subjects</p>
 					</div>
+					<div class="flex items-center gap-3">
+						<div class="text-right hidden md:block">
+							<p class="text-sm font-medium text-slate-900">{ param.Instructor.FullName }</p>
+							<p class="text-xs text-slate-500">Instructor</p>
+						</div>
+						<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary shrink-0">
+							@icon.User(icon.Props{Class: "h-5 w-5"})
+						</div>
+					</div>
 				</div>
 					<div class="w-full md:w-72 flex items-center gap-2 mb-6">
 						@icon.Search(icon.Props{Class: "h-4 w-4 text-slate-500"})

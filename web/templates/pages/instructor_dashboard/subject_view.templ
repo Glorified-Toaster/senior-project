@@ -51,8 +51,8 @@ templ SubjectViewPage(param SubjectViewParam) {
 						<p class="text-sm font-medium text-slate-900">{ param.Instructor.FullName }</p>
 						<p class="text-xs text-slate-500">Instructor</p>
 					</div>
-					<div class="h-10 w-10 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
-						@icon.User(icon.Props{Class: "h-5 w-5"})
+						<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary shrink-0">
+							@icon.User(icon.Props{Class: "h-5 w-5"})
 					</div>
 				</div>
 			</div>

@@ -2133,7 +2133,13 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 		helpers.Toast(ctx, "Student Unassigned", "Successfully unassigned student from the subject", toast.VariantSuccess)
 
 		// Re-render the table
-		students, _ := h.App.ListStudentsBySubjectID(ctx, sid)
+		limit := int32(12)
+		offset := int32(0)
+		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil { limit = int32(l) }
+		if o, err := strconv.Atoi(ctx.Query("offset")); err == nil { offset = int32(o) }
+
+		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx, sid, limit, offset)
+		totalCount, _ := h.App.CountStudentsBySubjectID(ctx, sid)
 		allStudents, _ := h.App.SearchStudents(ctx, ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
 
 		ctx.Header("Content-Type", "text/html")
@@ -2144,12 +2150,15 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 			ID:          "students-table",
 			Search:      true,
 			SearchAPI:   "/admin/dashboard/subject/" + subjectID + "/students/search",
+			TotalCount:  totalCount,
+			Limit:       limit,
+			Offset:      offset,
 			AddStudent:  true,
 			Students:    allStudents,
 			AddStudentAPI: "/admin/dashboard/subject/" + subjectID + "/students/assign",
 			StudentAssignSwapTarget: "#students-table-container",
-			UnassignAPI: "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
 			ExportURL:   "/admin/dashboard/subject/" + subjectID + "/students/export",
+			UnassignAPI: "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
 		}).Render(ctx, ctx.Writer)
 	}
 }

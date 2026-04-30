@@ -262,7 +262,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false, "", ""))
+			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false, "", "", 0, 0))
 			return
 		}
 

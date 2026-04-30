@@ -540,7 +540,7 @@ templ QuestionsTab(param EditExamPageParam) {
 						Size: button.SizeSm,
 						Href: "/admin/dashboard/exam/" + param.Exam.ID.String() + "/export-csv",
 					}) {
-						@icon.Upload(icon.Props{
+						@icon.Download(icon.Props{
 							Class: "h-4 w-4",
 						})
 						Export As CSV
