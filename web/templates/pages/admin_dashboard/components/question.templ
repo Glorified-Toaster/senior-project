@@ -19,10 +19,12 @@ import "uot-exam/web/templates/components/selectbox"
 import "uot-exam/web/templates/components/badge"
 
 type QuestionListProps struct {
+	RoutePrefix string
 	Questions []domain.Question
 }
 
 type EditExamPageParam struct {
+	RoutePrefix string
 	Exam       domain.Exam
 	Questions  []domain.Question
 }

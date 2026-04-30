@@ -31,6 +31,7 @@ type Querier interface {
 	CountStudents(ctx context.Context) (int64, error)
 	CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
+	CountSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) (int64, error)
 	CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, arg CountSubmittedAttemptsBySubjectForStudentParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
@@ -73,6 +74,7 @@ type Querier interface {
 	ListQuestionsByExam(ctx context.Context, examID uuid.NullUUID) ([]Question, error)
 	ListStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]ListStudentsBySubjectIDRow, error)
 	ListStudentsBySubjectIDPaginated(ctx context.Context, arg ListStudentsBySubjectIDPaginatedParams) ([]ListStudentsBySubjectIDPaginatedRow, error)
+	ListSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) ([]Subject, error)
 	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]Subject, error)
 	ListUsersByRole(ctx context.Context, role UserRoleType) ([]User, error)
 	PublishDraftExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) error

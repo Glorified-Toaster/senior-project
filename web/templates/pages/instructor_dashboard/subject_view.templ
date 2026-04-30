@@ -1,0 +1,252 @@
+package instructor_dashboard
+
+import "fmt"
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/dialog"
+import "uot-exam/web/templates/components/toast"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/input"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/form"
+import "uot-exam/web/templates/components/selectbox"
+import "uot-exam/web/templates/components/tabs"
+
+templ SubjectViewPage(param SubjectViewParam) {
+	@sidebar.Script()
+	@tabs.Script()
+	@collapsible.Script()
+	@dropdown.Script()
+	@popover.Script()
+	@dialog.Script()
+	@toast.Script()
+	@input.Script()
+	@selectbox.Script()
+	@Navbar([]navbar.BreadPath{
+		{
+			Href: "/instructor/dashboard",
+			Path: "Dashboard",
+		},
+		{
+			Href: fmt.Sprintf("/instructor/subject/%s", param.Subject.ID.String()),
+			Path: param.Subject.Title,
+		},
+	}) {
+		<div id="subject-page" data-subject-id={ param.Subject.ID.String() } class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<div>
+					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+						@icon.Bookmark(icon.Props{Class: "h-8 w-8 text-primary"})
+						{ param.Subject.Title }
+					</h1>
+					<p class="text-slate-500 mt-1">Manage exams for this subject</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<div class="text-right hidden md:block">
+						<p class="text-sm font-medium text-slate-900">{ param.Instructor.FullName }</p>
+						<p class="text-xs text-slate-500">Instructor</p>
+					</div>
+					<div class="h-10 w-10 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+						@icon.User(icon.Props{Class: "h-5 w-5"})
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+				@components.TotalCard(components.TotalCardProps{
+					Title:       "Total Exams",
+					Value:       fmt.Sprintf("%d", len(param.Exams)),
+					Description: "Exams in this subject",
+					Icon:        icon.Book(icon.Props{Class: "h-10 w-10 text-primary"}),
+				})
+				@components.TotalCard(components.TotalCardProps{
+					Title:       "Duration",
+					Value:       fmt.Sprintf("%d min", param.Subject.DurationMinutes),
+					Description: "Allocated time",
+					Icon:        icon.Clock(icon.Props{Class: "h-10 w-10 text-slate-500"}),
+				})
+				@components.TotalCard(components.TotalCardProps{
+					Title:       "Pass Score",
+					Value:       fmt.Sprintf("%.2f", param.Subject.PassScore),
+					Description: "Out of " + fmt.Sprintf("%.2f", param.Subject.TotalMarks),
+					Icon:        icon.Target(icon.Props{Class: "h-10 w-10 text-green-500"}),
+				})
+			</div>
+
+			@tabs.Tabs(tabs.Props{ID: "subject-tabs"}) {
+				@tabs.List(tabs.ListProps{Class: "w-full"}) {
+					@tabs.Trigger(tabs.TriggerProps{
+						Value:    "exams",
+						IsActive: true,
+						TabsID:   "subject-tabs",
+						Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Exams
+					}
+					@tabs.Trigger(tabs.TriggerProps{
+						Value:  "students",
+						TabsID: "subject-tabs",
+						Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+					}) {
+						Students
+					}
+				}
+				<div class="mt-4">
+					@tabs.Content(tabs.ContentProps{Value: "exams", TabsID: "subject-tabs"}) {
+						@ExamTab(param)
+					}
+					@tabs.Content(tabs.ContentProps{Value: "students", TabsID: "subject-tabs"}) {
+						@StudentsTab(param)
+					}
+				</div>
+			}
+		</div>
+		<div id="toast-container"></div>
+	}
+}
+
+templ ExamTab(param SubjectViewParam) {
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				<div class="flex items-center gap-2">
+					@icon.FileText(icon.Props{
+						Class: "h-6 w-6",
+					})
+					<span class="text-xl font-bold">Exams</span>
+					<div class="flex-1 flex justify-end gap-2">
+						<div class="w-64">
+							@input.Input(input.Props{
+								Type:        input.TypeSearch,
+								Name:        "search",
+								Placeholder: "Search exams...",
+								Attributes: templ.Attributes{
+									"hx-post":    "/instructor/subject/" + param.Subject.ID.String() + "/exams/search",
+									"hx-trigger": "keyup changed delay:300ms, search",
+									"hx-target":  "#exams-table-container",
+									"hx-swap":    "outerHTML",
+								},
+							})
+						</div>
+						@DialogAddExam(param)
+					</div>
+				</div>
+			}
+		}
+		@card.Content() {
+			@components.ExamTableGrid(param.Exams, "/instructor/exam/")
+		}
+	}
+}
+
+templ StudentsTab(param SubjectViewParam) {
+	<div class="flex flex-col gap-4">
+		@components.UserTableRoot("students-user-table-root", components.UserTableProps{
+			Users:     param.Students,
+			Title:     "Students",
+			BaseURL:   "/instructor/subject/" + param.Subject.ID.String() + "/students/search",
+			ID:        "students-table",
+			Search:    true,
+			SearchAPI: "/instructor/subject/" + param.Subject.ID.String() + "/students/search",
+			AddStudent: true,
+			Students: param.AllStudents,
+			AddStudentAPI: "/instructor/subject/" + param.Subject.ID.String() + "/students/assign",
+			StudentAssignSwapTarget: "#students-user-table-root",
+            HideActions: true,
+		})
+	</div>
+}
+
+templ DialogAddExam(param SubjectViewParam) {
+	@dialog.Dialog(dialog.Props{
+		ID: "add-exam-dialog",
+	}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+				Class: "flex items-center gap-2",
+			}) {
+                @icon.Plus(icon.Props{Class: "h-4 w-4"})
+				Add Exam
+			}
+		}
+		@dialog.Content(dialog.ContentProps{
+			Class: "max-w-md",
+		}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Add New Exam
+				}
+				@dialog.Description() {
+					Create a new exam for { param.Subject.Title }.
+				}
+			}
+			<form
+				id="add-exam-form"
+				hx-post="/instructor/exams/create"
+				hx-target="#exams-table-container"
+				hx-swap="outerHTML"
+			>
+				<div class="space-y-4 py-4">
+					<div class="space-y-2">
+						@form.Label(form.LabelProps{For: "title", Class: "text-sm font-medium"}) {
+							Exam Title
+						}
+						@input.Input(input.Props{
+							ID:          "title",
+							Name:        "title",
+							Required:    true,
+							Placeholder: "e.g. Midterm Exam",
+						})
+					</div>
+					<input type="hidden" name="subject_id" value={ param.Subject.ID.String() } />
+					<div class="space-y-2">
+						@form.Label(form.LabelProps{For: "total_marks", Class: "text-sm font-medium"}) {
+							Total Marks
+						}
+						@input.Input(input.Props{
+							Type:        input.TypeNumber,
+							ID:          "total_marks",
+							Name:        "total_marks",
+							Required:    true,
+							Placeholder: "Enter total marks",
+							Attributes:  templ.Attributes{"min": "0", "step": "0.1"},
+						})
+					</div>
+                    <div class="space-y-2">
+						@form.Label(form.LabelProps{For: "description", Class: "text-sm font-medium"}) {
+							Description (Optional)
+						}
+						@input.Input(input.Props{
+							ID:          "description",
+							Name:        "description",
+							Placeholder: "Brief description of the exam",
+						})
+					</div>
+				</div>
+				@dialog.Footer() {
+					@dialog.Close() {
+						@button.Button(button.Props{
+							Variant: button.VariantOutline,
+						}) {
+							Cancel
+						}
+					}
+					@button.Button(
+						button.Props{
+							Variant: button.VariantDefault,
+							Type:    button.TypeSubmit,
+							Form:    "add-exam-form",
+						}) {
+						Create Exam
+					}
+				}
+			</form>
+		}
+	}
+}

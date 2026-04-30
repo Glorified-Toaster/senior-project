@@ -530,7 +530,15 @@ func (h *UserHandler) SearchExamsBySubject() gin.HandlerFunc {
 		}
 
 		ctx.Header("Content-Type", "text/html")
-		render.Render(ctx, components.ExamTableGrid(exams))
+		// Determine baseURL based on user role
+		baseURL := "/admin/dashboard/exam/"
+		if role, exists := ctx.Get("role"); exists {
+			if domain.UserRole(role.(string)) == domain.RoleInstructor {
+				baseURL = "/instructor/exam/"
+			}
+		}
+
+		render.Render(ctx, components.ExamTableGrid(exams, baseURL))
 	}
 }
 

@@ -34,21 +34,27 @@ templ SubjectTableGrid(subjects []domain.Subject) {
 	}
 }
 
-templ ExamTableGrid(exams []domain.Exam) {
+templ ExamTableGrid(exams []domain.Exam, baseURL ...string) {
+    {{
+        effectiveBaseURL := "/admin/dashboard/exam/"
+        if len(baseURL) > 0 {
+            effectiveBaseURL = baseURL[0]
+        }
+    }}
 	<div id="exams-table-container">
 		if len(exams) == 0 {
 			@EmptyState("No exams found", "We couldn't find any exams matching your search. Try adjusting your keywords or filters.", false, true)
 		} else {
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 				for _, exam := range exams {
-					@ExamCard(exam)
+					@ExamCard(exam, effectiveBaseURL)
 				}
 			</div>
 		}
 	</div>
 }
 
-templ ExamCard(exam domain.Exam) {
+templ ExamCard(exam domain.Exam, baseURL string) {
 	<div class="w-full max-w-sm">
 		@card.Card(card.Props{
 			Class: "max-w-sm",
@@ -101,7 +107,7 @@ templ ExamCard(exam domain.Exam) {
 				}
 				@button.Button(button.Props{
 					Variant: button.VariantGhost,
-					Href:    "/admin/dashboard/exam/" + exam.ID.String(),
+					Href:    baseURL + exam.ID.String(),
 				}) {
 					@icon.ArrowRight(icon.Props{Class: "h-4 w-4"})
 				}

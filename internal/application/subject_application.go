@@ -263,3 +263,13 @@ func (a *Application) CloseSubject(ctx context.Context, id uuid.UUID) error {
 	})
 	return err
 }
+
+func (a *Application) ListSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) ([]domain.Subject, error) {
+	var subjects []domain.Subject
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		subjects, err = a.subjectRepo.ListSubjectsForInstructor(txCtx, instructorID)
+		return err
+	})
+	return subjects, err
+}

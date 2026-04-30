@@ -147,6 +147,22 @@ func (q *Queries) CountSubjects(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countSubjectsForInstructor = `-- name: CountSubjectsForInstructor :one
+SELECT COUNT(*)
+FROM subjects s
+JOIN subject_instructors si ON s.id = si.subject_id
+WHERE si.instructor_id = $1
+  AND si.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+`
+
+func (q *Queries) CountSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSubjectsForInstructor, instructorID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSubject = `-- name: CreateSubject :one
 INSERT INTO subjects (title, description, duration_minutes, pass_score, status)
 VALUES ($1, $2, $3, $4, $5)
@@ -505,6 +521,47 @@ func (q *Queries) ListStudentsBySubjectIDPaginated(ctx context.Context, arg List
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AssignedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSubjectsForInstructor = `-- name: ListSubjectsForInstructor :many
+SELECT s.id, s.title, s.description, s.duration_minutes, s.total_marks, s.pass_score, s.status, s.created_at, s.updated_at, s.deleted_at
+FROM subjects s
+JOIN subject_instructors si ON s.id = si.subject_id
+WHERE si.instructor_id = $1
+  AND si.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+ORDER BY s.title ASC
+`
+
+func (q *Queries) ListSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listSubjectsForInstructor, instructorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.TotalMarks,
+			&i.PassScore,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.DeletedAt,
 		); err != nil {
 			return nil, err

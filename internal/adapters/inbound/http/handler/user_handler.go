@@ -164,6 +164,8 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			ctx.Header("HX-Redirect", "/admin/dashboard")
 		case domain.RoleStudent:
 			ctx.Header("HX-Redirect", "/student/dashboard")
+		case domain.RoleInstructor:
+			ctx.Header("HX-Redirect", "/instructor/dashboard")
 		default:
 			ctx.Header("HX-Redirect", "/login")
 		}

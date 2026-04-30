@@ -135,14 +135,7 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.GET("/exam/:id", r.userHandler.EditExamPageRender())
 			dashboardRoutes.POST("/exam/edit/:id", r.userHandler.EditExamInfo())
 			dashboardRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
-			dashboardRoutes.POST("/exam/preview/question-text", r.userHandler.PreviewQuestionText())
-			dashboardRoutes.POST("/exam/preview/question-choice", r.userHandler.PreviewQuestionChoice())
-			dashboardRoutes.POST("/exam/preview/question-form", r.userHandler.GetQuestionForm())
-			dashboardRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
-			dashboardRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
-			dashboardRoutes.DELETE("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 			dashboardRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
-			dashboardRoutes.POST("/questions/edit/:id", r.userHandler.UpdateQuestion())
 		}
 	}
 
@@ -176,6 +169,55 @@ func (r *Router) SetupRoutes() {
 		studentRoutes.POST("/exam/:id/auto-submit", r.userHandler.StudentAutoSubmit())
 		studentRoutes.GET("/subject/:id/result", r.userHandler.StudentSubjectResult())
 		studentRoutes.GET("/subject/:id/pdf", r.userHandler.StudentSubjectPDF())
+	}
+	// Instructor routes
+	instructorRoutes := r.router.Group("/instructor")
+	instructorRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	instructorRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleInstructor))
+	{
+		instructorRoutes.GET("/dashboard", r.userHandler.InstructorDashboardRender())
+		instructorRoutes.GET("/subject/:id", r.userHandler.InstructorSubjectView())
+		instructorRoutes.POST("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())
+		instructorRoutes.POST("/subject/:id/students/search", r.userHandler.SearchSubjectStudentsInstructor())
+		instructorRoutes.POST("/subject/:id/students/assign", r.userHandler.AssignStudentToSubjectInstructor())
+		instructorRoutes.POST("/subjects/search", r.userHandler.SearchInstructorSubjects())
+
+		// Exam Management (Instructor restricted)
+		instructorRoutes.POST("/exams/create", r.userHandler.CreateExam())
+		instructorRoutes.GET("/exam/:id", r.userHandler.InstructorEditExamPageRender())
+		instructorRoutes.POST("/exam/edit/:id", r.userHandler.EditExamInfo())
+		instructorRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
+		instructorRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
+
+		// Question Management (Instructor restricted)
+		instructorRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
+		instructorRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
+		instructorRoutes.POST("/exam/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
+		instructorRoutes.POST("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+
+	}
+
+	// Shared routes for exam management (Admin + Instructor)
+	// We use the same path prefix as admin to avoid changing components for now
+	sharedExamRoutes := r.router.Group("/admin/dashboard/exam")
+	sharedExamRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	sharedExamRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin, domain.RoleInstructor))
+	{
+		sharedExamRoutes.POST("/preview/question-text", r.userHandler.PreviewQuestionText())
+		sharedExamRoutes.POST("/preview/question-choice", r.userHandler.PreviewQuestionChoice())
+		sharedExamRoutes.POST("/preview/question-form", r.userHandler.GetQuestionForm())
+		sharedExamRoutes.POST("/:id/question/create", r.userHandler.CreateQuestion())
+		sharedExamRoutes.POST("/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
+		sharedExamRoutes.POST("/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
+		sharedExamRoutes.DELETE("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+		sharedExamRoutes.POST("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+	}
+
+	sharedQuestionRoutes := r.router.Group("/admin/dashboard/questions")
+	sharedQuestionRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
+	sharedQuestionRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleAdmin, domain.RoleInstructor))
+	{
+		sharedQuestionRoutes.POST("/edit/:id", r.userHandler.UpdateQuestion())
 	}
 
 	r.router.NoRoute(func(c *gin.Context) {

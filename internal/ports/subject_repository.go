@@ -33,4 +33,5 @@ type SubjectRepository interface {
 	ListSubjectsForStudent(ctx context.Context, studentID uuid.UUID) ([]domain.Subject, error)
 	PublishSubject(ctx context.Context, id uuid.UUID) error
 	CloseSubject(ctx context.Context, id uuid.UUID) error
+	ListSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) ([]domain.Subject, error)
 }

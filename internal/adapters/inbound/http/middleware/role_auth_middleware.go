@@ -15,7 +15,7 @@ func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin
 	roleSet := make(map[domain.UserRole]struct{}, len(allowedRoles))
 	for _, r := range allowedRoles {
 		roleSet[r] = struct{}{}
-}
+	}
 
 	return func(c *gin.Context) {
 		// Retrieve the claims set by AuthenticationMiddleware.
@@ -35,7 +35,6 @@ func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin
 			return
 		}
 
-		// Reject disabled accounts.
 		if !claims.IsActive {
 			m.logger.LogErrorWithLevel("warn", "AUTH_ERROR", "INACTIVE_USER", "Inactive user attempted access", nil)
 			c.JSON(http.StatusForbidden, gin.H{"error": "Account is disabled"})
@@ -43,7 +42,6 @@ func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin
 			return
 		}
 
-		// Check whether the user's role is in the allowed set.
 		userRole := domain.UserRole(claims.Role)
 		if _, allowed := roleSet[userRole]; !allowed {
 			m.logger.LogErrorWithLevel("warn", "AUTH_ERROR", "FORBIDDEN", "User role not permitted", nil)

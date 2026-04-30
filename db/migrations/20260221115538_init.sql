@@ -383,7 +383,7 @@ CREATE TABLE student_answers (
 );
 
 CREATE INDEX idx_answers_attempt ON student_answers(attempt_id);
-CREATE INDEX idx_answers_question ON student_answers(question_id); 
+CREATE INDEX idx_answers_question ON student_answers(question_id);
 
 -- +goose StatementEnd
 

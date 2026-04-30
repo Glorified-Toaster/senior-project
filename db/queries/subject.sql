@@ -197,3 +197,19 @@ WHERE id = $1;
 UPDATE subjects
 SET status = 'CLOSED', updated_at = NOW()
 WHERE id = $1 AND status = 'PUBLISHED';
+-- name: ListSubjectsForInstructor :many
+SELECT s.*
+FROM subjects s
+JOIN subject_instructors si ON s.id = si.subject_id
+WHERE si.instructor_id = $1
+  AND si.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+ORDER BY s.title ASC;
+
+-- name: CountSubjectsForInstructor :one
+SELECT COUNT(*)
+FROM subjects s
+JOIN subject_instructors si ON s.id = si.subject_id
+WHERE si.instructor_id = $1
+  AND si.deleted_at IS NULL
+  AND s.deleted_at IS NULL;
