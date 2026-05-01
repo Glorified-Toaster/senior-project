@@ -14,7 +14,12 @@ type QuestionRepository interface {
 	ListChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
 	GetQuestionByChecksum(ctx context.Context, arg string) (bool, error)
 	DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error
+	DeleteChoicesByQuestion(ctx context.Context, arg uuid.UUID) error
 	Update(ctx context.Context, arg UpdateQuestionParams) (domain.Question, error)
+	GetByID(ctx context.Context, id uuid.UUID) (domain.Question, error)
+	ListAllChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
+	UpdateChoice(ctx context.Context, arg UpdateChoiceParams) (domain.Choice, error)
+	SoftDeleteChoiceByID(ctx context.Context, id uuid.UUID) error
 }
 
 type UpdateQuestionParams struct {
@@ -52,4 +57,10 @@ type ListChoicesByQuestionParams struct {
 	QuestionID uuid.UUID
 	Limit      int32
 	Offset     int32
+}
+
+type UpdateChoiceParams struct {
+	ID         uuid.UUID
+	ChoiceText string
+	IsCorrect  bool
 }

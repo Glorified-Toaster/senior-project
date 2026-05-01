@@ -939,9 +939,9 @@ func (h *UserHandler) GetQuestionForm() gin.HandlerFunc {
 		case domain.QuestionTypeText:
 			render.Render(ctx, components.TextQuestionForm(domain.Question{}, "question-preview"))
 		case domain.QuestionTypeCode:
-			render.Render(ctx, components.CodeQuestionForm(domain.Question{}))
+			render.Render(ctx, components.CodeQuestionForm(domain.Question{}, "question-preview"))
 		case domain.QuestionTypeImage:
-			render.Render(ctx, components.ImageQuestionForm(domain.Question{}, true))
+			render.Render(ctx, components.ImageQuestionForm(domain.Question{}, true, "question-preview"))
 		default:
 			render.Render(ctx, components.TextQuestionForm(domain.Question{}, "question-preview"))
 		}
@@ -1018,7 +1018,7 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			return
 		}
 
-		if helpers.IsTrimmedEmpty(questionTitle) || helpers.IsTrimmedEmpty(questionText) ||
+		if helpers.IsTrimmedEmpty(questionTitle) || (questionType != string(domain.QuestionTypeImage) && helpers.IsTrimmedEmpty(questionText)) ||
 			helpers.IsTrimmedEmpty(questionType) || helpers.IsTrimmedEmpty(questionMarks) || len(choices) == 0 ||
 			helpers.IsTrimmedEmpty(correctChoice) {
 			ctx.Header("HX-Reswap", "none")
@@ -1327,27 +1327,43 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			questionMarksFloat = 1
 		}
 
-		if questionImage != nil {
-			_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
-				ID:            id,
-				QuestionTitle: questionTitle,
-				QuestionText:  questionText,
-				Marks:         questionMarksFloat,
-				ImageURL:      questionImageURL,
-			})
-		} else {
-			_, err = h.App.UpdateQuestion(ctx.Request.Context(), ports.UpdateQuestionParams{
-				ID:            id,
-				QuestionTitle: questionTitle,
-				QuestionText:  questionText,
-				QuestionType:  domain.QuestionType(questionType),
-				Marks:         questionMarksFloat,
-			})
-
+		existingQuestion, err := h.App.GetQuestionByID(ctx.Request.Context(), id)
+		if err != nil {
+			helpers.Toast(ctx, "Update Question Failed", "Question not found", toast.VariantError)
+			return
 		}
 
+		if questionImageURL == "" {
+			questionImageURL = existingQuestion.QuestionImage
+		}
+
+		choices := []ports.CreateChoiceParams{}
+		correctChoice := ctx.PostForm("correct_choice")
+
+		for i := 1; i <= 4; i++ {
+			choiceText := ctx.PostForm("choice_" + strconv.Itoa(i))
+			if !helpers.IsTrimmedEmpty(choiceText) {
+				choices = append(choices, ports.CreateChoiceParams{
+					QuestionID: id,
+					ChoiceText: choiceText,
+					IsCorrect:  fmt.Sprintf("choice_%d", i) == correctChoice,
+				})
+			}
+		}
+
+		updateParams := ports.UpdateQuestionParams{
+			ID:            id,
+			QuestionTitle: questionTitle,
+			QuestionText:  questionText,
+			QuestionType:  domain.QuestionType(questionType),
+			Marks:         questionMarksFloat,
+			ImageURL:      questionImageURL,
+		}
+
+		_, err = h.App.UpdateQuestionWithChoices(ctx.Request.Context(), updateParams, choices)
+
 		if err != nil {
-			helpers.Toast(ctx, "Update Question Failed", "Failed to update question", toast.VariantError)
+			helpers.Toast(ctx, "Update Question Failed", "Failed to update question : "+err.Error(), toast.VariantError)
 			return
 		}
 

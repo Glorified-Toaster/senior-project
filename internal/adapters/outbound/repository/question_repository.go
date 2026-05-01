@@ -123,13 +123,22 @@ func (r *QuestionRepository) GetQuestionByChecksum(ctx context.Context, arg stri
 	return true, nil
 }
 
+func (r *QuestionRepository) DeleteChoicesByQuestion(ctx context.Context, arg uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.DeleteChoicesByQuestion(ctx, uuid.NullUUID{UUID: arg, Valid: true})
+}
+
 func (r *QuestionRepository) DeleteQuestionAndChoices(ctx context.Context, arg uuid.UUID) error {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
 		queries = queries.WithTx(tx)
 	}
 
-	err := queries.DeleteChoicesByQuestion(ctx, uuid.NullUUID{UUID: arg, Valid: true})
+	err := r.DeleteChoicesByQuestion(ctx, arg)
 	if err != nil {
 		return err
 	}
@@ -181,4 +190,59 @@ func (r *QuestionRepository) Update(ctx context.Context, arg ports.UpdateQuestio
 	}
 
 	return mapSqlcQuestionToDomain(question), nil
+}
+
+func (r *QuestionRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.Question, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	question, err := queries.GetQuestionByID(ctx, id)
+	if err != nil {
+		return domain.Question{}, err
+	}
+
+	return mapSqlcQuestionToDomain(question), nil
+}
+
+func (r *QuestionRepository) ListAllChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	choices, err := queries.ListAllChoicesByQuestion(ctx, uuid.NullUUID{UUID: arg, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapSlice(choices, mapSqlcChoiceToDomain), nil
+}
+
+func (r *QuestionRepository) UpdateChoice(ctx context.Context, arg ports.UpdateChoiceParams) (domain.Choice, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	choice, err := queries.UpdateChoice(ctx, sqlc.UpdateChoiceParams{
+		ID:         arg.ID,
+		ChoiceText: arg.ChoiceText,
+		IsCorrect:  arg.IsCorrect,
+	})
+	if err != nil {
+		return domain.Choice{}, err
+	}
+
+	return mapSqlcChoiceToDomain(choice), nil
+}
+
+func (r *QuestionRepository) SoftDeleteChoiceByID(ctx context.Context, id uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.SoftDeleteChoiceByID(ctx, id)
 }

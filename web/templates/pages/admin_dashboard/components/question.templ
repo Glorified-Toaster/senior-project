@@ -231,14 +231,48 @@ templ EditDialog(question domain.Question) {
 				enctype="multipart/form-data"
 				hx-encoding="multipart/form-data"
 			>
-				<input type="hidden" name="question_type" value={ string(question.QuestionType) } />
-				switch question.QuestionType {
-					case "TEXT":
-						@EditQuestionForm(question)
-					case "CODE":
-						@CodeQuestionForm(question)
-					case "IMAGE":
-						@ImageQuestionForm(question , false)
+				@tabs.Tabs(tabs.Props{
+					ID: fmt.Sprintf("edit-question-tabs-%s", question.ID),
+				}) {
+					@tabs.List(tabs.ListProps{
+						Class: "w-full max-w-full",
+					}) {
+						@tabs.Trigger(tabs.TriggerProps{
+							Value: "questions",
+							IsActive: true,
+							TabsID:   fmt.Sprintf("edit-question-tabs-%s", question.ID),
+							Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							Question
+						}
+						@tabs.Trigger(tabs.TriggerProps{
+							Value: "choices",
+							TabsID:   fmt.Sprintf("edit-question-tabs-%s", question.ID),
+							Class: "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							Choices
+						}
+					}
+					@tabs.Content(tabs.ContentProps{
+						Value:    "questions",
+						TabsID:   fmt.Sprintf("edit-question-tabs-%s", question.ID),
+					}) {
+						<input type="hidden" name="question_type" value={ string(question.QuestionType) } />
+						switch question.QuestionType {
+							case "TEXT":
+								@TextQuestionForm(question, fmt.Sprintf("edit-question-preview-%s", question.ID))
+							case "CODE":
+								@CodeQuestionForm(question, fmt.Sprintf("edit-question-preview-%s", question.ID))
+							case "IMAGE":
+								@ImageQuestionForm(question , false, fmt.Sprintf("edit-question-preview-%s", question.ID))
+						}
+					}
+					@tabs.Content(tabs.ContentProps{
+						Value:    "choices",
+						TabsID:   fmt.Sprintf("edit-question-tabs-%s", question.ID),
+					}) {
+						@ChoicesTab(question.Choices, fmt.Sprintf("edit-question-form-%s", question.ID))
+					}
 				}
 			</form>
 			@dialog.Footer() {
@@ -250,20 +284,19 @@ templ EditDialog(question domain.Question) {
 				}) {
 					Save
 				}
+				@dialog.Close() {
 				@button.Button(button.Props{
 					Variant: button.VariantOutline,
 					Size:    button.SizeSm,
 				}) {
 					Cancel
 				}
-			}
+			}}
 		}
 	}
 }
 
-templ EditQuestionForm(question domain.Question) {
-	@TextQuestionForm(question, "edit-question-preview")
-}
+
 
 templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
 	@dialog.Dialog(dialog.Props{
@@ -318,7 +351,7 @@ templ QuestionPreview(ID , questionTitle, questionText string) {
 	<div id={ID} class="latex-content">{ questionTitle }<br/>{ questionText }</div>
 }
 
-templ CodeQuestionForm(question domain.Question) {
+templ CodeQuestionForm(question domain.Question, id string) {
 		<div>
 			@label.Label(label.Props{
 				For: "question_title",
@@ -382,7 +415,7 @@ templ CodeQuestionForm(question domain.Question) {
 		</div>
 }
 
-templ ImageQuestionForm(question domain.Question , imgReq bool) {
+templ ImageQuestionForm(question domain.Question , imgReq bool, id string) {
 		<div>
 			@label.Label(label.Props{
 				For: "question_title",
@@ -464,7 +497,7 @@ templ ImageQuestionForm(question domain.Question , imgReq bool) {
 				Description (Optional)
 			}
 			@textarea.Textarea(textarea.Props{
-				Placeholder: "Enter image description...",
+				Placeholder: "Enter image description (optional)...",
 				ID: "question_text",
 				Name: "question_text",
 				Rows: 3,
@@ -527,7 +560,7 @@ templ AddDialog(param EditExamPageParam) {
 					Value:    "choices",
 					TabsID:   "add_question_tabs",
 				}) {
-					@ChoicesTab()
+					@ChoicesTab([]domain.Choice{}, "add_question_form")
 				}
 			}
 			@dialog.Footer() {
@@ -669,7 +702,7 @@ templ TextQuestionForm(question domain.Question, id string) {
 				Attributes: templ.Attributes{
 					"hx-post": "/admin/dashboard/exam/preview/question-text",
 					"hx-trigger": "keyup changed delay:300ms",
-					"hx-target": "#question-preview",
+					"hx-target": "#" + id,
 					"hx-swap": "innerHTML",
 				},
 			})
@@ -689,7 +722,7 @@ templ TextQuestionForm(question domain.Question, id string) {
 				ID: "question_marks",
 				Name: "question_marks",
 				Class: "mb-4",
-				Value: "1",
+				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
 				Attributes: templ.Attributes{
 					"min": "0.1",
 					"step": "0.1",
@@ -717,7 +750,7 @@ templ TextQuestionForm(question domain.Question, id string) {
     			Attributes: templ.Attributes{
         "hx-post": "/admin/dashboard/exam/preview/question-text",
         "hx-trigger": "keyup changed delay:300ms",
-        "hx-target": "#question-preview",
+        "hx-target": "#" + id,
         "hx-swap": "innerHTML",
     },			})
 		</div>
@@ -735,14 +768,14 @@ templ TextQuestionForm(question domain.Question, id string) {
 				Class: "mb-6",
 			}){
 				@card.Content(){
-					@QuestionPreview(id, `\[\text{Question Title}\]`, `\[\text{Question Text}\]`)
+					@QuestionPreview(id, utils.IfElse(question.QuestionTitle != "", question.QuestionTitle, `\[\text{Question Title}\]`), utils.IfElse(question.QuestionText != "", question.QuestionText, `\[\text{Question Text}\]`))
 				}
 			}
 		</div>	
 }
 
 
-templ ChoicesTab() {
+templ ChoicesTab(choices []domain.Choice, formID string) {
 	<div class="flex flex-col space-y-4">
 		@label.Label(label.Props{
 			For: "question_choices",
@@ -756,7 +789,11 @@ templ ChoicesTab() {
 		
 		<div id="choices-container" class="space-y-3">
 			for i := 1; i <= 4; i++ {
-				@choiceItemCheckbox(i, i == 1)
+				if i <= len(choices) {
+					@choiceItemCheckbox(i, choices[i-1].ChoiceText, choices[i-1].IsCorrect, formID)
+				} else {
+					@choiceItemCheckbox(i, "", i == 1, formID)
+				}
 			}
 		</div>
 		<script>
@@ -777,15 +814,16 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
 	</div>
 }
 
-templ choiceItemCheckbox(index int, isCorrect bool) {
+templ choiceItemCheckbox(index int, choiceText string, isCorrect bool, formID string) {
 	<div class="group flex items-center gap-3 rounded-md" data-index={ strconv.Itoa(index) }>
 		<div class="flex-1 flex items-center gap-2">
 			@input.Input(input.Props{
 				Type: input.TypeText,
 				Placeholder: "Choice " + strconv.Itoa(index),
 				Name: "choice_" + strconv.Itoa(index),
+				Value: choiceText,
 				Class: "mb-0",
-				Form: "add_question_form",
+				Form: formID,
 				Attributes: templ.Attributes{
 					"hx-post": "/admin/dashboard/exam/preview/question-choice",
 					"hx-trigger": "keyup changed delay:300ms",
@@ -801,11 +839,10 @@ templ choiceItemCheckbox(index int, isCorrect bool) {
 				Name: "correct_choice",
 				Value: "choice_" + strconv.Itoa(index),
 				Checked: isCorrect,
-				Form: "add_question_form",
+				Form: formID,
 				Class: "mb-0",
 				Attributes: templ.Attributes{
 					"class": "h-4 w-4 cursor-pointer rounded",
-					"onchange": "setCorrectChoice(this)",
 				},
 			})
 			<label 
@@ -817,7 +854,7 @@ templ choiceItemCheckbox(index int, isCorrect bool) {
 		</div>
 	</div>
 <div class="flex justify-center" id={ "question-choice-preview-wrapper-" + strconv.Itoa(index) }>
-        @QuestionChoicesPreview(fmt.Sprintf(`$\text{Choice %d}$`, index))
+        @QuestionChoicesPreview(utils.IfElse(choiceText != "", choiceText, fmt.Sprintf(`$\text{Choice %d}$`, index)))
     </div>
 	<script>
 document.body.addEventListener('htmx:afterSwap', function(event) {

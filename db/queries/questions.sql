@@ -59,3 +59,15 @@ UPDATE questions SET deleted_at = NOW() WHERE id = $1;
 
 -- name: SetQuestionImagePath :exec
 UPDATE questions SET question_image = $2 WHERE deleted_at IS NULL AND question_type = 'IMAGE' AND id = $1;
+
+-- name: UpdateChoice :one
+UPDATE choices
+SET choice_text = $2, is_correct = $3, deleted_at = NULL, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: ListAllChoicesByQuestion :many
+SELECT * FROM choices WHERE question_id = $1 ORDER BY created_at ASC;
+
+-- name: SoftDeleteChoiceByID :exec
+UPDATE choices SET deleted_at = NOW() WHERE id = $1;
