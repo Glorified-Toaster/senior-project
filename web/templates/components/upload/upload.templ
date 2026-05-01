@@ -41,3 +41,15 @@ templ Upload(props Props) {
 		/>
 	</div>
 }
+
+templ CSVRequirement(title string, columns string) {
+	<div class="bg-primary/5 border border-primary/10 rounded-lg p-3 mt-4">
+		<p class="text-xs text-primary font-bold flex items-center gap-2">
+			@icon.Info(icon.Props{Class: "h-3.5 w-3.5"})
+			{ title }
+		</p>
+		<p class="text-[10px] text-slate-900 mt-1 leading-relaxed font-medium">
+			{ columns }
+		</p>
+	</div>
+}

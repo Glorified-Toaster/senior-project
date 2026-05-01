@@ -364,16 +364,7 @@ templ AddUserCSVForm() {
 					Placeholder: "Click to browse or drag and drop your CSV file here",
 					Required:    true,
 				})
-				<div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mt-4">
-					<p class="text-xs text-blue-700 font-medium flex items-center gap-2">
-						@icon.Info(icon.Props{Class: "h-3.5 w-3.5"})
-						CSV Format Requirement
-					</p>
-					<p class="text-[10px] text-blue-600 mt-1 leading-relaxed">
-						The CSV should contain 4 columns in this exact order: <br/>
-						<span class="font-bold">username, full_name, role, password</span>
-					</p>
-				</div>
+				@upload.CSVRequirement("CSV Format Requirement", "The CSV should contain 4 columns in this exact order: username, full_name, role, password")
 			</div>
 		</div>
 		@dialog.Footer() {
@@ -520,7 +511,7 @@ templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, u
 					}
 				}
 				if !hideActions {
-					<td class="px-10 py-4 text-right">
+					<td class="px-6 py-4 text-right">
 						<div class="flex justify-end items-center gap-2">
 							<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 								if restoreButton {
@@ -774,6 +765,7 @@ templ AddStudentDialog(param UserTableProps){
 					Required:    true,
 					Class:       "mb-4 mt-4",
 				})
+				@upload.CSVRequirement("CSV Format Requirement", "The CSV should have a 'username' column containing student usernames.")
 
 				@dialog.Footer() {
 					@dialog.Close() {
@@ -921,7 +913,7 @@ templ AddStudentCSVDialog(param UserTableProps) {
 							Placeholder: "Click to browse or drag and drop your CSV file here",
 							Required:    true,
 						})
-						<p class="text-[10px] text-slate-400">The CSV should have a 'username' column.</p>
+						@upload.CSVRequirement("CSV Format Requirement", "The CSV should have a 'username' column containing student usernames.")
 					</div>
 				</div>
 				@dialog.Footer() {

@@ -1,0 +1,333 @@
+package page
+
+import (
+	"uot-exam/web/templates/components/accordion"
+	"uot-exam/web/templates/components/button"
+	"uot-exam/web/templates/components/card"
+	"uot-exam/web/templates/components/dialog"
+	"uot-exam/web/templates/components/icon"
+	"uot-exam/web/templates/components/particles"
+)
+
+templ LandingPage() {
+	@dialog.Script()
+	@particles.ParticlesScript()
+	@particles.Particles()
+	<div class="fixed inset-0 flex flex-col items-center justify-center p-4 z-10">
+		<div class="max-w-lg">
+			@card.Card() {
+				@card.Header(card.HeaderProps{
+					Class: "flex flex-col items-center gap-1 pb-6 text-center",
+				}) {
+					<div class="flex items-center justify-center mb-4">
+						<img src="/images/uotLogo.png" alt="University of Technology Logo" class="h-24 w-auto"/>
+					</div>
+					@card.Title(card.TitleProps{Class: "text-2xl"}) {
+						UoT Examination System
+					}
+					@card.Description() {
+						University of Technology — Online Examination Management Portal
+					}
+				}
+				@card.Content(card.ContentProps{Class: "pb-2"}) {
+					<div class="grid gap-4">
+						@dialog.Dialog(dialog.Props{ID: "student-info-dialog"}) {
+							@dialog.Trigger() {
+								<div class="flex items-start gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+									@icon.GraduationCap(icon.Props{Class: "size-5 mt-0.5 text-primary shrink-0"})
+									<div>
+										<p class="text-sm font-medium">For Students</p>
+										<p class="text-xs text-muted-foreground">Access your exams, view results, and track your academic performance.</p>
+									</div>
+								</div>
+							}
+							@dialog.Content(dialog.ContentProps{Class: "sm:max-w-lg"}) {
+								@dialog.Header() {
+									@dialog.Title() {
+										<div class="flex items-center gap-2">
+											@icon.GraduationCap(icon.Props{Class: "size-5 text-primary"})
+											Student Portal — Exam Rules
+										</div>
+									}
+									@dialog.Description() {
+										Please read the following rules carefully before taking any exam.
+									}
+								}
+								<div class="max-h-[60vh] overflow-y-auto pr-1">
+									@accordion.Accordion() {
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Clock(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Time Limits & Auto-Submission
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Each exam has a fixed time limit. Once the timer expires, your exam will be automatically submitted. A countdown timer is always visible at the top of the exam page.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.TriangleAlert(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Single Attempt Policy
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">You may only attempt each exam once. Make sure you are fully prepared and have a stable internet connection before starting.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Save(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Auto-Save Answers
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Your answers are saved automatically as you select them. You do not need to worry about losing progress due to connection issues.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Lock(icon.Props{Class: "size-4 text-primary shrink-0"})
+													No Changes After Submission
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Once you submit an exam, you cannot change your answers. Review your responses carefully before clicking submit.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Target(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Scoring & Pass Score
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Your score is calculated based on the marks assigned to each question. The pass score is displayed before starting the exam. Each question may have a different weight.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.ChartBar(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Results & Performance
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">After all exams in a subject are completed, you will be automatically redirected to the results page to view your overall performance, including charts and detailed breakdowns.</p>
+											}
+										}
+									}
+								</div>
+								@dialog.Footer() {
+									@dialog.Close() {
+										@button.Button(button.Props{Variant: button.VariantDefault}) {
+											I Understand
+										}
+									}
+								}
+							}
+						}
+
+						@dialog.Dialog(dialog.Props{ID: "instructor-info-dialog"}) {
+							@dialog.Trigger() {
+								<div class="flex items-start gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+									@icon.BookOpen(icon.Props{Class: "size-5 mt-0.5 text-primary shrink-0"})
+									<div>
+										<p class="text-sm font-medium">For Instructors</p>
+										<p class="text-xs text-muted-foreground">Manage subjects, create exams, and review student performance analytics.</p>
+									</div>
+								</div>
+							}
+							@dialog.Content(dialog.ContentProps{Class: "sm:max-w-lg"}) {
+								@dialog.Header() {
+									@dialog.Title() {
+										<div class="flex items-center gap-2">
+											@icon.BookOpen(icon.Props{Class: "size-5 text-primary"})
+											Instructor Portal
+										</div>
+									}
+									@dialog.Description() {
+										Manage your assigned subjects and exams efficiently.
+									}
+								}
+								<div class="max-h-[60vh] overflow-y-auto pr-1">
+									@accordion.Accordion() {
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.BookOpen(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Subject Management
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">View and manage subjects assigned to you by the administrator. Monitor enrolled students and track subject-level analytics.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.FileText(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Exam Creation
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Create exams with multiple question types including text, code, and image-based questions. Set total marks, pass scores, and manage exam statuses.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Upload(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Bulk Question Upload
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Add questions manually or upload them in bulk via CSV files to quickly populate exams with large question sets.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.ChartBar(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Performance Analytics
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">View detailed exam analytics including pass rates, score distributions, and individual student performance reports with visual charts.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Download(icon.Props{Class: "size-4 text-primary shrink-0"})
+													PDF Export
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Export student attempts and performance reports as professionally formatted PDF documents for record-keeping.</p>
+											}
+										}
+									}
+								</div>
+								@dialog.Footer() {
+									@dialog.Close() {
+										@button.Button(button.Props{Variant: button.VariantDefault}) {
+											Got It
+										}
+									}
+								}
+							}
+						}
+
+						@dialog.Dialog(dialog.Props{ID: "admin-info-dialog"}) {
+							@dialog.Trigger() {
+								<div class="flex items-start gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+									@icon.Shield(icon.Props{Class: "size-5 mt-0.5 text-primary shrink-0"})
+									<div>
+										<p class="text-sm font-medium">For Administrators</p>
+										<p class="text-xs text-muted-foreground">Oversee the entire system, manage users, subjects, and institutional settings.</p>
+									</div>
+								</div>
+							}
+							@dialog.Content(dialog.ContentProps{Class: "sm:max-w-lg"}) {
+								@dialog.Header() {
+									@dialog.Title() {
+										<div class="flex items-center gap-2">
+											@icon.Shield(icon.Props{Class: "size-5 text-primary"})
+											Administrator Portal
+										</div>
+									}
+									@dialog.Description() {
+										Full control over the examination management system.
+									}
+								}
+								<div class="max-h-[60vh] overflow-y-auto pr-1">
+									@accordion.Accordion() {
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Users(icon.Props{Class: "size-4 text-primary shrink-0"})
+													User Management
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Create, edit, and manage student, instructor, and admin accounts. Supports bulk user import via CSV for efficient onboarding.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.BookOpen(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Subject Management
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Create subjects, assign instructors and students, set pass scores, and configure exam timers and duration settings.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Eye(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Exam Oversight
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Monitor all exams across the platform, review student attempts, and manage exam statuses between Draft and Published.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.ChartBar(icon.Props{Class: "size-4 text-primary shrink-0"})
+													Analytics Dashboard
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Access comprehensive analytics for subjects and exams including pass rates, score distributions, and student performance metrics.</p>
+											}
+										}
+										@accordion.Item() {
+											@accordion.Trigger() {
+												<div class="flex items-center gap-2">
+													@icon.Settings(icon.Props{Class: "size-4 text-primary shrink-0"})
+													System Control
+												</div>
+											}
+											@accordion.Content() {
+												<p class="text-muted-foreground">Full access to all platform features with the ability to modify any resource in the system, including overriding instructor-level actions.</p>
+											}
+										}
+									}
+								</div>
+								@dialog.Footer() {
+									@dialog.Close() {
+										@button.Button(button.Props{Variant: button.VariantDefault}) {
+											Got It
+										}
+									}
+								}
+							}
+						}
+					</div>
+				}
+				@card.Footer(card.FooterProps{
+					Class: "flex justify-center pt-4",
+				}) {
+					@button.Button(button.Props{
+						Href:  "/login",
+						Class: "w-full",
+					}) {
+						@icon.LogIn(icon.Props{Class: "size-4 mr-2"})
+						Sign In to Portal
+					}
+				}
+			}
+		</div>
+	</div>
+}

@@ -65,6 +65,12 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 	}
 }
 
+func (h *UserHandler) LandingPage() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		render.Render(ctx, pages.BasePage("UoT Examination System", page.LandingPage()))
+	}
+}
+
 func (h *UserHandler) AdminLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		render.Render(ctx, pages.BasePage("Admin Login", page.LoginPage("")))
@@ -431,21 +437,31 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		subjectID := ctx.Param("id")
 		username, fullname, userID := parseUsername(ctx)
-		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(subjectID))
+
+		parsedID, err := uuid.Parse(subjectID)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.HTML(http.StatusNotFound, "404.html", nil)
 			return
 		}
 
-		instructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), parsedID)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Subject not found", toast.VariantError)
 			return
 		}
 
-		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), uuid.MustParse(subjectID))
+		instructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), parsedID)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to fetch instructors", toast.VariantError)
+			return
+		}
+
+		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), parsedID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to fetch exams", toast.VariantError)
 			return
 		}
 		allInstructors, err := h.App.ListAllInstructors(ctx.Request.Context(), ports.ListAllInstructorsParams{
@@ -453,7 +469,8 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Offset: 0,
 		})
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to fetch instructors", toast.VariantError)
 			return
 		}
 		availableInstructors := filterAvailableUsers(allInstructors, instructors)
@@ -463,12 +480,13 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 		limit, _ := strconv.Atoi(limitStr)
 		offset, _ := strconv.Atoi(offsetStr)
 
-		students, err := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), uuid.MustParse(subjectID), int32(limit), int32(offset))
+		students, err := h.App.ListStudentsBySubjectIDPaginated(ctx.Request.Context(), parsedID, int32(limit), int32(offset))
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to fetch students", toast.VariantError)
 			return
 		}
-		studentCount, err := h.App.CountStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		studentCount, err := h.App.CountStudentsBySubjectID(ctx.Request.Context(), parsedID)
 		if err != nil {
 			studentCount = 0
 		}
@@ -477,14 +495,15 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Offset: 0,
 		})
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Edit Subject Failed", "Failed to fetch students", toast.VariantError)
 			return
 		}
 
-		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
+		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), parsedID)
 		availableStudents := filterAvailableUsers(allStudents, allEnrolledStudents)
 
-		analytics, err := h.App.GetSubjectAnalytics(ctx.Request.Context(), uuid.MustParse(subjectID))
+		analytics, err := h.App.GetSubjectAnalytics(ctx.Request.Context(), parsedID)
 		if err != nil {
 			analytics = domain.SubjectAnalytics{}
 		}

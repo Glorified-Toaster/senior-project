@@ -940,6 +940,7 @@ templ AddViaCSVDialog(param EditExamPageParam) {
 				Required:    true,
 				Class:       "mb-4",
 			})
+			@upload.CSVRequirement("CSV Format Requirement", "The CSV should contain 9 columns: Question Title, Marks, Question Type (TEXT/CODE), Question Text, Choice 1, Choice 2, Choice 3, Choice 4, Correct Choice (choice_1 to choice_4)")
 		
 			@dialog.Footer(){
 				@dialog.Close(){

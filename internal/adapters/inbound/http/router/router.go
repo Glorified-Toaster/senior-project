@@ -87,6 +87,7 @@ func (r *Router) SetupRoutes() {
 		publicRoutes.GET("/test", r.userHandler.TestPage())
 		publicRoutes.GET("/login", r.userHandler.AdminLogin())
 		publicRoutes.GET("/logout", r.userHandler.Logout())
+		publicRoutes.GET("/", r.userHandler.LandingPage())
 
 	}
 

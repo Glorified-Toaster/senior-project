@@ -825,7 +825,7 @@ templ SubjectAnalyticsTab(param EditSubjectPageParam) {
 				@card.Description() { Overview of subject success rate across all exams. }
 			}
 			@card.Content() {
-				<div class="h-[100px]">
+				<div class="h-[300px]">
 					@chart.Chart(chart.Props{
 						Variant: chart.VariantPie,
 						Data: chart.Data{
@@ -850,7 +850,7 @@ templ SubjectAnalyticsTab(param EditSubjectPageParam) {
 				@card.Description() { Comparison of key score metrics across all exams. }
 			}
 			@card.Content() {
-				<div class="h-[100px]">
+				<div class="h-[300px]">
 					@chart.Chart(chart.Props{
 						Variant: chart.VariantBar,
 						Data: chart.Data{

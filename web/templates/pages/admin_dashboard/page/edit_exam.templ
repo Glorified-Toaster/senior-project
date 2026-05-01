@@ -731,7 +731,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 				@card.Description() { Overview of student success rate. }
 			}
 			@card.Content() {
-				<div class="h-[100px]">
+				<div class="h-[300px]">
 					@chart.Chart(chart.Props{
 						Variant: chart.VariantPie,
 						Data: chart.Data{
@@ -756,7 +756,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 				@card.Description() { Comparison of key score metrics. }
 			}
 			@card.Content() {
-				<div class="h-[100px]">
+				<div class="h-[300px]">
 					@chart.Chart(chart.Props{
 						Variant: chart.VariantBar,
 						Data: chart.Data{
