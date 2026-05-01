@@ -51,7 +51,7 @@ templ DashboardPage(param DashboardPageParam) {
 					for _, info := range param.Subjects {
 						<a href={ templ.SafeURL(fmt.Sprintf("/student/subject/%s", info.Subject.ID.String())) }>
 							@card.Card(card.Props{
-								Class: "h-full hover:shadow-lg hover:border-primary/50 transition-all duration-300 group-hover:-translate-y-1",
+								Class: "h-full hover:shadow-lg hover:border-primary/50 transition-all duration-300 group hover:-translate-y-1",
 							}) {
 								@card.Header() {
 									<div class="flex items-start justify-between">
@@ -144,6 +144,18 @@ templ DashboardPage(param DashboardPageParam) {
 														@icon.Play(icon.Props{Class: "h-4 w-4"})
 														Start
 													}
+												}
+											</div>
+										} else {
+											<div class="pt-2">
+												@button.Button(button.Props{
+													Variant: button.VariantOutline,
+													Size:    button.SizeSm,
+													Class:   "w-full flex items-center justify-center gap-2 opacity-60",
+													Disabled: true,
+												}) {
+													@icon.Clock(icon.Props{Class: "h-4 w-4"})
+													Not started yet
 												}
 											</div>
 										}

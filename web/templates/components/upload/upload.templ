@@ -1,0 +1,43 @@
+package upload
+
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/utils"
+
+type Props struct {
+	ID          string
+	Name        string
+	Accept      string
+	Placeholder string
+	Required    bool
+	Class       string
+}
+
+templ Upload(props Props) {
+	<div class={ utils.TwMerge("relative group flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-12 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/50 transition-all cursor-pointer", props.Class) }>
+		@icon.Upload(icon.Props{Class: "h-8 w-8 text-slate-400 group-hover:text-primary mb-2"})
+		<p class="text-sm text-slate-500 text-center">
+			if props.Placeholder != "" {
+				{ props.Placeholder }
+			} else {
+				Click to browse or drag and drop your file here
+			}
+		</p>
+		<input
+			type="file"
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Name != "" {
+				name={ props.Name }
+			}
+			if props.Accept != "" {
+				accept={ props.Accept }
+			}
+			if props.Required {
+				required
+			}
+			class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+			onchange="if (this.files[0]) { const p = this.previousElementSibling; p.innerText = this.files[0].name; p.classList.add('text-primary', 'font-semibold'); }"
+		/>
+	</div>
+}

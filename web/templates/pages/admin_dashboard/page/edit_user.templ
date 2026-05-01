@@ -34,6 +34,7 @@ templ EditUserPage(param EditUserPageParam) {
 	@collapsible.Script()
 	@dropdown.Script()
 	@popover.Script()
+	@dialog.Script()
 	@toast.Script()
 	@input.Script()
 	@selectbox.Script()
@@ -209,40 +210,38 @@ templ UserInformationTab(param EditUserPageParam) {
 							For:   "is_active",
 							Class: "cursor-pointer",
 						}) {Account Status}
-									@selectbox.SelectBox() {
-										@selectbox.Trigger(selectbox.TriggerProps{
-											Name: "is_active",
-										}) {
-											@selectbox.Value(selectbox.ValueProps{
-												Placeholder: "Select user status",
-											}) {
-												{ utils.IfElse(param.TargetUser.IsActive, "Active", "Inactive") }
-											}
-										}
-										@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-											@selectbox.Group() {
-												@selectbox.Item(selectbox.ItemProps{Value: "true", Selected: param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Active } }
-												@selectbox.Item(selectbox.ItemProps{Value: "false", Selected: !param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Inactive } }
-											}
-										}
-									}
-							
-				</div>
-			</div>
-
-				<div class="mt-6 flex justify-between items-center">
-					@DialogChangePassword(param.TargetUser.ID.String())
-					@button.Button(button.Props{
-						Type: "submit",
-						Form: "edit_user_form",
-						Class: "flex items-center gap-2",
-					}) {
-						@icon.Save(icon.Props{Class: "h-4 w-4"})
-						Save changes
-					}
+						@selectbox.SelectBox() {
+							@selectbox.Trigger(selectbox.TriggerProps{
+								Name: "is_active",
+							}) {
+								@selectbox.Value(selectbox.ValueProps{
+									Placeholder: "Select user status",
+								}) {
+									{ utils.IfElse(param.TargetUser.IsActive, "Active", "Inactive") }
+								}
+							}
+							@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+								@selectbox.Group() {
+									@selectbox.Item(selectbox.ItemProps{Value: "true", Selected: param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDefault}) { Active } }
+									@selectbox.Item(selectbox.ItemProps{Value: "false", Selected: !param.TargetUser.IsActive}) { @badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Inactive } }
+								}
+							}
+						}
+					</div>
 				</div>
 			}
 		</form>
+		<div class="px-6 pb-6 pt-0 flex justify-between items-center">
+			@DialogChangePassword(param.TargetUser.ID.String())
+			@button.Button(button.Props{
+				Type: "submit",
+				Form: "edit_user_form",
+				Class: "flex items-center gap-2",
+			}) {
+				@icon.Save(icon.Props{Class: "h-4 w-4"})
+				Save changes
+			}
+		</div>
 	}
 }
 
@@ -252,8 +251,7 @@ templ DialogChangePassword(userID string) {
 	}) {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
-				Variant: button.VariantOutline,
-				Class: "flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200",
+				Variant: button.VariantDestructive,
 			}) {
 				@icon.Lock(icon.Props{Class: "h-4 w-4"})
 				Change Password

@@ -15,6 +15,7 @@ import "github.com/google/uuid"
 import "strconv"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/upload"
 import "uot-exam/web/templates/components/selectbox"
 import "uot-exam/web/templates/components/badge"
 
@@ -434,22 +435,20 @@ templ ImageQuestionForm(question domain.Question , imgReq bool) {
 				Question Image
 			}
 			if imgReq {
-			@input.Input(input.Props{
-				ID:         "question_image",
-				Name:       "question_image",
-				Value:      question.QuestionImage,
-				Type:       input.TypeFile,
-				Required:   true,
-				FileAccept: "image/*",
-				Class:      "mb-4",
+			@upload.Upload(upload.Props{
+				ID:          "question_image",
+				Name:        "question_image",
+				Accept:      "image/*",
+				Placeholder: "Select or drag question image",
+				Required:    true,
+				Class:       "mb-4",
 			})
 			} else {
-			@input.Input(input.Props{
-				ID:         "question_image",
-				Name:       "question_image",
-				Value:      question.QuestionImage,
-				Type:       input.TypeFile,
-				FileAccept: "image/*",
+			@upload.Upload(upload.Props{
+				ID:          "question_image",
+				Name:        "question_image",
+				Accept:      "image/*",
+				Placeholder: "Select or drag question image",
 				Class:      "mb-4",
 			})
 			}
@@ -896,12 +895,13 @@ templ AddViaCSVDialog(param EditExamPageParam) {
 				})
 				CSV File
 			}
-			@input.Input(input.Props{
-				Type: input.TypeFile,
-				ID: "file",
-				Name: "file",
-				FileAccept: ".csv",
-				Class: "mb-4",
+			@upload.Upload(upload.Props{
+				ID:          "file",
+				Name:        "file",
+				Accept:      ".csv",
+				Placeholder: "Upload a CSV file with questions",
+				Required:    true,
+				Class:       "mb-4",
 			})
 		
 			@dialog.Footer(){

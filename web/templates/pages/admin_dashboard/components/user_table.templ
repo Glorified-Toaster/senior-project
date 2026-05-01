@@ -15,6 +15,8 @@ import "uot-exam/web/templates/components/input"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/selectbox"
+import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/upload"
 import "uot-exam/web/templates/utils"
 
 type UserTableProps struct {
@@ -96,12 +98,8 @@ templ UserTable(props UserTableProps) {
 							@AddStudentDialog(props)
 						}
 
-						if props.AddUserCSV {
-							@AddUserCSVDialog()
-						}
-
 						if props.AddUser {
-							@AddUserDialog()
+							@AddUserDialog(props.AddUserCSV)
 						}
 						
 						if props.AddInstructor {
@@ -141,245 +139,262 @@ templ UserTable(props UserTableProps) {
 	}
 }
 
-templ AddUserDialog() {
-							@dialog.Dialog(){
-							@dialog.Trigger(){
-								@button.Button(button.Props{
-									Variant: button.VariantDefault,
-								}) {
-									Add User
-								}
-							}
-							@dialog.Content(){
-								@dialog.Header(){
-									@dialog.Title() {
-										Add User
-									}
-									@dialog.Description(){
-										Add a new user to the platform.
-									}
-								}
-
-							<form
-								id="add-user-form"
-								hx-post="/admin/dashboard/users/create"
-								hx-target="#users-table-container"
-								hx-swap="outerHTML"
-							>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="space-y-2 mb-4 md:col-span-2">
-						@form.Label(form.LabelProps{For: "full_name"}) {
-							Full Name
-						}
-						@input.Input(input.Props{
-							ID:          "full_name",
-							Name:        "full_name",
-							Placeholder: "Enter full name",
-							Required:    true,
-						})
-					</div>
-					<div class="space-y-2 mb-4">
-						<div class="flex items-center justify-between">
-							@form.Label(form.LabelProps{For: "username"}) {
-								Username
-							}
-							@button.Button(button.Props{
-								Size:    button.SizeIcon,
-								Variant: button.VariantGhost,
-								Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
-								Attributes: templ.Attributes{
-									"hx-get":    "/admin/dashboard/users/generate-username",
-									"hx-swap":   "none",
-									"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('username').value = event.detail.xhr.responseText }",
-									"type":      "button",
-									"title":     "Randomize Username",
-								},
-							}) {
-								@icon.Dices(icon.Props{Size: 14})
-							}
-						</div>
-						@input.Input(input.Props{
-							ID:          "username",
-							Name:        "username",
-							Placeholder: "Enter username",
-							Required:    true,
-						})
-					</div>
-
-					<div class="space-y-2 mb-4">
-						<div class="flex items-center justify-between">
-							@form.Label(form.LabelProps{For: "password"}) {
-								Password
-							}
-							@button.Button(button.Props{
-								Size:    button.SizeIcon,
-								Variant: button.VariantGhost,
-								Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
-								Attributes: templ.Attributes{
-									"hx-get":    "/admin/dashboard/users/generate-password",
-									"hx-swap":   "none",
-									"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('password').value = event.detail.xhr.responseText }",
-									"type":      "button",
-									"title":     "Randomize Password",
-								},
-							}) {
-								@icon.Dices(icon.Props{Size: 14})
-							}
-						</div>
-						@input.Input(input.Props{
-							ID:          "password",
-							Name:        "password",
-							Placeholder: "Enter password",
-							Type:        input.TypePassword,
-							Required:    true,
-						})
-					</div>
-					<div class="space-y-2 mb-4">
-						@form.Label(form.LabelProps{For: "role"}) {
-							Role
-						}
-			@selectbox.SelectBox() {
-				@selectbox.Trigger(selectbox.TriggerProps{
-					Name: "role",
-				}) {
-					@selectbox.Value(selectbox.ValueProps{
-						Placeholder: "Select the role",
-					})
-				}
-				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-					@selectbox.Group() {
-						@selectbox.Label() {
-							Role
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value: "ADMIN",
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantSecondary,
-							}) {
-								Admin
-							}
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value: "STUDENT",
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantDestructive,
-							}) {
-								Student
-							}
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value: "INSTRUCTOR",
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantDefault,
-							}) {
-								Instructor
-							}
-						}
-					}
-				}
-			}
-					</div>
-
-				</div>
-								@dialog.Footer(){
-									@dialog.Close(){
-										@button.Button(button.Props{
-											Variant: button.VariantOutline,	
-										}) {
-											Cancel
-										}
-									}
-									@button.Button(button.Props{
-										Variant: button.VariantDefault,
-										Type:    button.TypeSubmit,
-									}){
-										Add User
-									}
-								}
-							</form>
-							}
-						}
-
-}
-
-templ AddUserCSVDialog() {
-	@dialog.Dialog(dialog.Props{
-		ID: "add-user-csv-dialog",
-	}) {
+templ AddUserDialog(showCSV bool) {
+	@dialog.Dialog() {
 		@dialog.Trigger() {
 			@button.Button(button.Props{
-				Variant: button.VariantOutline,
-				Size:    button.SizeSm,
-				Class:   "flex items-center gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm transition-all",
-				Attributes: templ.Attributes{"title": "Add Users via CSV"},
+				Variant: button.VariantDefault,
 			}) {
-				@icon.FilePlus(icon.Props{Class: "h-4 w-4"})
-				<span class="hidden sm:inline">Add Users CSV</span>
+				Add User
 			}
 		}
-		@dialog.Content(dialog.ContentProps{
-			Class: "max-w-md",
-		}) {
+		@dialog.Content(dialog.ContentProps{Class: "max-w-2xl"}) {
 			@dialog.Header() {
 				@dialog.Title() {
-					Add Users via CSV
+					Add User
 				}
 				@dialog.Description() {
-					Bulk import new users to the platform by uploading a CSV file.
+					Add a new user to the platform manually or via CSV bulk import.
 				}
 			}
-			<form
-				id="add-user-csv-form"
-				hx-post="/admin/dashboard/users/create-csv"
-				hx-encoding="multipart/form-data"
-				hx-target="#users-table-container"
-				hx-swap="outerHTML"
-			>
-				<div class="space-y-4 py-4">
-					<div class="space-y-2">
-						@form.Label(form.LabelProps{For: "csv_file", Class: "text-sm font-medium"}) {
-							Select CSV File
-						}
-						<div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/50 transition-all cursor-pointer group">
-							@icon.Upload(icon.Props{Class: "h-8 w-8 text-slate-400 group-hover:text-primary mb-2"})
-							<p class="text-sm text-slate-500 text-center">Click to browse or drag and drop your CSV file here</p>
-							<input 
-								type="file" 
-								id="csv_file" 
-								name="csv_file" 
-								accept=".csv" 
-								required 
-								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-							/>
-						</div>
-						<p class="text-[10px] text-slate-400">The CSV should contain: full_name, username, role.</p>
-					</div>
-				</div>
-				@dialog.Footer() {
-					@dialog.Close() {
-						@button.Button(button.Props{
-							Variant: button.VariantOutline,
-						}) {
-							Cancel
-						}
-					}
-					@button.Button(button.Props{
-						Variant: button.VariantDefault,
-						Type:    button.TypeSubmit,
-						Form:    "add-user-csv-form",
-						Class:   "flex items-center gap-2",
+			if showCSV {
+				@tabs.Tabs(tabs.Props{
+					ID: "add-user-tabs",
+				}) {
+					@tabs.List(tabs.ListProps{
+						Class: "w-full",
 					}) {
-						@icon.Check(icon.Props{Class: "h-4 w-4"})
-						Import Users
+						@tabs.Trigger(tabs.TriggerProps{
+							Value:    "manual",
+							IsActive: true,
+							TabsID:   "add-user-tabs",
+							Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							Manual Entry
+						}
+						@tabs.Trigger(tabs.TriggerProps{
+							Value:  "csv",
+							TabsID: "add-user-tabs",
+							Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							CSV Import
+						}
 					}
+					<div class="mt-4">
+						@tabs.Content(tabs.ContentProps{
+							Value:    "manual",
+							IsActive: true,
+							TabsID:   "add-user-tabs",
+						}) {
+							@AddUserManualForm()
+						}
+						@tabs.Content(tabs.ContentProps{
+							Value:  "csv",
+							TabsID: "add-user-tabs",
+						}) {
+							@AddUserCSVForm()
+						}
+					</div>
 				}
-			</form>
+			} else {
+				@AddUserManualForm()
+			}
 		}
 	}
+}
+
+templ AddUserManualForm() {
+	<form
+		id="add-user-form"
+		hx-post="/admin/dashboard/users/create"
+		hx-target="#users-table-container"
+		hx-swap="outerHTML"
+	>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+			<div class="space-y-2 mb-4 md:col-span-2">
+				@form.Label(form.LabelProps{For: "full_name"}) {
+					Full Name
+				}
+				@input.Input(input.Props{
+					ID:          "full_name",
+					Name:        "full_name",
+					Placeholder: "Enter full name",
+					Required:    true,
+				})
+			</div>
+			<div class="space-y-2 mb-4">
+				<div class="flex items-center justify-between">
+					@form.Label(form.LabelProps{For: "username"}) {
+						Username
+					}
+					@button.Button(button.Props{
+						Size:    button.SizeIcon,
+						Variant: button.VariantGhost,
+						Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+						Attributes: templ.Attributes{
+							"hx-get":                   "/admin/dashboard/users/generate-username",
+							"hx-swap":                  "none",
+							"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('username').value = event.detail.xhr.responseText }",
+							"type":                     "button",
+							"title":                    "Randomize Username",
+						},
+					}) {
+						@icon.Dices(icon.Props{Size: 14})
+					}
+				</div>
+				@input.Input(input.Props{
+					ID:          "username",
+					Name:        "username",
+					Placeholder: "Enter username",
+					Required:    true,
+				})
+			</div>
+			<div class="space-y-2 mb-4">
+				<div class="flex items-center justify-between">
+					@form.Label(form.LabelProps{For: "password"}) {
+						Password
+					}
+					@button.Button(button.Props{
+						Size:    button.SizeIcon,
+						Variant: button.VariantGhost,
+						Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+						Attributes: templ.Attributes{
+							"hx-get":                   "/admin/dashboard/users/generate-password",
+							"hx-swap":                  "none",
+							"hx-on:htmx:after-request": "if(event.detail.xhr.status === 200) { document.getElementById('password').value = event.detail.xhr.responseText }",
+							"type":                     "button",
+							"title":                    "Randomize Password",
+						},
+					}) {
+						@icon.Dices(icon.Props{Size: 14})
+					}
+				</div>
+				@input.Input(input.Props{
+					ID:          "password",
+					Name:        "password",
+					Placeholder: "Enter password",
+					Type:        input.TypePassword,
+					Required:    true,
+				})
+			</div>
+			<div class="space-y-2 mb-4">
+				@form.Label(form.LabelProps{For: "role"}) {
+					Role
+				}
+				@selectbox.SelectBox() {
+					@selectbox.Trigger(selectbox.TriggerProps{
+						Name: "role",
+					}) {
+						@selectbox.Value(selectbox.ValueProps{
+							Placeholder: "Select the role",
+						})
+					}
+					@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+						@selectbox.Group() {
+							@selectbox.Label() {
+								Role
+							}
+							@selectbox.Item(selectbox.ItemProps{
+								Value: "ADMIN",
+							}) {
+								@badge.Badge(badge.Props{
+									Variant: badge.VariantSecondary,
+								}) {
+									Admin
+								}
+							}
+							@selectbox.Item(selectbox.ItemProps{
+								Value: "STUDENT",
+							}) {
+								@badge.Badge(badge.Props{
+									Variant: badge.VariantDestructive,
+								}) {
+									Student
+								}
+							}
+							@selectbox.Item(selectbox.ItemProps{
+								Value: "INSTRUCTOR",
+							}) {
+								@badge.Badge(badge.Props{
+									Variant: badge.VariantDefault,
+								}) {
+									Instructor
+								}
+							}
+						}
+					}
+				}
+			</div>
+		</div>
+		@dialog.Footer() {
+			@dialog.Close() {
+				@button.Button(button.Props{
+					Variant: button.VariantOutline,
+				}) {
+					Cancel
+				}
+			}
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+				Type:    button.TypeSubmit,
+			}) {
+				Add User
+			}
+		}
+	</form>
+}
+
+templ AddUserCSVForm() {
+	<form
+		id="add-user-csv-form"
+		hx-post="/admin/dashboard/users/create-csv"
+		hx-encoding="multipart/form-data"
+		hx-target="#users-table-container"
+		hx-swap="outerHTML"
+	>
+		<div class="space-y-4 py-4">
+			<div class="space-y-2">
+				@form.Label(form.LabelProps{For: "csv_file", Class: "text-sm font-medium"}) {
+					Select CSV File
+				}
+				@upload.Upload(upload.Props{
+					ID:          "csv_file",
+					Name:        "csv_file",
+					Accept:      ".csv",
+					Placeholder: "Click to browse or drag and drop your CSV file here",
+					Required:    true,
+				})
+				<div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mt-4">
+					<p class="text-xs text-blue-700 font-medium flex items-center gap-2">
+						@icon.Info(icon.Props{Class: "h-3.5 w-3.5"})
+						CSV Format Requirement
+					</p>
+					<p class="text-[10px] text-blue-600 mt-1 leading-relaxed">
+						The CSV should contain 4 columns in this exact order: <br/>
+						<span class="font-bold">username, full_name, role, password</span>
+					</p>
+				</div>
+			</div>
+		</div>
+		@dialog.Footer() {
+			@dialog.Close() {
+				@button.Button(button.Props{
+					Variant: button.VariantOutline,
+				}) {
+					Cancel
+				}
+			}
+			@button.Button(button.Props{
+				Variant: button.VariantDefault,
+				Type:    button.TypeSubmit,
+				Form:    "add-user-csv-form",
+				Class:   "flex items-center gap-2",
+			}) {
+				@icon.Check(icon.Props{Class: "h-4 w-4"})
+				Import Users
+			}
+		}
+	</form>
 }
 
 templ UserTableContainer(props UserTableProps) {
@@ -751,12 +766,13 @@ templ AddStudentDialog(param UserTableProps){
 				hx-swap="outerHTML"
 				hx-encoding="multipart/form-data"
 			>
-				@input.Input(input.Props{
-					Type:        input.TypeFile,
+				@upload.Upload(upload.Props{
+					ID:          "student_csv_manual",
 					Name:        "student_csv",
-					FileAccept:      ".csv",
-					Class:       "mb-4 mt-4",
+					Accept:      ".csv",
+					Placeholder: "Click to browse or drag and drop your CSV file here",
 					Required:    true,
+					Class:       "mb-4 mt-4",
 				})
 
 				@dialog.Footer() {
@@ -898,18 +914,13 @@ templ AddStudentCSVDialog(param UserTableProps) {
 						@form.Label(form.LabelProps{For: "student_csv", Class: "text-sm font-medium"}) {
 							Select CSV File
 						}
-						<div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/50 transition-all cursor-pointer group">
-							@icon.Upload(icon.Props{Class: "h-8 w-8 text-slate-400 group-hover:text-primary mb-2"})
-							<p class="text-sm text-slate-500 text-center">Click to browse or drag and drop your CSV file here</p>
-							<input 
-								type="file" 
-								id="student_csv" 
-								name="student_csv" 
-								accept=".csv" 
-								required 
-								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-							/>
-						</div>
+						@upload.Upload(upload.Props{
+							ID:          "student_csv",
+							Name:        "student_csv",
+							Accept:      ".csv",
+							Placeholder: "Click to browse or drag and drop your CSV file here",
+							Required:    true,
+						})
 						<p class="text-[10px] text-slate-400">The CSV should have a 'username' column.</p>
 					</div>
 				</div>
