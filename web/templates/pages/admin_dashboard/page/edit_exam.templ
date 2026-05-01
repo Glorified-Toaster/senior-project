@@ -533,25 +533,28 @@ templ QuestionsTab(param EditExamPageParam) {
 	Title: "Total Questions",
 	Description: "Number of questions in this exam.",
 	Icon: icon.BadgeQuestionMark(icon.Props{
-		Class: "h-10 w-10 text-primary",
+		Class: "h-8 w-8",
 	}),
 	Value: strconv.Itoa(len(param.Questions)),
+	ColorClass: "bg-primary/10 text-primary",
 })
 	@components.TotalCard(components.TotalCardProps{
 		Title: "Pass Score",
 		Description: "Minimum score required to pass.",
 		Icon: icon.CircleCheck(icon.Props{
-			Class: "h-10 w-10 text-green-500",
+			Class: "h-8 w-8",
 		}),
 		Value: fmt.Sprintf("%.2f / %.2f", param.Exam.PassScore, param.Exam.TotalMarks),
+		ColorClass: "bg-green-50 text-green-600",
 	})
 	@components.TotalCard(components.TotalCardProps{
 		Title: "Status",
 		Description: "Current status of the exam.",
 		Icon: icon.Activity(icon.Props{
-			Class: "h-10 w-10 text-yellow-500",
+			Class: "h-8 w-8",
 		}),
 		Value: string(param.Exam.Status),
+		ColorClass: "bg-orange-50 text-orange-600",
 	})
 </div>
 	@card.Card() {
@@ -599,25 +602,28 @@ templ ExamStudentsTab(param EditExamPageParam) {
 			Title: "Total Attempts",
 			Description: "Total number of student attempts.",
 			Icon: icon.Users(icon.Props{
-				Class: "h-10 w-10 text-blue-500",
+				Class: "h-8 w-8",
 			}),
 			Value: strconv.Itoa(len(param.Attempts)),
+			ColorClass: "bg-blue-50 text-blue-600",
 		})
 		@components.TotalCard(components.TotalCardProps{
 			Title: "In Progress",
 			Description: "Students currently taking the exam.",
 			Icon: icon.Clock(icon.Props{
-				Class: "h-10 w-10 text-yellow-500",
+				Class: "h-8 w-8",
 			}),
 			Value: strconv.Itoa(countInProgress(param.Attempts)),
+			ColorClass: "bg-orange-50 text-orange-600",
 		})
 		@components.TotalCard(components.TotalCardProps{
 			Title: "Completed",
 			Description: "Students who have submitted their exam.",
 			Icon: icon.CircleCheck(icon.Props{
-				Class: "h-10 w-10 text-green-500",
+				Class: "h-8 w-8",
 			}),
 			Value: strconv.Itoa(countCompleted(param.Attempts)),
+			ColorClass: "bg-green-50 text-green-600",
 		})
 	</div>
 	@card.Card() {
@@ -678,7 +684,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Analytics.AverageScore) }</h3>
 					</div>
 					<div class="p-3 bg-blue-50 rounded-lg text-blue-600">
-						@icon.TrendingUp(icon.Props{Class: "h-6 w-6"})
+						@icon.TrendingUp(icon.Props{Class: "h-8 w-8"})
 					</div>
 				</div>
 			}
@@ -691,7 +697,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.1f%%", param.Analytics.PassRate) }</h3>
 					</div>
 					<div class="p-3 bg-green-50 rounded-lg text-green-600">
-						@icon.CircleCheck(icon.Props{Class: "h-6 w-6"})
+						@icon.CircleCheck(icon.Props{Class: "h-8 w-8"})
 					</div>
 				</div>
 			}
@@ -704,7 +710,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Analytics.MaxScore) }</h3>
 					</div>
 					<div class="p-3 bg-purple-50 rounded-lg text-purple-600">
-						@icon.Trophy(icon.Props{Class: "h-6 w-6"})
+						@icon.Trophy(icon.Props{Class: "h-8 w-8"})
 					</div>
 				</div>
 			}
@@ -717,7 +723,7 @@ templ AnalyticsTab(param EditExamPageParam) {
 						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Analytics.TotalAttempts) }</h3>
 					</div>
 					<div class="p-3 bg-orange-50 rounded-lg text-orange-600">
-						@icon.Users(icon.Props{Class: "h-6 w-6"})
+						@icon.Users(icon.Props{Class: "h-8 w-8"})
 					</div>
 				</div>
 			}

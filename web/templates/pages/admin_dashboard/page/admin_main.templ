@@ -52,19 +52,22 @@ templ AdminMainPage(params AdminDashboardParam) {
 						Title:       "Total Users",
 						Description: "Total number of users on the platform.",
 						Value:       params.TotalUsers,
-						Icon:        icon.Users(icon.Props{Class: "h-10 w-10"}),
+						Icon:        icon.Users(icon.Props{Class: "h-8 w-8"}),
+						ColorClass:  "bg-blue-50 text-blue-600",
 					})
 					@components.TotalCard(components.TotalCardProps{
 						Title:       "Total Exams",
 						Description: "Total number of Exams taken on the platform.",
 						Value:       "20",
-						Icon:        icon.Book(icon.Props{Class: "h-10 w-10"}),
+						Icon:        icon.Book(icon.Props{Class: "h-8 w-8"}),
+						ColorClass:  "bg-purple-50 text-purple-600",
 					})
 					@components.TotalCard(components.TotalCardProps{
 						Title:       "Total Questions",
 						Description: "Total number of Questions on the platform.",
 						Value:       "80",
-						Icon:        icon.BadgeQuestionMark(icon.Props{Class: "h-10 w-10"}),
+						Icon:        icon.BadgeQuestionMark(icon.Props{Class: "h-8 w-8"}),
+						ColorClass:  "bg-orange-50 text-orange-600",
 					})
 				</div>
 				@ExamGridTableCard(params.Exams)

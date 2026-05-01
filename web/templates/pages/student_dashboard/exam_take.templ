@@ -58,9 +58,9 @@ templ ExamTakePage(param ExamTakeParam) {
 				</div>
 				<div class="flex items-center gap-4">
 					<!-- Timer -->
-					<div id="exam-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-primary font-mono text-lg font-bold shadow-sm transition-colors ring-1 ring-primary/10">
-						@icon.Clock(icon.Props{Class: "h-5 w-5"})
-						<span id="timer-display">--:--</span>
+					<div id="exam-timer" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10 text-primary transition-all duration-300">
+						@icon.Clock(icon.Props{Class: "h-4 w-4"})
+						<span id="timer-display" class="font-mono text-sm font-bold tracking-tight">--:--:--</span>
 					</div>
 					<!-- Submit Button -->
 					@dialog.Trigger(dialog.TriggerProps{For: "submit-exam-dialog"}) {
@@ -203,7 +203,7 @@ templ ExamTakePage(param ExamTakeParam) {
 			
 			if (data.auto_submit) {
 				submitted = true;
-				timerDisplay.textContent = '00:00';
+				timerDisplay.textContent = '00:00:00';
 				socket.close();
 				
 				showToast('Exam Auto-Submitted', 'Time is up. Your exam has been automatically submitted.', 'warning');
@@ -221,11 +221,7 @@ templ ExamTakePage(param ExamTakeParam) {
 			const minutes = Math.floor((totalSeconds % 3600) / 60);
 			const seconds = totalSeconds % 60;
 
-			if (hours > 0) {
-				timerDisplay.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-			} else {
-				timerDisplay.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-			}
+			timerDisplay.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
 
 			// Progress bar
 			const totalDuration = durationMinutes * 60;

@@ -62,19 +62,22 @@ templ SubjectViewPage(param SubjectViewParam) {
 					Title:       "Total Exams",
 					Value:       fmt.Sprintf("%d", len(param.Exams)),
 					Description: "Exams in this subject",
-					Icon:        icon.Book(icon.Props{Class: "h-10 w-10 text-primary"}),
+					Icon:        icon.Book(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-primary/10 text-primary",
 				})
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Duration",
 					Value:       fmt.Sprintf("%d min", param.Subject.DurationMinutes),
 					Description: "Allocated time",
-					Icon:        icon.Clock(icon.Props{Class: "h-10 w-10 text-slate-500"}),
+					Icon:        icon.Clock(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-blue-50 text-blue-600",
 				})
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Pass Score",
 					Value:       fmt.Sprintf("%.2f", param.Subject.PassScore),
 					Description: "Out of " + fmt.Sprintf("%.2f", param.Subject.TotalMarks),
-					Icon:        icon.Target(icon.Props{Class: "h-10 w-10 text-green-500"}),
+					Icon:        icon.Target(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-green-50 text-green-600",
 				})
 			</div>
 
@@ -116,7 +119,7 @@ templ ExamTab(param SubjectViewParam) {
 			@card.Title() {
 				<div class="flex items-center gap-2">
 					@icon.FileText(icon.Props{
-						Class: "h-6 w-6",
+						Class: "h-8 w-8",
 					})
 					<span class="text-xl font-bold">Exams</span>
 					<div class="flex-1 flex justify-end gap-2">

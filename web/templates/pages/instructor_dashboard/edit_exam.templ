@@ -168,17 +168,20 @@ templ QuestionsTab(param EditExamPageParam) {
         @components.TotalCard(components.TotalCardProps{
             Title: "Total Questions",
             Value: strconv.Itoa(len(param.Questions)),
-            Icon: icon.BadgeQuestionMark(icon.Props{Class: "h-10 w-10 text-primary"}),
+            Icon: icon.BadgeQuestionMark(icon.Props{Class: "h-8 w-8"}),
+            ColorClass: "bg-primary/10 text-primary",
         })
         @components.TotalCard(components.TotalCardProps{
             Title: "Total Marks",
             Value: fmt.Sprintf("%.2f", param.Exam.TotalMarks),
-            Icon: icon.Trophy(icon.Props{Class: "h-10 w-10 text-yellow-500"}),
+            Icon: icon.Trophy(icon.Props{Class: "h-8 w-8"}),
+            ColorClass: "bg-purple-50 text-purple-600",
         })
         @components.TotalCard(components.TotalCardProps{
             Title: "Pass Score",
             Value: fmt.Sprintf("%.2f", param.Exam.PassScore),
-            Icon: icon.CircleCheck(icon.Props{Class: "h-10 w-10 text-green-500"}),
+            Icon: icon.CircleCheck(icon.Props{Class: "h-8 w-8"}),
+            ColorClass: "bg-green-50 text-green-600",
         })
     </div>
 

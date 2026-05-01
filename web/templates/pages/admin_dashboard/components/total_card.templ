@@ -1,35 +1,35 @@
 package components
 
 import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/utils"
 
 type TotalCardProps struct {
 	Title       string
 	Description string
 	Value       string
 	Icon        templ.Component
+	ColorClass  string // e.g., "bg-primary/10 text-primary"
 }
 
 templ TotalCard(props TotalCardProps) {
-	<div class="w-full max-w-sm">
-		@card.Card(card.Props{
-			Class: "max-w-sm",
-		}) {
-			@card.Header() {
-				@card.Title() {
-					<span class="text-2xl font-bold">{ props.Title }</span>
-				}
-				@card.Description() {
-					<span class="text-sm text-muted-foreground">{ props.Description }</span>
-				}
-			}
-			@card.Content() {
-				<div class="flex items-center justify-between">
-					<span class="text-4xl font-bold ">{ props.Value }</span>
-					<span class="text-sm text-muted-foreground">
-						@props.Icon
-					</span>
+	@card.Card(card.Props{
+		Class: "w-full shadow-sm border-slate-200/60",
+	}) {
+		@card.Content(card.ContentProps{Class: "p-6"}) {
+			<div class="flex items-center justify-between">
+				<div class="space-y-1">
+					<p class="text-sm font-medium text-slate-500 tracking-tight">{ props.Title }</p>
+					<div class="flex flex-col">
+						<h3 class="text-2xl font-bold text-slate-900 tracking-tight">{ props.Value }</h3>
+						if props.Description != "" {
+							<p class="text-[11px] text-slate-400 font-medium leading-tight">{ props.Description }</p>
+						}
+					</div>
 				</div>
-			}
+				<div class={ utils.TwMerge("p-3 rounded-xl transition-colors duration-200", utils.IfElse(props.ColorClass != "", props.ColorClass, "bg-primary/10 text-primary")) }>
+					@props.Icon
+				</div>
+			</div>
 		}
-	</div>
+	}
 }

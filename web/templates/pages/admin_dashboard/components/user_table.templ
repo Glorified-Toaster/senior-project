@@ -61,7 +61,7 @@ templ UserTable(props UserTableProps) {
 			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50 p-4 rounded-t-xl">
 				<div class="flex items-center gap-3">
 					<div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm ">
-						@icon.Users(icon.Props{Class: "h-6 w-6"})
+						@icon.Users(icon.Props{Class: "h-8 w-8"})
 					</div>
 					<div>
 						<h3 class="text-xl font-bold text-slate-800 tracking-tight">
@@ -230,7 +230,7 @@ templ AddUserManualForm() {
 					@button.Button(button.Props{
 						Size:    button.SizeIcon,
 						Variant: button.VariantGhost,
-						Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+						Class:   "h-8 w-8 text-slate-400 hover:text-blue-600",
 						Attributes: templ.Attributes{
 							"hx-get":                   "/admin/dashboard/users/generate-username",
 							"hx-swap":                  "none",
@@ -257,7 +257,7 @@ templ AddUserManualForm() {
 					@button.Button(button.Props{
 						Size:    button.SizeIcon,
 						Variant: button.VariantGhost,
-						Class:   "h-6 w-6 text-slate-400 hover:text-blue-600",
+						Class:   "h-8 w-8 text-slate-400 hover:text-blue-600",
 						Attributes: templ.Attributes{
 							"hx-get":                   "/admin/dashboard/users/generate-password",
 							"hx-swap":                  "none",

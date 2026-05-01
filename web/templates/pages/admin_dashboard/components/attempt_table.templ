@@ -15,7 +15,7 @@ templ AttemptTable(attempts []domain.ExamAttempt, examStatus string) {
 				Class: "flex flex-col items-center justify-center py-12 text-center",
 			}) {
 				<div class="rounded-full bg-muted p-3 mb-4">
-					@icon.Info(icon.Props{Class: "h-6 w-6 text-muted-foreground"})
+					@icon.Info(icon.Props{Class: "h-8 w-8 text-muted-foreground"})
 				</div>
 				<h3 class="text-lg font-semibold">
 					if examStatus == "DRAFT" {

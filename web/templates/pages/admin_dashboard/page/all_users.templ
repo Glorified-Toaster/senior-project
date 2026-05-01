@@ -98,19 +98,22 @@ templ AllUsersContent(params AdminDashboardParam) {
 					Title:       "Total Users",
 					Description: "Total number of users on the platform.",
 					Value:       params.TotalUsers,
-					Icon:        icon.Users(icon.Props{Class: "h-10 w-10"}),
+					Icon:        icon.Users(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-blue-50 text-blue-600",
 				})
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Total Instructors",
 					Description: "Total number of instructors on the platform.",
 					Value:       "20",
-					Icon:        icon.UserRoundPen(icon.Props{Class: "h-10 w-10"}),
+					Icon:        icon.UserRoundPen(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-purple-50 text-purple-600",
 				})
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Total Students",
 					Description: "Total number of students on the platform.",
 					Value:       "80",
-					Icon:        icon.User(icon.Props{Class: "h-10 w-10"}),
+					Icon:        icon.User(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-green-50 text-green-600",
 				})
 			</div>
 
@@ -134,7 +137,8 @@ templ DeletedUsersContent(params AdminDashboardParam) {
 					Title:       "Total Deleted Users",
 					Description: "Total number of deleted users on the platform.",
 					Value:       fmt.Sprintf("%d", params.DeletedUsersCount),
-					Icon:        icon.Users(icon.Props{Class: "h-10 w-10"}),
+					Icon:        icon.Users(icon.Props{Class: "h-8 w-8"}),
+					ColorClass:  "bg-red-50 text-red-600",
 				})
 			</div>
 			@components.UserTable(components.UserTableProps{
