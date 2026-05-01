@@ -385,7 +385,6 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 		}
 
 		exam, _ := h.App.GetExamByID(ctx.Request.Context(), examID)
-		helpers.Toast(ctx, "Exam Submitted", "Your exam has been submitted successfully", toast.VariantSuccess)
 
 		// Check if this was the last exam for the subject
 		totalExams, _ := h.App.CountPublishedExamsBySubject(ctx.Request.Context(), exam.SubjectID)

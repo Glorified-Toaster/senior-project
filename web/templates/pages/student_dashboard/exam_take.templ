@@ -9,11 +9,13 @@ import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/badge"
 import "uot-exam/web/templates/components/label"
 import "uot-exam/web/templates/components/aspectratio"
+import "uot-exam/web/templates/components/dialog"
 import "uot-exam/internal/domain"
 import "github.com/google/uuid"
 
 templ ExamTakePage(param ExamTakeParam) {
 	@toast.Script()
+	@dialog.Script()
 
 	<!-- KaTeX CSS (local) -->
 	<link rel="stylesheet" href="/src/katex/katex.min.css" />
@@ -61,24 +63,39 @@ templ ExamTakePage(param ExamTakeParam) {
 						<span id="timer-display">--:--</span>
 					</div>
 					<!-- Submit Button -->
-					@button.Button(button.Props{
-						Variant: button.VariantDefault,
-						Class: "flex items-center gap-2",
-						Attributes: templ.Attributes{
-							"id": "submit-exam-btn",
-							"hx-post": fmt.Sprintf("/student/exam/%s/submit", param.Exam.ID.String()),
-							"hx-swap": "none",
-							"hx-confirm": "Are you sure you want to submit this exam? You cannot change your answers after submission.",
-						},
-					}) {
-						@icon.Send(icon.Props{Class: "h-4 w-4"})
-						Submit Exam
+					@dialog.Trigger(dialog.TriggerProps{For: "submit-exam-dialog"}) {
+						@button.Button(button.Props{
+							Variant: button.VariantDefault,
+							Class: "flex items-center gap-2",
+							Attributes: templ.Attributes{
+								"id": "submit-exam-btn",
+							},
+						}) {
+							@icon.Send(icon.Props{Class: "h-4 w-4"})
+							Submit Exam
+						}
 					}
 				</div>
 			</div>
 			<!-- Progress bar -->
 			<div class="h-1 bg-slate-100">
 				<div id="progress-bar" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
+			</div>
+			<!-- Question Navigation Indicator -->
+			<div class="bg-white border-b shadow-sm overflow-x-auto py-2 px-4 text-center">
+				<div class="inline-flex items-center gap-2">
+					for qIndex, question := range param.Questions {
+						<a href={ templ.SafeURL("#question-" + question.ID.String()) }
+							id={ "nav-indicator-" + question.ID.String() }
+							class={
+								"flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md text-sm font-medium transition-colors border shadow-sm",
+								templ.KV("bg-primary text-white border-primary", isAnswered(param.AnsweredChoices, question.ID)),
+								templ.KV("bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100", !isAnswered(param.AnsweredChoices, question.ID)),
+							}>
+							{ fmt.Sprint(qIndex + 1) }
+						</a>
+					}
+				</div>
 			</div>
 		</header>
 
@@ -103,22 +120,44 @@ templ ExamTakePage(param ExamTakeParam) {
 
 			<!-- Bottom submit button -->
 			<div class="mt-8 flex justify-center pb-8">
-				@button.Button(button.Props{
-					Variant: button.VariantDefault,
-					Class: "flex items-center gap-2 px-8 py-3",
-					Attributes: templ.Attributes{
-						"hx-post": fmt.Sprintf("/student/exam/%s/submit", param.Exam.ID.String()),
-						"hx-swap": "none",
-						"hx-confirm": "Are you sure you want to submit this exam? You cannot change your answers after submission.",
-					},
-				}) {
-					@icon.Send(icon.Props{Class: "h-4 w-4"})
-					Submit Exam
+				@dialog.Trigger(dialog.TriggerProps{For: "submit-exam-dialog"}) {
+					@button.Button(button.Props{
+						Variant: button.VariantDefault,
+						Class: "flex items-center gap-2 px-8 py-3",
+					}) {
+						@icon.Send(icon.Props{Class: "h-4 w-4"})
+						Submit Exam
+					}
 				}
 			</div>
 		</main>
 	</div>
 	<div id="toast-container"></div>
+	
+	@dialog.Dialog(dialog.Props{ID: "submit-exam-dialog"}) {
+		@dialog.Content() {
+			@dialog.Header() {
+				@dialog.Title() { Submit Exam }
+				@dialog.Description() { Are you sure you want to submit this exam? You cannot change your answers after submission. If you submit, you will be automatically redirected to the subject page when other exams are available, or the results page if all are completed. }
+			}
+			@dialog.Footer() {
+				@dialog.Close() {
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Close
+					}
+				}
+				@button.Button(button.Props{
+					Variant: button.VariantDefault,
+					Attributes: templ.Attributes{
+						"hx-post": fmt.Sprintf("/student/exam/%s/submit", param.Exam.ID.String()),
+						"hx-swap": "none",
+					},
+				}) {
+					Submit
+				}
+			}
+		}
+	}
 
 	<!-- Highlight.js init + Timer & Auto-submit Script -->
 	<script>
@@ -231,6 +270,11 @@ templ ExamTakePage(param ExamTakeParam) {
 					if (indicator) {
 						indicator.classList.remove('bg-slate-200');
 						indicator.classList.add('bg-primary');
+					}
+					const navIndicator = document.getElementById('nav-indicator-' + body.question_id);
+					if (navIndicator) {
+						navIndicator.classList.remove('bg-slate-50', 'text-slate-500', 'border-slate-200', 'hover:bg-slate-100');
+						navIndicator.classList.add('bg-primary', 'text-white', 'border-primary');
 					}
 					updateAnsweredCount();
 				}
