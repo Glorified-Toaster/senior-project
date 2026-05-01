@@ -21,6 +21,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/johnfercher/maroto/v2"
+	"github.com/johnfercher/maroto/v2/pkg/components/col"
+	"github.com/johnfercher/maroto/v2/pkg/components/image"
+	"github.com/johnfercher/maroto/v2/pkg/components/line"
+	"github.com/johnfercher/maroto/v2/pkg/components/row"
+	"github.com/johnfercher/maroto/v2/pkg/components/text"
+	"github.com/johnfercher/maroto/v2/pkg/config"
+	"github.com/johnfercher/maroto/v2/pkg/consts/align"
+	"github.com/johnfercher/maroto/v2/pkg/consts/fontstyle"
+	"github.com/johnfercher/maroto/v2/pkg/props"
 )
 
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
@@ -848,8 +858,12 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			questions = []domain.Question{}
 		}
 
-		var choices []domain.Choice
+		attempts, err := h.App.ListAttemptsByExam(ctx.Request.Context(), examIDUUID)
+		if err != nil {
+			attempts = []domain.ExamAttempt{}
+		}
 
+		var choices []domain.Choice
 		for i := range questions {
 			choices, err = h.App.ListChoicesByQuestion(ctx.Request.Context(), questions[i].ID)
 			if err != nil {
@@ -865,6 +879,7 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			Username:  username,
 			FullName:  fullname,
 			Questions: questions,
+			Attempts:  attempts,
 		})))
 	}
 }
@@ -1325,6 +1340,13 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 		questionMarksFloat, _ := strconv.ParseFloat(questionMarks, 64)
 		if questionMarksFloat <= 0 {
 			questionMarksFloat = 1
+		}
+
+		if helpers.IsTrimmedEmpty(questionTitle) || (questionType != string(domain.QuestionTypeImage) && helpers.IsTrimmedEmpty(questionText)) ||
+			helpers.IsTrimmedEmpty(questionType) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Question Failed", "All fields are required", toast.VariantError)
+			return
 		}
 
 		existingQuestion, err := h.App.GetQuestionByID(ctx.Request.Context(), id)
@@ -2176,5 +2198,191 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 			ExportURL:   "/admin/dashboard/subject/" + subjectID + "/students/export",
 			UnassignAPI: "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
 		}).Render(ctx, ctx.Writer)
+	}
+}
+
+func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		examIDStr := ctx.Param("id")
+		examID, err := uuid.Parse(examIDStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam ID"})
+			return
+		}
+
+		exam, err := h.App.GetExamByID(ctx.Request.Context(), examID)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Exam not found"})
+			return
+		}
+
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), exam.SubjectID)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Subject not found"})
+			return
+		}
+
+		attempts, err := h.App.ListAttemptsByExam(ctx.Request.Context(), examID)
+		if err != nil {
+			attempts = []domain.ExamAttempt{}
+		}
+
+		m := maroto.New(config.NewBuilder().Build())
+
+		// Issue Date
+		m.AddRows(
+			row.New(5).Add(
+				col.New(12).Add(
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{
+						Size:  6,
+						Align: align.Right,
+						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
+					}),
+				),
+			),
+		)
+
+		// Header Bar
+		m.AddRows(
+			row.New(20).Add(
+				col.New(4).Add(
+					image.NewFromFile("./web/static/images/uotLogo.png", props.Rect{
+						Center:  true,
+						Percent: 90,
+					}),
+				),
+				col.New(8).Add(
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{
+						Size:  14,
+						Style: fontstyle.Bold,
+						Align: align.Right,
+						Top:   5,
+						Color: &props.Color{Red: 30, Green: 58, Blue: 138}, // Dark Blue
+					}),
+				),
+			),
+			line.NewRow(1),
+		)
+
+		m.AddRows(row.New(10))
+
+		// Title Section
+		m.AddRows(
+			row.New(15).Add(
+				col.New(12).Add(
+					text.New("STUDENT ATTEMPTS REPORT", props.Text{
+						Size:  20,
+						Style: fontstyle.Bold,
+						Align: align.Center,
+						Color: &props.Color{Red: 15, Green: 23, Blue: 42}, // Slate 900
+					}),
+				),
+			),
+			row.New(10).Add(
+				col.New(12).Add(
+					text.New(fmt.Sprintf("%s - %s", subject.Title, exam.Title), props.Text{
+						Size:  12,
+						Style: fontstyle.BoldItalic,
+						Align: align.Center,
+						Color: &props.Color{Red: 71, Green: 85, Blue: 105}, // Slate 600
+					}),
+				),
+			),
+		)
+
+		m.AddRows(row.New(10))
+
+		// Exam Info Box
+		m.AddRows(
+			row.New(8).Add(
+				col.New(12).Add(
+					text.New("EXAM INFORMATION", props.Text{Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+			row.New(18).Add(
+				col.New(3).Add(
+					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
+					text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
+				),
+				col.New(3).Add(
+					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%.2f", subject.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(3).Add(
+					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(3).Add(
+					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+		)
+
+		m.AddRows(row.New(15))
+
+		// Attempts Table Header
+		m.AddRows(
+			row.New(10).Add(
+				col.New(4).Add(text.New("STUDENT NAME", props.Text{Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
+				col.New(2).Add(text.New("ID", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("STATUS", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("SCORE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("DATE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 30, Green: 41, Blue: 59}}), // Slate 800
+		)
+
+		for i, attempt := range attempts {
+			score := "-"
+			if attempt.Score != nil {
+				score = fmt.Sprintf("%.2f", *attempt.Score)
+			}
+
+			statusColor := &props.Color{Red: 71, Green: 85, Blue: 105} // Slate 600
+			if attempt.Status == domain.AttemptStatusSubmitted || attempt.Status == domain.AttemptStatusGraded {
+				if attempt.Score != nil && *attempt.Score >= subject.PassScore {
+					statusColor = &props.Color{Red: 21, Green: 128, Blue: 61} // Green 700
+				} else {
+					statusColor = &props.Color{Red: 185, Green: 28, Blue: 28} // Red 700
+				}
+			}
+
+			rowStyle := &props.Cell{BackgroundColor: &props.Color{Red: 255, Green: 255, Blue: 255}}
+			if i%2 == 1 {
+				rowStyle.BackgroundColor = &props.Color{Red: 241, Green: 245, Blue: 249} // Slate 100
+			}
+
+			m.AddRows(
+				row.New(10).Add(
+					col.New(4).Add(text.New(attempt.StudentName, props.Text{Size: 9, Top: 2, Left: 3})),
+					col.New(2).Add(text.New(attempt.StudentUsername, props.Text{Size: 8, Align: align.Center, Top: 2})),
+					col.New(2).Add(text.New(string(attempt.Status), props.Text{Size: 8, Align: align.Center, Color: statusColor, Top: 2, Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(score, props.Text{Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(attempt.StartedAt.Format("Jan 02, 2006"), props.Text{Size: 8, Align: align.Center, Top: 2, Right: 3})),
+				).WithStyle(rowStyle),
+			)
+		}
+
+		m.AddRows(row.New(20))
+
+		// Footer
+		m.AddRows(
+			row.New(10).Add(
+				col.New(12).Add(
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{
+						Size:  8,
+						Align: align.Center,
+						Style: fontstyle.Italic,
+						Color: &props.Color{Red: 100, Green: 116, Blue: 139},
+					}),
+				),
+			),
+		)
+
+		document, _ := m.Generate()
+
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=exam_attempts_%s.pdf", url.PathEscape(exam.Title)))
+		ctx.Header("Content-Type", "application/pdf")
+		ctx.Data(200, "application/pdf", document.GetBytes())
 	}
 }

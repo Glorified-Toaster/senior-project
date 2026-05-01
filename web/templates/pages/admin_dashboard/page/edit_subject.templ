@@ -196,7 +196,7 @@ templ TabsSubject(param EditSubjectPageParam) {
 				Value:  "students",
 				TabsID: "account-tabs",
 			}) {
-				@StudentsTab(param)
+				@SubjectStudentsTab(param)
 			}
 			@tabs.Content(tabs.ContentProps{
 				Value:  "instructors",
@@ -821,7 +821,7 @@ templ ExamForm(param EditSubjectPageParam) {
 	</div>
 }
 
-templ StudentsTab(param EditSubjectPageParam) {
+templ SubjectStudentsTab(param EditSubjectPageParam) {
 		<div class="flex flex-col gap-4">
 		@components.TotalCard(components.TotalCardProps{
 			Title:       "Students",

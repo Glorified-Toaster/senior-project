@@ -217,6 +217,7 @@ func (r *Router) SetupRoutes() {
 		sharedExamRoutes.POST("/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
 		sharedExamRoutes.DELETE("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 		sharedExamRoutes.POST("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+		sharedExamRoutes.GET("/:id/export-pdf", r.userHandler.ExamAttemptsPDF())
 	}
 
 	sharedQuestionRoutes := r.router.Group("/admin/dashboard/questions")

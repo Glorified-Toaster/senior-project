@@ -48,8 +48,10 @@ type ExamAttempt struct {
 	Score        *float64
 	Status       AttemptStatus
 	CreatedAt    time.Time
-	ExamTitle    string
-	SubjectTitle string
+	ExamTitle       string
+	SubjectTitle    string
+	StudentName     string
+	StudentUsername string
 }
 
 type StudentAnswer struct {

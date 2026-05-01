@@ -293,6 +293,58 @@ func (q *Queries) ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullU
 	return items, nil
 }
 
+const listAttemptsByExam = `-- name: ListAttemptsByExam :many
+SELECT ea.id, ea.exam_id, ea.student_id, ea.started_at, ea.submitted_at, ea.score, ea.status, ea.created_at, u.full_name as student_name, u.username as student_username
+FROM exam_attempts ea
+JOIN users u ON ea.student_id = u.id
+WHERE ea.exam_id = $1
+ORDER BY ea.started_at DESC
+`
+
+type ListAttemptsByExamRow struct {
+	ID              uuid.UUID          `json:"id"`
+	ExamID          uuid.NullUUID      `json:"exam_id"`
+	StudentID       uuid.NullUUID      `json:"student_id"`
+	StartedAt       pgtype.Timestamptz `json:"started_at"`
+	SubmittedAt     pgtype.Timestamptz `json:"submitted_at"`
+	Score           pgtype.Float8      `json:"score"`
+	Status          AttemptStatusType  `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	StudentName     string             `json:"student_name"`
+	StudentUsername string             `json:"student_username"`
+}
+
+func (q *Queries) ListAttemptsByExam(ctx context.Context, examID uuid.NullUUID) ([]ListAttemptsByExamRow, error) {
+	rows, err := q.db.Query(ctx, listAttemptsByExam, examID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAttemptsByExamRow
+	for rows.Next() {
+		var i ListAttemptsByExamRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExamID,
+			&i.StudentID,
+			&i.StartedAt,
+			&i.SubmittedAt,
+			&i.Score,
+			&i.Status,
+			&i.CreatedAt,
+			&i.StudentName,
+			&i.StudentUsername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAttemptsByStudent = `-- name: ListAttemptsByStudent :many
 SELECT ea.id, ea.exam_id, ea.student_id, ea.started_at, ea.submitted_at, ea.score, ea.status, ea.created_at, e.title as exam_title, s.title as subject_title
 FROM exam_attempts ea

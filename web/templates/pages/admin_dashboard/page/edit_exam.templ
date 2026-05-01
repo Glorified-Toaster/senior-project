@@ -33,6 +33,7 @@ type EditExamPageParam struct {
 	Instructor domain.User
 	Exam domain.Exam
 	Questions []domain.Question
+	Attempts []domain.ExamAttempt
 }
 
 templ EditExamPage(param EditExamPageParam) {
@@ -196,9 +197,9 @@ templ TabsExam(param EditExamPageParam) {
 			}
 			@tabs.Content(tabs.ContentProps{
 				Value:    "students",
-                TabsID:   "account-tabs",
+				TabsID:   "account-tabs",
 			}) {
-                // TODO: Implement StudentsTab
+				@ExamStudentsTab(param)
 			}
 			@tabs.Content(tabs.ContentProps{
 				Value:    "analytics",
@@ -566,4 +567,79 @@ templ QuestionsTab(param EditExamPageParam) {
 			})
 		}
 	}
+}
+
+templ ExamStudentsTab(param EditExamPageParam) {
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+		@components.TotalCard(components.TotalCardProps{
+			Title: "Total Attempts",
+			Description: "Total number of student attempts.",
+			Icon: icon.Users(icon.Props{
+				Class: "h-10 w-10 text-blue-500",
+			}),
+			Value: strconv.Itoa(len(param.Attempts)),
+		})
+		@components.TotalCard(components.TotalCardProps{
+			Title: "In Progress",
+			Description: "Students currently taking the exam.",
+			Icon: icon.Clock(icon.Props{
+				Class: "h-10 w-10 text-yellow-500",
+			}),
+			Value: strconv.Itoa(countInProgress(param.Attempts)),
+		})
+		@components.TotalCard(components.TotalCardProps{
+			Title: "Completed",
+			Description: "Students who have submitted their exam.",
+			Icon: icon.CircleCheck(icon.Props{
+				Class: "h-10 w-10 text-green-500",
+			}),
+			Value: strconv.Itoa(countCompleted(param.Attempts)),
+		})
+	</div>
+	@card.Card() {
+		@card.Header() {
+			<div class="flex items-center justify-between">
+				<div>
+					@card.Title() {
+						Student Attempts
+					}
+					@card.Description() {
+						Monitor student progress and scores for this exam.
+					}
+				</div>
+				@button.Button(button.Props{
+					Variant: button.VariantSecondary,
+					Size:    button.SizeSm,
+					Href:    fmt.Sprintf("/admin/dashboard/exam/%s/export-pdf", param.Exam.ID.String()),
+                    Attributes: templ.Attributes{"download": "true"},
+				}) {
+					@icon.FileText(icon.Props{Class: "h-4 w-4 mr-1"})
+					Export PDF
+				}
+			</div>
+		}
+		@card.Content() {
+			@components.AttemptTable(param.Attempts, string(param.Exam.Status))
+		}
+	}
+}
+
+func countInProgress(attempts []domain.ExamAttempt) int {
+	count := 0
+	for _, a := range attempts {
+		if a.Status == "IN_PROGRESS" {
+			count++
+		}
+	}
+	return count
+}
+
+func countCompleted(attempts []domain.ExamAttempt) int {
+	count := 0
+	for _, a := range attempts {
+		if a.Status == "SUBMITTED" || a.Status == "GRADED" {
+			count++
+		}
+	}
+	return count
 }

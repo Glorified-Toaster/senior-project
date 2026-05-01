@@ -241,3 +241,13 @@ func (app *Application) ListInProgressAttemptsByExam(ctx context.Context, examID
 	})
 	return attempts, err
 }
+
+func (app *Application) ListAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error) {
+	var attempts []domain.ExamAttempt
+	var err error
+	_ = app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		attempts, err = app.examRepo.ListAttemptsByExam(txCtx, examID)
+		return err
+	})
+	return attempts, err
+}

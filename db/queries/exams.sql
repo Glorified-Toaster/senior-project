@@ -135,3 +135,10 @@ WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL;
 SELECT * FROM exam_attempts
 WHERE exam_id = $1 AND status = 'IN_PROGRESS'
 ORDER BY started_at DESC;
+
+-- name: ListAttemptsByExam :many
+SELECT ea.*, u.full_name as student_name, u.username as student_username
+FROM exam_attempts ea
+JOIN users u ON ea.student_id = u.id
+WHERE ea.exam_id = $1
+ORDER BY ea.started_at DESC;

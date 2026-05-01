@@ -62,6 +62,7 @@ type Querier interface {
 	ListAllSubjects(ctx context.Context, arg ListAllSubjectsParams) ([]Subject, error)
 	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]User, error)
 	ListAnswersByAttempt(ctx context.Context, attemptID uuid.NullUUID) ([]StudentAnswer, error)
+	ListAttemptsByExam(ctx context.Context, examID uuid.NullUUID) ([]ListAttemptsByExamRow, error)
 	ListAttemptsByStudent(ctx context.Context, studentID uuid.NullUUID) ([]ListAttemptsByStudentRow, error)
 	ListChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
 	ListChoicesByQuestionSeeded(ctx context.Context, arg ListChoicesByQuestionSeededParams) ([]Choice, error)

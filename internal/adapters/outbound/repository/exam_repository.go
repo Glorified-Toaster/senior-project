@@ -473,3 +473,37 @@ func (r *ExamRepository) ListInProgressAttemptsByExam(ctx context.Context, examI
 
 	return attempts, nil
 }
+
+func mapSqlcAttemptWithStudentToDomain(attempt sqlc.ListAttemptsByExamRow) domain.ExamAttempt {
+	return domain.ExamAttempt{
+		ID:              attempt.ID,
+		ExamID:          attempt.ExamID.UUID,
+		StudentID:       attempt.StudentID.UUID,
+		StartedAt:       attempt.StartedAt.Time,
+		SubmittedAt:     toTimePtr(attempt.SubmittedAt),
+		Score:           toFloat64Ptr(attempt.Score),
+		Status:          domain.AttemptStatus(attempt.Status),
+		CreatedAt:       attempt.CreatedAt.Time,
+		StudentName:     attempt.StudentName,
+		StudentUsername: attempt.StudentUsername,
+	}
+}
+
+func (r *ExamRepository) ListAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcAttempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: examID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var attempts []domain.ExamAttempt
+	for _, attempt := range sqlcAttempts {
+		attempts = append(attempts, mapSqlcAttemptWithStudentToDomain(attempt))
+	}
+
+	return attempts, nil
+}
