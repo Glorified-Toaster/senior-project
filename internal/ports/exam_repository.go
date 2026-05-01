@@ -35,6 +35,7 @@ type ExamRepository interface {
 	ListInProgressAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error)
 	ListAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error)
 	GetExamAnalytics(ctx context.Context, examID uuid.UUID) (domain.ExamAnalytics, error)
+	GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error)
 }
 
 type SearchExamsParams struct {
@@ -55,6 +56,7 @@ type CreateExamParams struct {
 	Title       string
 	Description *string
 	TotalMarks  float64
+	PassScore   float64
 	StartTime   *string
 	EndTime     *string
 	Status      domain.ExamStatus
@@ -66,6 +68,7 @@ type UpdateExamParams struct {
 	Title       string
 	Description *string
 	TotalMarks  float64
+	PassScore   float64
 	Status      domain.ExamStatus
 }
 

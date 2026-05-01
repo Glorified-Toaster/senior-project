@@ -335,6 +335,29 @@ templ ExamInformationTab(param EditExamPageParam) {
 			</div>
 			<div>
 			@label.Label(label.Props{
+				For: "exam_pass_score",
+				Class: "flex items-center gap-2 mb-2 mt-4",
+			}) {
+				@icon.BadgeCheck(icon.Props{
+					Class: "h-4 w-4",
+				})
+				Exam Pass Score 
+			}
+			@input.Input(input.Props{
+				Type: input.TypeNumber,
+				ID: "exam_pass_score",
+				Name: "exam_pass_score",
+				Value: fmt.Sprintf("%.2f", param.Exam.PassScore),
+				Class: "mb-4",
+				Disabled: string(param.Exam.Status) != "DRAFT",
+				Attributes: templ.Attributes{
+					"min": "0",
+					"step": "0.1",
+				},
+			})
+			</div>
+			<div>
+			@label.Label(label.Props{
 				For: "exam_status",
 				Class: "flex items-center gap-2 mb-2 mt-4",
 			}) {
@@ -520,15 +543,15 @@ templ QuestionsTab(param EditExamPageParam) {
 		Icon: icon.CircleCheck(icon.Props{
 			Class: "h-10 w-10 text-green-500",
 		}),
-		Value: fmt.Sprintf("%.2f / %.2f", param.Subject.PassScore, param.Subject.TotalMarks),
+		Value: fmt.Sprintf("%.2f / %.2f", param.Exam.PassScore, param.Exam.TotalMarks),
 	})
 	@components.TotalCard(components.TotalCardProps{
-		Title: "Total Marks",
-		Description: "Total marks available in this exam.",
-		Icon: icon.Trophy(icon.Props{
+		Title: "Status",
+		Description: "Current status of the exam.",
+		Icon: icon.Activity(icon.Props{
 			Class: "h-10 w-10 text-yellow-500",
 		}),
-		Value: fmt.Sprintf("%.2f", param.Exam.TotalMarks),
+		Value: string(param.Exam.Status),
 	})
 </div>
 	@card.Card() {

@@ -98,6 +98,7 @@ func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 		Title:       exam.Title,
 		Description: exam.Description,
 		TotalMarks:  exam.TotalMarks,
+		PassScore:   exam.PassScore,
 		Status:      domain.ExamStatus(exam.Status),
 		CreatedBy:   exam.CreatedBy.UUID,
 		CreatedAt:   exam.CreatedAt.Time,
@@ -131,6 +132,7 @@ func (r *ExamRepository) Create(ctx context.Context, arg ports.CreateExamParams)
 		Title:       arg.Title,
 		Description: arg.Description,
 		TotalMarks:  arg.TotalMarks,
+		PassScore:   arg.PassScore,
 		Status:      sqlc.ExamStatusType(arg.Status),
 		CreatedBy:   uuid.NullUUID{UUID: arg.CreatedBy, Valid: true},
 	})
@@ -171,6 +173,7 @@ func (r *ExamRepository) Update(ctx context.Context, arg ports.UpdateExamParams)
 		Title:       arg.Title,
 		Description: arg.Description,
 		TotalMarks:  arg.TotalMarks,
+		PassScore:   arg.PassScore,
 		Status:      sqlc.ExamStatusType(arg.Status),
 	})
 	if err != nil {
@@ -485,11 +488,6 @@ func (r *ExamRepository) GetExamAnalytics(ctx context.Context, examID uuid.UUID)
 		return domain.ExamAnalytics{}, err
 	}
 
-	subject, err := queries.GetSubjectByID(ctx, exam.SubjectID.UUID)
-	if err != nil {
-		return domain.ExamAnalytics{}, err
-	}
-
 	dbAttempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: examID, Valid: true})
 	if err != nil {
 		return domain.ExamAnalytics{}, err
@@ -525,7 +523,7 @@ func (r *ExamRepository) GetExamAnalytics(ctx context.Context, examID uuid.UUID)
 			minScore = score
 		}
 
-		if score >= subject.PassScore {
+		if score >= exam.PassScore {
 			passCount++
 		} else {
 			failCount++
@@ -609,6 +607,107 @@ func (r *ExamRepository) ListAttemptsByExam(ctx context.Context, examID uuid.UUI
 	for _, attempt := range sqlcAttempts {
 		attempts = append(attempts, mapSqlcAttemptWithStudentToDomain(attempt))
 	}
-
 	return attempts, nil
+}
+
+func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	exams, err := queries.ListExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+	if err != nil {
+		return domain.SubjectAnalytics{}, err
+	}
+
+	var totalExams int64 = int64(len(exams))
+	var totalAttempts int64
+	var totalPassCount int64
+	var totalFailCount int64
+	var totalScore float64
+	var submittedCount int64
+	var maxScore float64 = -1.0
+	var minScore float64 = -1.0
+	var examStats []domain.ExamSummaryAnalytics
+
+	for _, exam := range exams {
+		attempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: exam.ID, Valid: true})
+		if err != nil {
+			continue
+		}
+
+		totalAttempts += int64(len(attempts))
+		var examPassCount int64
+		var examSubmittedCount int64
+
+		for _, att := range attempts {
+			if att.Status != "SUBMITTED" && att.Status != "GRADED" {
+				continue
+			}
+			examSubmittedCount++
+			submittedCount++
+			score := 0.0
+			if att.Score.Valid {
+				score = att.Score.Float64
+			}
+
+			totalScore += score
+			if maxScore == -1.0 || score > maxScore {
+				maxScore = score
+			}
+			if minScore == -1.0 || score < minScore {
+				minScore = score
+			}
+
+			if score >= exam.PassScore {
+				examPassCount++
+				totalPassCount++
+			} else {
+				totalFailCount++
+			}
+		}
+
+		var examPassRate float64
+		if examSubmittedCount > 0 {
+			examPassRate = (float64(examPassCount) / float64(examSubmittedCount)) * 100
+		}
+
+		examStats = append(examStats, domain.ExamSummaryAnalytics{
+			ExamID:        exam.ID,
+			Title:         exam.Title,
+			PassRate:      examPassRate,
+			TotalAttempts: int64(len(attempts)),
+		})
+	}
+
+	if minScore == -1.0 {
+		minScore = 0
+	}
+	if maxScore == -1.0 {
+		maxScore = 0
+	}
+
+	var avgScore float64
+	if submittedCount > 0 {
+		avgScore = totalScore / float64(submittedCount)
+	}
+
+	var passRate float64
+	if submittedCount > 0 {
+		passRate = (float64(totalPassCount) / float64(submittedCount)) * 100
+	}
+
+	return domain.SubjectAnalytics{
+		SubjectID:     subjectID,
+		TotalExams:    totalExams,
+		TotalAttempts: totalAttempts,
+		AverageScore:  avgScore,
+		MaxScore:      maxScore,
+		MinScore:      minScore,
+		PassCount:     totalPassCount,
+		FailCount:     totalFailCount,
+		PassRate:      passRate,
+		ExamStats:     examStats,
+	}, nil
 }

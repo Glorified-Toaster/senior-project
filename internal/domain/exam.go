@@ -21,6 +21,7 @@ type Exam struct {
 	ExamID      string
 	Description *string
 	TotalMarks  float64
+	PassScore   float64
 	StartTime   time.Time
 	EndTime     time.Time
 	Status      ExamStatus
@@ -83,4 +84,24 @@ type ExamAnalytics struct {
 	FailCount        int64
 	PassRate         float64
 	QuestionStats    []QuestionAnalytics
+}
+
+type ExamSummaryAnalytics struct {
+	ExamID        uuid.UUID
+	Title         string
+	PassRate      float64
+	TotalAttempts int64
+}
+
+type SubjectAnalytics struct {
+	SubjectID      uuid.UUID
+	TotalExams     int64
+	TotalAttempts  int64
+	AverageScore   float64
+	MaxScore       float64
+	MinScore       float64
+	PassCount      int64
+	FailCount      int64
+	PassRate       float64
+	ExamStats      []ExamSummaryAnalytics
 }

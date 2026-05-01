@@ -37,6 +37,7 @@ type EditSubjectPageParam struct {
 	Students    []domain.User
 	AllStudents []domain.User
 	StudentCount int64
+	Analytics    domain.SubjectAnalytics
 	Limit       int32
 	Offset      int32
 }
@@ -172,6 +173,13 @@ templ TabsSubject(param EditSubjectPageParam) {
 				Students
 			}
 			@tabs.Trigger(tabs.TriggerProps{
+				Value:  "analytics",
+				TabsID: "account-tabs",
+				Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+			}) {
+				Analytics
+			}
+			@tabs.Trigger(tabs.TriggerProps{
 				Value:  "information",
 				TabsID: "account-tabs",
 				Class:  "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
@@ -203,6 +211,12 @@ templ TabsSubject(param EditSubjectPageParam) {
 				TabsID: "account-tabs",
 			}) {
 				@InstructorsTab(param)
+			}
+			@tabs.Content(tabs.ContentProps{
+				Value:  "analytics",
+				TabsID: "account-tabs",
+			}) {
+				@SubjectAnalyticsTab(param)
 			}
 		</div>
 	}
@@ -476,114 +490,7 @@ templ InstructorsTab(param EditSubjectPageParam) {
 	</div>
 }
 
-templ ExamPassChart(title string, description string) {
-	@card.Card(card.Props{Class: "w-full"}) {
-		@card.Header() {
-			@card.Title() {
-				{ title }
-			}
-			@card.Description() {
-				{ description }
-			}
-		}
-		@card.Content() {
-			@chart.Chart(chart.Props{
-				Variant: chart.VariantDoughnut,
-				Data: chart.Data{
-					Labels: []string{"Pass", "Fail"},
-					Datasets: []chart.Dataset{
-						{
-							Label:           "Students",
-							Data:            []float64{85, 15},
-							BackgroundColor: []string{"#10b981", "#ef4444"},
-						},
-					},
-				},
-				Options: chart.Options{
-					Responsive: true,
-					Legend:     true,
-				},
-			})
-		}
-	}
-}
 
-templ AttendanceRateChart(title string, description string) {
-	@card.Card(card.Props{Class: "w-full"}) {
-		@card.Header() {
-			@card.Title() {
-				{ title }
-			}
-			@card.Description() {
-				{ description }
-			}
-		}
-		@card.Content() {
-			@chart.Chart(chart.Props{
-				Variant:     chart.VariantLine,
-				ShowYGrid:   true,
-				ShowXLabels: true,
-				Data: chart.Data{
-					Labels: []string{"TOC-2026-1", "TOC-2026-2", "TOC-2026-3", "TOC-2026-4", "TOC-2026-5", "TOC-2026-6"},
-					Datasets: []chart.Dataset{
-						{
-							Data:        []float64{3, 9, 3, 12, 7, 8},
-							BorderWidth: 1,
-							Fill:        true,
-						},
-						{
-							Data:        []float64{10, 12, 13, 12, 17, 18},
-							BorderWidth: 1,
-							Fill:        true,
-						},
-					},
-				},
-			})
-		}
-	}
-}
-
-templ ExamPassRateChart(title string, description string) {
-	{{
-		passRates := []float64{90, 80, 40, 60, 30}
-		var colors []string
-		for _, val := range passRates {
-			if val <= 50.0 {
-				colors = append(colors, "#ef4444")
-			} else {
-				colors = append(colors, "#67b5e1")
-			}
-		}
-	}}
-	@card.Card(card.Props{Class: "w-full"}) {
-		@card.Header() {
-			@card.Title() {
-				{ title }
-			}
-			@card.Description() {
-				{ description }
-			}
-		}
-		@card.Content() {
-			@chart.Chart(chart.Props{
-				Variant:     chart.VariantBar,
-				Horizontal:  true,
-				ShowXGrid:   false,
-				ShowYLabels: true,
-				Data: chart.Data{
-					Labels: []string{"TOC-2026-1", "TOC-2026-2", "TOC-2026-3", "TOC-2026-4", "TOC-2026-5"},
-					Datasets: []chart.Dataset{
-						{
-							Label:           "Pass Rate",
-							Data:            passRates,
-							BackgroundColor: colors,
-						},
-					},
-				},
-			})
-		}
-	}
-}
 
 templ ExamTab(param EditSubjectPageParam) {
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -606,10 +513,7 @@ templ ExamTab(param EditSubjectPageParam) {
 			Icon:        icon.Users(icon.Props{Class: "h-10 w-10 text-blue-500"}),
 		})
 	</div>
-	<div class="grid grid-cols-1 md:grid-cols-2 w-full mb-4 gap-4">
-		@ExamPassRateChart("Pass Rate", "Past Exams Pass Rate")
-		@AttendanceRateChart("Attendance Rate", "Past Exams Attendance Rate")
-	</div>
+
 	@card.Card() {
 		@card.Header() {
 			@card.Title() {
@@ -748,7 +652,10 @@ templ ExamForm(param EditSubjectPageParam) {
 				Name:        "total_marks",
 				Required:    true,
 				Placeholder: "Enter total marks",
-				Attributes:  templ.Attributes{"min": "0", "step": "0.1"},
+				Attributes:  templ.Attributes{
+					"min": "0", 
+					"step": "0.1",
+				},
 			})
 		</div>
 
@@ -853,4 +760,164 @@ templ SubjectStudentsTab(param EditSubjectPageParam) {
 		})
 	</div>
 
+}
+
+templ SubjectAnalyticsTab(param EditSubjectPageParam) {
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+		@card.Card() {
+			@card.Content(card.ContentProps{Class: "p-6"}) {
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-slate-500">Average Score</p>
+						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Analytics.AverageScore) }</h3>
+					</div>
+					<div class="p-3 bg-blue-50 rounded-lg text-blue-600">
+						@icon.TrendingUp(icon.Props{Class: "h-6 w-6"})
+					</div>
+				</div>
+			}
+		}
+		@card.Card() {
+			@card.Content(card.ContentProps{Class: "p-6"}) {
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-slate-500">Pass Rate</p>
+						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.1f%%", param.Analytics.PassRate) }</h3>
+					</div>
+					<div class="p-3 bg-green-50 rounded-lg text-green-600">
+						@icon.CircleCheck(icon.Props{Class: "h-6 w-6"})
+					</div>
+				</div>
+			}
+		}
+		@card.Card() {
+			@card.Content(card.ContentProps{Class: "p-6"}) {
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-slate-500">Highest Score</p>
+						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%.2f", param.Analytics.MaxScore) }</h3>
+					</div>
+					<div class="p-3 bg-purple-50 rounded-lg text-purple-600">
+						@icon.Trophy(icon.Props{Class: "h-6 w-6"})
+					</div>
+				</div>
+			}
+		}
+		@card.Card() {
+			@card.Content(card.ContentProps{Class: "p-6"}) {
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-slate-500">Total Attempts</p>
+						<h3 class="text-2xl font-bold text-slate-900">{ fmt.Sprintf("%d", param.Analytics.TotalAttempts) }</h3>
+					</div>
+					<div class="p-3 bg-orange-50 rounded-lg text-orange-600">
+						@icon.Users(icon.Props{Class: "h-6 w-6"})
+					</div>
+				</div>
+			}
+		}
+	</div>
+
+	<div class="grid grid-cols-2 gap-6 mb-6">
+		@card.Card() {
+			@card.Header() {
+				@card.Title() { Pass/Fail Distribution }
+				@card.Description() { Overview of subject success rate across all exams. }
+			}
+			@card.Content() {
+				<div class="h-[100px]">
+					@chart.Chart(chart.Props{
+						Variant: chart.VariantPie,
+						Data: chart.Data{
+							Labels: []string{"Pass", "Fail"},
+							Datasets: []chart.Dataset{
+								{
+									Label: "Distribution",
+									Data: []float64{float64(param.Analytics.PassCount), float64(param.Analytics.FailCount)},
+									BackgroundColor: []string{"rgba(34, 197, 94, 0.6)", "rgba(239, 68, 68, 0.6)"},
+									BorderColor: []string{"rgb(34, 197, 94)", "rgb(239, 68, 68)"},
+								},
+							},
+						},
+						ShowLegend: true,
+					})
+				</div>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() { Score Summary }
+				@card.Description() { Comparison of key score metrics across all exams. }
+			}
+			@card.Content() {
+				<div class="h-[100px]">
+					@chart.Chart(chart.Props{
+						Variant: chart.VariantBar,
+						Data: chart.Data{
+							Labels: []string{"Min", "Avg", "Max"},
+							Datasets: []chart.Dataset{
+								{
+									Label: "Scores",
+									Data: []float64{param.Analytics.MinScore, param.Analytics.AverageScore, param.Analytics.MaxScore},
+									BackgroundColor: "rgba(59, 130, 246, 0.6)",
+									BorderColor: "rgb(59, 130, 246)",
+									BorderWidth: 1,
+								},
+							},
+						},
+						ShowXLabels: true,
+						ShowYLabels: true,
+						BeginAtZero: Ptr(true),
+					})
+				</div>
+			}
+		}
+	</div>
+
+	@card.Card() {
+		@card.Header() {
+			@card.Title() { Exam-Level Analysis }
+			@card.Description() { Performance breakdown for each exam in this subject. }
+		}
+		@card.Content(card.ContentProps{Class: "p-0"}) {
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm text-left">
+					<thead class="text-xs text-slate-700 uppercase bg-slate-50">
+						<tr>
+							<th class="px-6 py-3">Exam Title</th>
+							<th class="px-6 py-3 text-center">Total Attempts</th>
+							<th class="px-6 py-3 text-center">Pass Rate</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-200">
+						for _, stat := range param.Analytics.ExamStats {
+							<tr class="bg-white hover:bg-slate-50 transition-colors">
+								<td class="px-6 py-4 font-medium text-slate-900">{ stat.Title }</td>
+								<td class="px-6 py-4 text-center">{ fmt.Sprintf("%d", stat.TotalAttempts) }</td>
+								<td class="px-6 py-4 text-center">
+									<div class="flex items-center justify-center gap-2">
+										<div class="w-16 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+											<div class={ getPassRateColor(stat.PassRate), "h-full" } style={ fmt.Sprintf("width: %.1f%%", stat.PassRate) }></div>
+										</div>
+										<span class="text-xs font-medium text-slate-600">{ fmt.Sprintf("%.1f%%", stat.PassRate) }</span>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	}
+}
+
+
+func getPassRateColor(rate float64) string {
+	if rate >= 75 {
+		return "bg-green-500"
+	}
+	if rate >= 50 {
+		return "bg-yellow-500"
+	}
+	return "bg-red-500"
 }

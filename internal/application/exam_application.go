@@ -261,3 +261,12 @@ func (app *Application) GetExamAnalytics(ctx context.Context, examID uuid.UUID) 
 	})
 	return analytics, err
 }
+func (app *Application) GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error) {
+	var analytics domain.SubjectAnalytics
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		analytics, err = app.examRepo.GetSubjectAnalytics(txCtx, subjectID)
+		return err
+	})
+	return analytics, err
+}

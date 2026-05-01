@@ -256,6 +256,7 @@ type Exam struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	PassScore   float64            `json:"pass_score"`
 }
 
 type ExamAttempt struct {

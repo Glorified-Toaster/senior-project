@@ -176,8 +176,8 @@ templ QuestionsTab(param EditExamPageParam) {
             Icon: icon.Trophy(icon.Props{Class: "h-10 w-10 text-yellow-500"}),
         })
         @components.TotalCard(components.TotalCardProps{
-            Title: "Subject Pass Score",
-            Value: fmt.Sprintf("%.2f", param.Subject.PassScore),
+            Title: "Pass Score",
+            Value: fmt.Sprintf("%.2f", param.Exam.PassScore),
             Icon: icon.CircleCheck(icon.Props{Class: "h-10 w-10 text-green-500"}),
         })
     </div>
@@ -241,6 +241,17 @@ templ InformationTab(param EditExamPageParam) {
 							ID:    "exam_total_marks",
 							Name:  "exam_total_marks",
 							Value: fmt.Sprintf("%.2f", param.Exam.TotalMarks),
+							Disabled: param.Exam.Status != domain.ExamStatusDraft,
+							Attributes: templ.Attributes{"step": "0.1"},
+						})
+					</div>
+					<div class="space-y-2">
+						@label.Label(label.Props{For: "exam_pass_score"}) { Pass Score }
+						@input.Input(input.Props{
+							Type:  input.TypeNumber,
+							ID:    "exam_pass_score",
+							Name:  "exam_pass_score",
+							Value: fmt.Sprintf("%.2f", param.Exam.PassScore),
 							Disabled: param.Exam.Status != domain.ExamStatusDraft,
 							Attributes: templ.Attributes{"step": "0.1"},
 						})

@@ -113,9 +113,9 @@ func (q *Queries) CountSubmittedAttemptsBySubjectForStudent(ctx context.Context,
 }
 
 const createExam = `-- name: CreateExam :one
-INSERT INTO exams (subject_id, title, description, total_marks, status, created_by)
-VALUES ($1,$2,$3,$4,$5,$6)
-RETURNING id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at
+INSERT INTO exams (subject_id, title, description, total_marks, pass_score, status, created_by)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
+RETURNING id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score
 `
 
 type CreateExamParams struct {
@@ -123,6 +123,7 @@ type CreateExamParams struct {
 	Title       string         `json:"title"`
 	Description *string        `json:"description"`
 	TotalMarks  float64        `json:"total_marks"`
+	PassScore   float64        `json:"pass_score"`
 	Status      ExamStatusType `json:"status"`
 	CreatedBy   uuid.NullUUID  `json:"created_by"`
 }
@@ -133,6 +134,7 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		arg.Title,
 		arg.Description,
 		arg.TotalMarks,
+		arg.PassScore,
 		arg.Status,
 		arg.CreatedBy,
 	)
@@ -148,6 +150,7 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PassScore,
 	)
 	return i, err
 }
@@ -201,7 +204,7 @@ func (q *Queries) GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt
 }
 
 const getExamByID = `-- name: GetExamByID :one
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE id = $1
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams WHERE id = $1
 `
 
 func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
@@ -218,6 +221,7 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PassScore,
 	)
 	return i, err
 }
@@ -275,7 +279,7 @@ func (q *Queries) GetExamQuestionAnalytics(ctx context.Context, examID uuid.Null
 }
 
 const listAllExams = `-- name: ListAllExams :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2
 `
 
 type ListAllExamsParams struct {
@@ -303,6 +307,7 @@ func (q *Queries) ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]E
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -451,7 +456,7 @@ func (q *Queries) ListAttemptsByStudent(ctx context.Context, studentID uuid.Null
 }
 
 const listExamsBySubject = `-- name: ListExamsBySubject :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC
 `
 
 func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) ([]Exam, error) {
@@ -474,6 +479,7 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -486,7 +492,7 @@ func (q *Queries) ListExamsBySubject(ctx context.Context, subjectID uuid.NullUUI
 }
 
 const listExamsCreatedBy = `-- name: ListExamsCreatedBy :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams 
 WHERE created_by = $1 AND deleted_at IS NULL 
 ORDER BY created_at DESC
 `
@@ -511,6 +517,7 @@ func (q *Queries) ListExamsCreatedBy(ctx context.Context, createdBy uuid.NullUUI
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -523,7 +530,7 @@ func (q *Queries) ListExamsCreatedBy(ctx context.Context, createdBy uuid.NullUUI
 }
 
 const listExamsForStudent = `-- name: ListExamsForStudent :many
-SELECT e.id, e.subject_id, e.title, e.description, e.total_marks, e.status, e.created_by, e.created_at, e.updated_at, e.deleted_at 
+SELECT e.id, e.subject_id, e.title, e.description, e.total_marks, e.status, e.created_by, e.created_at, e.updated_at, e.deleted_at, e.pass_score 
 FROM exams e
 JOIN subject_students ss ON e.subject_id = ss.subject_id
 WHERE ss.student_id = $1 AND e.deleted_at IS NULL AND ss.deleted_at IS NULL
@@ -550,6 +557,7 @@ func (q *Queries) ListExamsForStudent(ctx context.Context, studentID uuid.UUID) 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -642,7 +650,7 @@ func (q *Queries) SaveAnswer(ctx context.Context, arg SaveAnswerParams) (Student
 }
 
 const searchExams = `-- name: SearchExams :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams 
 WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
 AND deleted_at IS NULL
 ORDER BY created_at DESC, id ASC
@@ -675,6 +683,7 @@ func (q *Queries) SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exa
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -687,7 +696,7 @@ func (q *Queries) SearchExams(ctx context.Context, arg SearchExamsParams) ([]Exa
 }
 
 const searchExamsBySubject = `-- name: SearchExamsBySubject :many
-SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams 
+SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score FROM exams 
 WHERE subject_id = $1
 AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
 AND deleted_at IS NULL
@@ -727,6 +736,7 @@ func (q *Queries) SearchExamsBySubject(ctx context.Context, arg SearchExamsBySub
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PassScore,
 		); err != nil {
 			return nil, err
 		}
@@ -796,9 +806,10 @@ SET
   title = $2,
   description = $3,
   total_marks = $4,
-  status = $5
+  pass_score = $5,
+  status = $6
 WHERE id = $1
-RETURNING id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at
+RETURNING id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at, pass_score
 `
 
 type UpdateExamParams struct {
@@ -806,6 +817,7 @@ type UpdateExamParams struct {
 	Title       string         `json:"title"`
 	Description *string        `json:"description"`
 	TotalMarks  float64        `json:"total_marks"`
+	PassScore   float64        `json:"pass_score"`
 	Status      ExamStatusType `json:"status"`
 }
 
@@ -815,6 +827,7 @@ func (q *Queries) UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, e
 		arg.Title,
 		arg.Description,
 		arg.TotalMarks,
+		arg.PassScore,
 		arg.Status,
 	)
 	var i Exam
@@ -829,6 +842,7 @@ func (q *Queries) UpdateExam(ctx context.Context, arg UpdateExamParams) (Exam, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PassScore,
 	)
 	return i, err
 }

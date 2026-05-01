@@ -39,7 +39,7 @@ templ ExamTakePage(param ExamTakeParam) {
 	<!-- Highlight.js JavaScript (local) -->
 	<script src="/src/highlight/highlight.min.js"></script>
 
-	<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" id="exam-page" 
+	<div class="min-h-screen" id="exam-page" 
 		data-exam-id={ param.Exam.ID.String() }
 		data-subject-id={ param.Subject.ID.String() }
 		data-duration={ strconv.Itoa(int(param.Subject.DurationMinutes)) }>

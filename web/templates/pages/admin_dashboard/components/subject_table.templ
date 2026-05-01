@@ -288,22 +288,7 @@ templ DialogAddSubject() {
 						})
 					</div>
 
-					<div class="space-y-2 mb-4">
-						@form.Label(form.LabelProps{For: "pass_score"}) {
-							Pass Score
-						}
-						@input.Input(input.Props{
-							Type:        input.TypeNumber,
-							ID:          "pass_score",
-							Name:        "pass_score",
-							Placeholder: "Passing score",
-							Required:    true,
-							Attributes: templ.Attributes{
-								"min": "0.1",
-								"step": "0.1",
-							},
-						})
-					</div>
+
 					<div class="space-y-2 mb-4">
 						@form.Label(form.LabelProps{For: "status"}) {
 							Status

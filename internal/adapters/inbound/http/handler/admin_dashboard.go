@@ -484,6 +484,11 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 		allEnrolledStudents, _ := h.App.ListStudentsBySubjectID(ctx.Request.Context(), uuid.MustParse(subjectID))
 		availableStudents := filterAvailableUsers(allStudents, allEnrolledStudents)
 
+		analytics, err := h.App.GetSubjectAnalytics(ctx.Request.Context(), uuid.MustParse(subjectID))
+		if err != nil {
+			analytics = domain.SubjectAnalytics{}
+		}
+
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
 			Subject:        subject,
 			Username:       username,
@@ -495,6 +500,7 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			Students:       students,
 			AllStudents:    availableStudents,
 			StudentCount:   studentCount,
+			Analytics:      analytics,
 			Limit:          int32(limit),
 			Offset:         int32(offset),
 		})))
@@ -572,6 +578,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 		}
 		description := ctx.PostForm("description")
 		totalMarksStr := ctx.PostForm("total_marks")
+		passScoreStr := ctx.PostForm("pass_score")
 
 		if helpers.IsTrimmedEmpty(title) || helpers.IsTrimmedEmpty(subjectIDStr) {
 			ctx.Header("HX-Reswap", "none")
@@ -593,6 +600,11 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			return
 		}
 
+		passScore, _ := strconv.ParseFloat(passScoreStr, 64)
+		if passScoreStr == "" {
+			passScore = totalMarks / 2.0
+		}
+
 		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
 		if err == nil && subject.Status == domain.SubjectStatusPublished {
 			ctx.Header("HX-Reswap", "none")
@@ -606,6 +618,7 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			CreatedBy:   createdBy,
 			Description: &description,
 			TotalMarks:  totalMarks,
+			PassScore:   passScore,
 			Status:      domain.ExamStatusDraft,
 		})
 		if err != nil {
@@ -663,9 +676,18 @@ func (h *UserHandler) EditSubjectInfo() gin.HandlerFunc {
 		}
 
 		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), uuid.MustParse(id))
-		if err == nil && subject.Status == domain.SubjectStatusPublished {
+		if err != nil {
+			helpers.Toast(ctx, "Edit Subject Failed", "Subject not found", toast.VariantError)
+			return
+		}
+
+		if subject.Status == domain.SubjectStatusPublished {
 			helpers.Toast(ctx, "Edit Subject Failed", "Subject is published and cannot be modified", toast.VariantError)
 			return
+		}
+
+		if passScore == 0 && subject.TotalMarks > 0 {
+			passScore = subject.TotalMarks / 2.0
 		}
 
 		_, err = h.App.UpdateSubject(ctx, domain.Subject{
@@ -746,10 +768,8 @@ func (h *UserHandler) CreateSubject() gin.HandlerFunc {
 		}
 
 		durationStr := ctx.PostForm("duration_minutes")
-		passScoreStr := ctx.PostForm("pass_score")
 		statusStr := ctx.PostForm("status")
-
-		passScore, _ := strconv.ParseFloat(passScoreStr, 64)
+		passScore := 0.0
 
 		var duration int32
 		if durationStr != "" {
@@ -896,6 +916,7 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		name := ctx.PostForm("exam_name")
 		description := ctx.PostForm("exam_description")
 		totalMarksStr := ctx.PostForm("exam_total_marks")
+		passScoreStr := ctx.PostForm("exam_pass_score")
 		statusStr := ctx.PostForm("exam_status")
 
 		if helpers.IsTrimmedEmpty(idStr) || helpers.IsTrimmedEmpty(name) {
@@ -919,12 +940,18 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 		}
 
 		totalMarks, _ := strconv.ParseFloat(totalMarksStr, 64)
+		passScore, _ := strconv.ParseFloat(passScoreStr, 64)
+
+		if passScore == exam.PassScore && totalMarks != exam.TotalMarks {
+			passScore = totalMarks / 2.0
+		}
 
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
 			ID:          examID,
 			Title:       name,
 			Description: &description,
 			TotalMarks:  totalMarks,
+			PassScore:   passScore,
 			Status:      domain.ExamStatus(statusStr),
 		})
 		if err != nil {
@@ -2310,15 +2337,19 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 			row.New(18).Add(
-				col.New(4).Add(
+				col.New(3).Add(
 					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
 					text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
 				),
-				col.New(5).Add(
+				col.New(3).Add(
+					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%.2f", exam.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(3).Add(
 					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
 					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
-				col.New(4).Add(
+				col.New(3).Add(
 					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
 					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
@@ -2346,7 +2377,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 
 			statusColor := &props.Color{Red: 71, Green: 85, Blue: 105} // Slate 600
 			if attempt.Status == domain.AttemptStatusSubmitted || attempt.Status == domain.AttemptStatusGraded {
-				if attempt.Score != nil && *attempt.Score >= subject.PassScore {
+				if attempt.Score != nil && *attempt.Score >= exam.PassScore {
 					statusColor = &props.Color{Red: 21, Green: 128, Blue: 61} // Green 700
 				} else {
 					statusColor = &props.Color{Red: 185, Green: 28, Blue: 28} // Red 700
