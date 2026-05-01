@@ -142,3 +142,18 @@ FROM exam_attempts ea
 JOIN users u ON ea.student_id = u.id
 WHERE ea.exam_id = $1
 ORDER BY ea.started_at DESC;
+
+-- name: GetExamQuestionAnalytics :many
+SELECT 
+    q.id as question_id,
+    q.question_title,
+    q.question_type,
+    q.marks as max_marks,
+    COUNT(sa.id) as total_answers,
+    COALESCE(SUM(CASE WHEN sa.is_correct = TRUE THEN 1 ELSE 0 END), 0)::bigint as correct_answers
+FROM questions q
+LEFT JOIN student_answers sa ON q.id = sa.question_id
+LEFT JOIN exam_attempts ea ON sa.attempt_id = ea.id AND ea.status IN ('SUBMITTED', 'GRADED')
+WHERE q.exam_id = $1 AND q.deleted_at IS NULL
+GROUP BY q.id, q.question_title, q.question_type, q.marks, q.created_at
+ORDER BY q.created_at ASC;

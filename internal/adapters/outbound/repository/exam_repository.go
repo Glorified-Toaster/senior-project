@@ -474,6 +474,111 @@ func (r *ExamRepository) ListInProgressAttemptsByExam(ctx context.Context, examI
 	return attempts, nil
 }
 
+func (r *ExamRepository) GetExamAnalytics(ctx context.Context, examID uuid.UUID) (domain.ExamAnalytics, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	exam, err := queries.GetExamByID(ctx, examID)
+	if err != nil {
+		return domain.ExamAnalytics{}, err
+	}
+
+	subject, err := queries.GetSubjectByID(ctx, exam.SubjectID.UUID)
+	if err != nil {
+		return domain.ExamAnalytics{}, err
+	}
+
+	dbAttempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: examID, Valid: true})
+	if err != nil {
+		return domain.ExamAnalytics{}, err
+	}
+
+	qStats, err := queries.GetExamQuestionAnalytics(ctx, uuid.NullUUID{UUID: examID, Valid: true})
+	if err != nil {
+		return domain.ExamAnalytics{}, err
+	}
+
+	var totalScore float64
+	var maxScore float64 = -1.0
+	var minScore float64 = -1.0
+	var passCount int64
+	var failCount int64
+	var submittedCount int64
+
+	for _, att := range dbAttempts {
+		if att.Status != "SUBMITTED" && att.Status != "GRADED" {
+			continue
+		}
+		submittedCount++
+		score := 0.0
+		if att.Score.Valid {
+			score = att.Score.Float64
+		}
+
+		totalScore += score
+		if maxScore == -1.0 || score > maxScore {
+			maxScore = score
+		}
+		if minScore == -1.0 || score < minScore {
+			minScore = score
+		}
+
+		if score >= subject.PassScore {
+			passCount++
+		} else {
+			failCount++
+		}
+	}
+
+	if minScore == -1.0 {
+		minScore = 0
+	}
+	if maxScore == -1.0 {
+		maxScore = 0
+	}
+
+	var avgScore float64
+	if submittedCount > 0 {
+		avgScore = totalScore / float64(submittedCount)
+	}
+
+	var passRate float64
+	if submittedCount > 0 {
+		passRate = (float64(passCount) / float64(submittedCount)) * 100
+	}
+
+	var questionStats []domain.QuestionAnalytics
+	for _, qs := range qStats {
+		accuracy := 0.0
+		if qs.TotalAnswers > 0 {
+			accuracy = (float64(qs.CorrectAnswers) / float64(qs.TotalAnswers)) * 100
+		}
+		questionStats = append(questionStats, domain.QuestionAnalytics{
+			QuestionID:     qs.QuestionID,
+			QuestionTitle:  qs.QuestionTitle,
+			QuestionType:   string(qs.QuestionType),
+			MaxMarks:       qs.MaxMarks,
+			TotalAnswers:   qs.TotalAnswers,
+			CorrectAnswers: qs.CorrectAnswers,
+			Accuracy:       accuracy,
+		})
+	}
+
+	return domain.ExamAnalytics{
+		ExamID:        examID,
+		TotalAttempts: int64(len(dbAttempts)),
+		AverageScore:  avgScore,
+		MaxScore:      maxScore,
+		MinScore:      minScore,
+		PassCount:     passCount,
+		FailCount:     failCount,
+		PassRate:      passRate,
+		QuestionStats: questionStats,
+	}, nil
+}
+
 func mapSqlcAttemptWithStudentToDomain(attempt sqlc.ListAttemptsByExamRow) domain.ExamAttempt {
 	return domain.ExamAttempt{
 		ID:              attempt.ID,

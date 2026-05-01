@@ -251,3 +251,13 @@ func (app *Application) ListAttemptsByExam(ctx context.Context, examID uuid.UUID
 	})
 	return attempts, err
 }
+
+func (app *Application) GetExamAnalytics(ctx context.Context, examID uuid.UUID) (domain.ExamAnalytics, error) {
+	var analytics domain.ExamAnalytics
+	var err error
+	_ = app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		analytics, err = app.examRepo.GetExamAnalytics(txCtx, examID)
+		return err
+	})
+	return analytics, err
+}

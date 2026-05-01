@@ -222,6 +222,58 @@ func (q *Queries) GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error) {
 	return i, err
 }
 
+const getExamQuestionAnalytics = `-- name: GetExamQuestionAnalytics :many
+SELECT 
+    q.id as question_id,
+    q.question_title,
+    q.question_type,
+    q.marks as max_marks,
+    COUNT(sa.id) as total_answers,
+    COALESCE(SUM(CASE WHEN sa.is_correct = TRUE THEN 1 ELSE 0 END), 0)::bigint as correct_answers
+FROM questions q
+LEFT JOIN student_answers sa ON q.id = sa.question_id
+LEFT JOIN exam_attempts ea ON sa.attempt_id = ea.id AND ea.status IN ('SUBMITTED', 'GRADED')
+WHERE q.exam_id = $1 AND q.deleted_at IS NULL
+GROUP BY q.id, q.question_title, q.question_type, q.marks, q.created_at
+ORDER BY q.created_at ASC
+`
+
+type GetExamQuestionAnalyticsRow struct {
+	QuestionID     uuid.UUID        `json:"question_id"`
+	QuestionTitle  string           `json:"question_title"`
+	QuestionType   QuestionTypeType `json:"question_type"`
+	MaxMarks       float64          `json:"max_marks"`
+	TotalAnswers   int64            `json:"total_answers"`
+	CorrectAnswers int64            `json:"correct_answers"`
+}
+
+func (q *Queries) GetExamQuestionAnalytics(ctx context.Context, examID uuid.NullUUID) ([]GetExamQuestionAnalyticsRow, error) {
+	rows, err := q.db.Query(ctx, getExamQuestionAnalytics, examID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetExamQuestionAnalyticsRow
+	for rows.Next() {
+		var i GetExamQuestionAnalyticsRow
+		if err := rows.Scan(
+			&i.QuestionID,
+			&i.QuestionTitle,
+			&i.QuestionType,
+			&i.MaxMarks,
+			&i.TotalAnswers,
+			&i.CorrectAnswers,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllExams = `-- name: ListAllExams :many
 SELECT id, subject_id, title, description, total_marks, status, created_by, created_at, updated_at, deleted_at FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2
 `

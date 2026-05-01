@@ -863,6 +863,11 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			attempts = []domain.ExamAttempt{}
 		}
 
+		analytics, err := h.App.GetExamAnalytics(ctx.Request.Context(), examIDUUID)
+		if err != nil {
+			analytics = domain.ExamAnalytics{}
+		}
+
 		var choices []domain.Choice
 		for i := range questions {
 			choices, err = h.App.ListChoicesByQuestion(ctx.Request.Context(), questions[i].ID)
@@ -880,6 +885,7 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			FullName:  fullname,
 			Questions: questions,
 			Attempts:  attempts,
+			Analytics: analytics,
 		})))
 	}
 }
@@ -2173,8 +2179,12 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 		// Re-render the table
 		limit := int32(12)
 		offset := int32(0)
-		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil { limit = int32(l) }
-		if o, err := strconv.Atoi(ctx.Query("offset")); err == nil { offset = int32(o) }
+		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil {
+			limit = int32(l)
+		}
+		if o, err := strconv.Atoi(ctx.Query("offset")); err == nil {
+			offset = int32(o)
+		}
 
 		students, _ := h.App.ListStudentsBySubjectIDPaginated(ctx, sid, limit, offset)
 		totalCount, _ := h.App.CountStudentsBySubjectID(ctx, sid)
@@ -2182,21 +2192,21 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 
 		ctx.Header("Content-Type", "text/html")
 		components.UserTableContainer(components.UserTableProps{
-			Users:       students,
-			Title:       "Students",
-			BaseURL:     "/admin/dashboard/subject/" + subjectID + "/students/search",
-			ID:          "students-table",
-			Search:      true,
-			SearchAPI:   "/admin/dashboard/subject/" + subjectID + "/students/search",
-			TotalCount:  totalCount,
-			Limit:       limit,
-			Offset:      offset,
-			AddStudent:  true,
-			Students:    allStudents,
-			AddStudentAPI: "/admin/dashboard/subject/" + subjectID + "/students/assign",
+			Users:                   students,
+			Title:                   "Students",
+			BaseURL:                 "/admin/dashboard/subject/" + subjectID + "/students/search",
+			ID:                      "students-table",
+			Search:                  true,
+			SearchAPI:               "/admin/dashboard/subject/" + subjectID + "/students/search",
+			TotalCount:              totalCount,
+			Limit:                   limit,
+			Offset:                  offset,
+			AddStudent:              true,
+			Students:                allStudents,
+			AddStudentAPI:           "/admin/dashboard/subject/" + subjectID + "/students/assign",
 			StudentAssignSwapTarget: "#students-table-container",
-			ExportURL:   "/admin/dashboard/subject/" + subjectID + "/students/export",
-			UnassignAPI: "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
+			ExportURL:               "/admin/dashboard/subject/" + subjectID + "/students/export",
+			UnassignAPI:             "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
 		}).Render(ctx, ctx.Writer)
 	}
 }
@@ -2300,19 +2310,15 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 			row.New(18).Add(
-				col.New(3).Add(
+				col.New(4).Add(
 					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
 					text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
 				),
-				col.New(3).Add(
-					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(fmt.Sprintf("%.2f", subject.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
-				),
-				col.New(3).Add(
+				col.New(5).Add(
 					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
 					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
-				col.New(3).Add(
+				col.New(4).Add(
 					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
 					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),

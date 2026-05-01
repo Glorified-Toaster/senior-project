@@ -49,6 +49,7 @@ type Querier interface {
 	GetAttemptByExamAndStudent(ctx context.Context, arg GetAttemptByExamAndStudentParams) (ExamAttempt, error)
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (Exam, error)
+	GetExamQuestionAnalytics(ctx context.Context, examID uuid.NullUUID) ([]GetExamQuestionAnalyticsRow, error)
 	GetQuestionByChecksum(ctx context.Context, checksum *string) (Question, error)
 	GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, error)
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error)

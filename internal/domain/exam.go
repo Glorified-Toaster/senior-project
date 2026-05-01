@@ -62,3 +62,25 @@ type StudentAnswer struct {
 	IsCorrect        *bool
 	AnsweredAt       time.Time
 }
+
+type QuestionAnalytics struct {
+	QuestionID     uuid.UUID
+	QuestionTitle  string
+	QuestionType   string
+	MaxMarks       float64
+	TotalAnswers   int64
+	CorrectAnswers int64
+	Accuracy       float64
+}
+
+type ExamAnalytics struct {
+	ExamID           uuid.UUID
+	TotalAttempts    int64
+	AverageScore     float64
+	MaxScore         float64
+	MinScore         float64
+	PassCount        int64
+	FailCount        int64
+	PassRate         float64
+	QuestionStats    []QuestionAnalytics
+}
