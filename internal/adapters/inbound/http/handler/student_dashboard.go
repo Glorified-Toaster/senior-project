@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"uot-exam/internal/adapters/inbound/http/helpers"
@@ -840,7 +841,7 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 
 		document, _ := m.Generate()
 
-		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s_result.pdf", subject.Title))
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s_result.pdf", url.PathEscape(subject.Title)))
 		ctx.Header("Content-Type", "application/pdf")
 		ctx.Data(200, "application/pdf", document.GetBytes())
 	}

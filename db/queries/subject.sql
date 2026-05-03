@@ -4,19 +4,29 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: GetSubjectByID :one
-SELECT * FROM subjects WHERE id = $1;
+SELECT 
+    sqlc.embed(s),
+    (SELECT COUNT(*) FROM subject_students ss WHERE ss.subject_id = s.id AND ss.deleted_at IS NULL) as total_enrolled
+FROM subjects s 
+WHERE s.id = $1;
 
 -- name: ListAllSubjects :many
-SELECT * FROM subjects 
-WHERE deleted_at IS NULL
-ORDER BY updated_at DESC, id ASC
+SELECT 
+    sqlc.embed(s),
+    (SELECT COUNT(*) FROM subject_students ss WHERE ss.subject_id = s.id AND ss.deleted_at IS NULL) as total_enrolled
+FROM subjects s 
+WHERE s.deleted_at IS NULL
+ORDER BY s.updated_at DESC, s.id ASC
 LIMIT $1 OFFSET $2;
 
 -- name: SearchSubjects :many
-SELECT * FROM subjects 
-WHERE title ILIKE '%' || sqlc.arg(title) || '%'
-AND deleted_at IS NULL
-ORDER BY updated_at DESC, id ASC
+SELECT 
+    sqlc.embed(s),
+    (SELECT COUNT(*) FROM subject_students ss WHERE ss.subject_id = s.id AND ss.deleted_at IS NULL) as total_enrolled
+FROM subjects s 
+WHERE s.title ILIKE '%' || sqlc.arg(title) || '%'
+AND s.deleted_at IS NULL
+ORDER BY s.updated_at DESC, s.id ASC
 LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
 
 -- name: CountSearchSubjects :one
@@ -179,7 +189,9 @@ WHERE ss.subject_id = $1
   AND (u.full_name ILIKE '%' || $2 || '%' OR u.username ILIKE '%' || $2 || '%');
 
 -- name: ListSubjectsForStudent :many
-SELECT s.*
+SELECT 
+    sqlc.embed(s),
+    (SELECT COUNT(*) FROM subject_students ss2 WHERE ss2.subject_id = s.id AND ss2.deleted_at IS NULL) as total_enrolled
 FROM subjects s
 JOIN subject_students ss ON s.id = ss.subject_id
 WHERE ss.student_id = $1
@@ -198,7 +210,9 @@ UPDATE subjects
 SET status = 'CLOSED', updated_at = NOW()
 WHERE id = $1 AND status = 'PUBLISHED';
 -- name: ListSubjectsForInstructor :many
-SELECT s.*
+SELECT 
+    sqlc.embed(s),
+    (SELECT COUNT(*) FROM subject_students ss WHERE ss.subject_id = s.id AND ss.deleted_at IS NULL) as total_enrolled
 FROM subjects s
 JOIN subject_instructors si ON s.id = si.subject_id
 WHERE si.instructor_id = $1

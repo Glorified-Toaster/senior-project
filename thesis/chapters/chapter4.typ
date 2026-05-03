@@ -80,8 +80,14 @@ export default function () {
 === Response Time
 A different request endpoint was tested and aggregated into a *_CSV_* file, then visualized.
 #figure(
-  image("../assets/performance_report.png"),
-  caption: [Response time of the system under load using *k6* and *Matplotlib*],
+  image("../assets/performance_report.png", width: 450pt),
+  caption: [Response time of the system under load using *k6*],
+)
+
+== CPU Usage
+#figure(
+  image("../assets/cpu_load.png"),
+  caption: [CPU usage of the system under load using *k6*],
 )
 
 === Memory Usage
@@ -140,7 +146,7 @@ The previous system had only one type of question, and it was simply the text qu
 )
 ==== Image questions
 #figure(
-  image("../assets/image_question.png"),
+  image("../assets/image_question.png", width: 90%),
   caption: [Image question type],
 )
 

@@ -1,6 +1,6 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
 #import "@preview/tiago:0.1.0": *
-= Chapter 3: System Design and \ Implementation
+= System Design and \ Implementation
 
 == Research Methodology
 The development phase of this project was carried out using the *_Agile Methodology_* software development methodology. The system is a _web-based, data-driven application_. So, a *_design-driven development_* methodology was used to implement the system. At the analysis phase, the system requirements were gathered (*_functional and non-functional requirements_*) and analyzed.
@@ -36,7 +36,7 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
         (0, 0),
         [
           *Inbound Adapters (HTTP)* \
- Router #sym.bar Handlers #sym.bar Middleware #sym.bar Helpers
+          Router #sym.bar Handlers #sym.bar Middleware #sym.bar Helpers
         ],
         ..tint(teal),
         name: <inbound>,
@@ -48,7 +48,7 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
         (0, 1),
         [
           *Application Layer* \
- UserApplication #sym.bar ExamApplication #sym.bar SubjectAppl.
+          UserApplication #sym.bar ExamApplication #sym.bar SubjectAppl.
         ],
         ..tint(blue),
         name: <app>,
@@ -60,7 +60,7 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
         (0, 2),
         [
           *Outbound Adapters* \
- PostgreSQL Repository #sym.bar Logger #sym.bar Config #sym.bar Storage
+          PostgreSQL Repository #sym.bar Logger #sym.bar Config #sym.bar Storage
         ],
         ..tint(orange),
         name: <outbound>,
@@ -72,7 +72,7 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
         (0, 3),
         [
           *Infrastructure* \
- PostgreSQL Database #sym.bar File System #sym.bar TLS Certs
+          PostgreSQL Database #sym.bar File System #sym.bar TLS Certs
         ],
         ..tint(gray),
         name: <infra>,
@@ -89,12 +89,10 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
 
 - *Outbound Adapters*: Outbound adapters are often called *_driven adapters_*, because they drive the application. This layer is responsible for driving the database, file system, logs, and configuration.
 
-
-#pagebreak()
 === Technology Selection and Justification
 
 #table(
-  columns: (0.4fr, 1fr, 1fr),
+  columns: (0.5fr, 1fr, 1fr),
 
   [Component], [Technology], [Justification],
   [Backend],
@@ -102,6 +100,7 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
   [High-performance compiled language, modern ecosystem, type-safe, concurrency, ideal for enterprise-level applications],
 
   [HTTP Framework], [Gin], [High-performance, middleware support, well documented and maintained],
+  [websocket \ support], [Gorilla Websocket], [Well-documented and maintained WebSocket library for Go],
   [Database],
   [PostgreSQL 18.3],
   [Relational database, ACID compliance, scalability, database triggers, and advanced data types],
@@ -138,23 +137,23 @@ This system, as mentioned before, follows a Hexagonal architecture pattern, whic
 The database is built using *_PostgreSQL_*, the main focus of the database is to be *_normalized and efficient_*. The database utilizes PostgreSQL plugins such as *_pgcrypto_* for *_password hashing_* and *_uuid_* generation, and *_citext_* for *_case-insensitive text_*. Also, the utilization of *_database triggers_* and *_constraints_* ensures the integrity of the database.
 
 #figure(
- ```sql
- CREATE TABLE users (
- id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- username CITEXT NOT NULL UNIQUE,
- full_name VARCHAR(255) NOT NULL,
- branch VARCHAR(255) NOT NULL,
- password_hash TEXT NOT NULL,
- role user_role_type NOT NULL DEFAULT 'STUDENT',
- is_active BOOLEAN NOT NULL DEFAULT TRUE,
- last_login TIMESTAMPTZ,
- created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
- updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
- deleted_at TIMESTAMPTZ NULL,
- CHECK (char_length(username) >= 3),
- CHECK (username ~ '^[a-zA-Z0-9_]+$')
- );
- ```,
+  ```sql
+  CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username CITEXT NOT NULL UNIQUE,
+  full_name VARCHAR(255) NOT NULL,
+  branch VARCHAR(255) NOT NULL,
+  password_hash TEXT NOT NULL,
+  role user_role_type NOT NULL DEFAULT 'STUDENT',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  last_login TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL,
+  CHECK (char_length(username) >= 3),
+  CHECK (username ~ '^[a-zA-Z0-9_]+$')
+  );
+  ```,
   caption: [User table schema],
 )
 
@@ -345,32 +344,32 @@ The mechanism by which the system checks if the user is authorized to access a s
 + `RoleAuthMiddleware(allowedRoles...)`: This middleware takes the user role from the stored claims in the gin context and checks if the user is authorized to access the requested resource and if the user is active or not.
 
 #figure(
- ```go
- func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin.HandlerFunc {
- roleSet := make(map[domain.UserRole]struct{}, len(allowedRoles))
- for _, r := range allowedRoles {
- roleSet[r] = struct{}{}
- }
+  ```go
+  func (m *AuthMiddleware) RoleAuthMiddleware(allowedRoles ...domain.UserRole) gin.HandlerFunc {
+  roleSet := make(map[domain.UserRole]struct{}, len(allowedRoles))
+  for _, r := range allowedRoles {
+  roleSet[r] = struct{}{}
+  }
 
- return func(c *gin.Context) {
- raw, exists := c.Get("claims")
- if !exists {
- c.Abort()
- return
- }
- if !claims.IsActive {
- c.Abort()
- return
- }
- userRole := domain.UserRole(claims.Role)
- if _, allowed := roleSet[userRole]; !allowed {
- c.Abort()
- return
- }
- c.Next()
- }
- }
- ```,
+  return func(c *gin.Context) {
+  raw, exists := c.Get("claims")
+  if !exists {
+  c.Abort()
+  return
+  }
+  if !claims.IsActive {
+  c.Abort()
+  return
+  }
+  userRole := domain.UserRole(claims.Role)
+  if _, allowed := roleSet[userRole]; !allowed {
+  c.Abort()
+  return
+  }
+  c.Next()
+  }
+  }
+  ```,
   caption: [Role-based authentication middleware],
 )
 
@@ -383,32 +382,32 @@ The mechanism by which the system checks if the user is authorized to access a s
   )
 ]
 #pagebreak()
-=== System Configuration 
+=== System Configuration
 To make the system modifiable and configurable, a config file system is used. The configuration is stored in a *YAML* file located at `/config/config.yaml`. The configuration has default values for all of the parameters if none of the parameters are provided to prevent any errors during the startup of the system.
 
 #figure(
-```yaml
-http_server:
- address: "localhost"
- port: "8443"
- tls_cert_dir: "certs"
- cert_file: "certs/cert.pem"
- key_file: "certs/key.pem"
- 
-database:
- host: "localhost"
- port: 5432
- username: "testuser"
- password: "123456"
- database_name: "testdb"
- ssl_mode: "disable"
- max_connections: 25
- min_connections: 5
- max_conn_lifetime: 1h
- max_conn_idle_time: 30m
-  
- // rest of the config file
-```,
+  ```yaml
+  http_server:
+   address: "localhost"
+   port: "8443"
+   tls_cert_dir: "certs"
+   cert_file: "certs/cert.pem"
+   key_file: "certs/key.pem"
+
+  database:
+   host: "localhost"
+   port: 5432
+   username: "testuser"
+   password: "123456"
+   database_name: "testdb"
+   ssl_mode: "disable"
+   max_connections: 25
+   min_connections: 5
+   max_conn_lifetime: 1h
+   max_conn_idle_time: 30m
+
+   // rest of the config file
+  ```,
   caption: [System Configuration File],
 )
 
@@ -453,17 +452,17 @@ In the domain layer located at `/internal/domain`, we define the entities and bu
 #align(center)[
   #block(width: 300pt)[
     #figure(
- ```go
- type User struct {
- ID        string    `json:"id"`
- Username  string    `json:"username"`
- FullName  string    `json:"full_name"`
- Role      UserRole  `json:"role"`
- IsActive  bool      `json:"is_active"`
- CreatedAt time.Time `json:"created_at"`
- UpdatedAt time.Time `json:"updated_at"`
- }
- ```,
+      ```go
+      type User struct {
+      ID        string    `json:"id"`
+      Username  string    `json:"username"`
+      FullName  string    `json:"full_name"`
+      Role      UserRole  `json:"role"`
+      IsActive  bool      `json:"is_active"`
+      CreatedAt time.Time `json:"created_at"`
+      UpdatedAt time.Time `json:"updated_at"`
+      }
+      ```,
       caption: [Domain Layer Entity],
     )
   ]
@@ -475,11 +474,11 @@ The Port layer `/internal/ports` works as an interface between the domain layer 
 #align(center)[
   #block(width: 300pt)[
     #figure(
- ```go
- type UserRepository interface {
- GetUsers() ([]User, error)
- }
- ```,
+      ```go
+      type UserRepository interface {
+      GetUsers() ([]User, error)
+      }
+      ```,
       caption: [Port Layer Interface],
     )
   ]
@@ -557,44 +556,44 @@ func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
 This system is built using a component-based architecture with *Templ* and *HTMX*. These components can be triggered by the handlers in the _presentation layer_. For example, a *_Toast Notification_* is a component that can be triggered from the handler using *HTMX AJAX* Headers `HX-Trigger` and `HX-Reswap`.
 
 #figure(
- ```go
- func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
- return func(ctx *gin.Context) {
- users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{Limit: 100, Offset: 0})
- if err != nil {
- helpers.Toast(ctx, "List All Users Failed", "Failed to list all users: " + err.Error(), toast.VariantError)
- return
- }
- render.Render(ctx, components.UserTableRows(users, false))
- }
- }
- ```,
+  ```go
+  func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
+  return func(ctx *gin.Context) {
+  users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{Limit: 100, Offset: 0})
+  if err != nil {
+  helpers.Toast(ctx, "List All Users Failed", "Failed to list all users: " + err.Error(), toast.VariantError)
+  return
+  }
+  render.Render(ctx, components.UserTableRows(users, false))
+  }
+  }
+  ```,
   caption: "Toast Notification In Presentation Layer",
 )
 
 #figure(
- ```go
- func Toast(ctx *gin.Context, title string, description string, variant toast.Variant) {
- ctx.Writer.Write([]byte(`<div hx-swap-oob="beforeend:#toast-container">`))
+  ```go
+   func Toast(ctx *gin.Context, title string, description string, variant toast.Variant) {
+   ctx.Writer.Write([]byte(`<div hx-swap-oob="beforeend:#toast-container">`))
 
- toast.Toast(toast.Props{
- Title:         title,
- Description:   description,
- Variant:       variant,
- Duration:      4000,
- ShowIndicator: true,
- Dismissible:   true,
- Icon:          true,
- }).Render(ctx.Request.Context(), ctx.Writer)
+   toast.Toast(toast.Props{
+   Title:         title,
+   Description:   description,
+   Variant:       variant,
+   Duration:      4000,
+   ShowIndicator: true,
+   Dismissible:   true,
+   Icon:          true,
+   }).Render(ctx.Request.Context(), ctx.Writer)
 
- ctx.Writer.Write([]byte(`</div>`))
-}
- ```,
+   ctx.Writer.Write([]byte(`</div>`))
+  }
+  ```,
   caption: "Toast Notification Implementation",
 )
 
 #figure(
-  image("../assets/toast.png" , width: 80%),
+  image("../assets/toast.png", width: 80%),
   caption: "Toast Notification After Triggering",
 )
 
@@ -602,7 +601,8 @@ This system is built using a component-based architecture with *Templ* and *HTMX
 == Security Mechanisms
 === OWASP Top 10 Security Considerations
 OWASP Top 10 is a list of the most important and critical security risks for web applications @owasp2025. The system is designed with these risks mitigation in mind.
-
+\
+\
 #table(
   columns: (1fr, 1fr),
   [OWASP Top 10 Risk], [Mitigation Strategy],
@@ -671,15 +671,15 @@ The system uses a self-signed certificate for local deployment and the ability t
 The system utilizes structured logging with `Uber's Zap` library to log all the system events. The logs are stored in a file with a rotation mechanism to prevent the log file from growing indefinitely using `lumberjack` package, which is a compression and rotation mechanism for log files. *Zap* is a _near-zero allocation, fast, structured_ logging library for *Go*.
 
 #figure(
- ```json
- {
- "level":"INFO",
- "timestamp":"2026-03-08T23:31:25.732+0300",
- "caller":"server/server.go:74",
- "message":"INTERNAL_INFO",
- "info_msg":"Using an existing TLS certificate..."
- }
-```,
+  ```json
+   {
+   "level":"INFO",
+   "timestamp":"2026-03-08T23:31:25.732+0300",
+   "caller":"server/server.go:74",
+   "message":"INTERNAL_INFO",
+   "info_msg":"Using an existing TLS certificate..."
+   }
+  ```,
   caption: [System Log Example],
 )
 
@@ -688,11 +688,11 @@ The use of *JSON* format for logging makes it easier to parse and analyze the lo
 The system also has a separate log for all the routes and the *HTTP* requests.
 
 #figure(
- ```json
- [GIN] 2026/04/14 - 10:02:56 | 200 | 4.992395ms | 127.0.0.1 | GET "/admin/dashboard/users"
- [GIN] 2026/04/14 - 10:02:59 | 200 | 3.799645ms | 127.0.0.1 | GET "/admin/dashboard/"
- [GIN] 2026/04/14 - 10:03:01 | 200 | 2.919365ms | 127.0.0.1 | GET "/admin/dashboard/subjects"
- ```,
+  ```json
+  [GIN] 2026/04/14 - 10:02:56 | 200 | 4.992395ms | 127.0.0.1 | GET "/admin/dashboard/users"
+  [GIN] 2026/04/14 - 10:02:59 | 200 | 3.799645ms | 127.0.0.1 | GET "/admin/dashboard/"
+  [GIN] 2026/04/14 - 10:03:01 | 200 | 2.919365ms | 127.0.0.1 | GET "/admin/dashboard/subjects"
+  ```,
   caption: [System Route Log Example],
 )
 === Password Security
@@ -711,28 +711,29 @@ The system also validates the password strength using a set of rules that are de
 - Password must contain at least one uppercase letter.
 
 #figure(
- ```go
-func ValidatePasswordCriteria(password string) error {
- if password == "" {
- return fmt.Errorf("password is required")
- }
- if len(password) < 8 {
- return fmt.Errorf("password must be at least 8 characters long")
- }
- var hasNum, hasUpper bool
- for _, char := range password {
- if unicode.IsNumber(char) {
- hasNum = true
- }
- if unicode.IsUpper(char) {
- hasUpper = true
- }
- }
- if !hasNum || !hasUpper {
- return fmt.Errorf("password must contain at least one number and one uppercase letter")
- }
- return nil
-}
-```,
+  ```go
+  func ValidatePasswordCriteria(password string) error {
+   if password == "" {
+   return fmt.Errorf("password is required")
+   }
+   if len(password) < 8 {
+   return fmt.Errorf("password must be at least 8 characters long")
+   }
+   var hasNum, hasUpper bool
+   for _, char := range password {
+   if unicode.IsNumber(char) {
+   hasNum = true
+   }
+   if unicode.IsUpper(char) {
+   hasUpper = true
+   }
+   }
+   if !hasNum || !hasUpper {
+   return fmt.Errorf("password must contain at least one number and one uppercase letter")
+   }
+   return nil
+  }
+  ```,
   caption: [Password Validation Function],
 )
+

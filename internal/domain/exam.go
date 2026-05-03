@@ -29,6 +29,8 @@ type Exam struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   *time.Time
+
+	TotalQuestions int64
 }
 
 type AttemptStatus string

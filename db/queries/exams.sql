@@ -15,13 +15,28 @@ WHERE id = $1
 RETURNING *;
 
 -- name: GetExamByID :one
-SELECT * FROM exams WHERE id = $1;
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE e.id = $1;
 
 -- name: ListExamsBySubject :many
-SELECT * FROM exams WHERE subject_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC;
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE e.subject_id = $1 AND e.deleted_at IS NULL 
+ORDER BY e.created_at DESC;
 
 -- name: ListAllExams :many
-SELECT * FROM exams WHERE deleted_at IS NULL ORDER BY created_at DESC, id ASC LIMIT $1 OFFSET $2;
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE e.deleted_at IS NULL 
+ORDER BY e.created_at DESC, e.id ASC 
+LIMIT $1 OFFSET $2;
 
 -- name: CountExams :one
 SELECT COUNT(*) FROM exams WHERE deleted_at IS NULL;
@@ -64,18 +79,24 @@ RETURNING *;
 SELECT * FROM student_answers WHERE attempt_id = $1;
 
 -- name: SearchExams :many
-SELECT * FROM exams 
-WHERE (title ILIKE '%' || $1::text || '%' OR description ILIKE '%' || $1::text || '%')
-AND deleted_at IS NULL
-ORDER BY created_at DESC, id ASC
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE (e.title ILIKE '%' || $1::text || '%' OR e.description ILIKE '%' || $1::text || '%')
+AND e.deleted_at IS NULL
+ORDER BY e.created_at DESC, e.id ASC
 LIMIT $2 OFFSET $3;
 
 -- name: SearchExamsBySubject :many
-SELECT * FROM exams 
-WHERE subject_id = $1
-AND (title ILIKE '%' || $2::text || '%' OR description ILIKE '%' || $2::text || '%')
-AND deleted_at IS NULL
-ORDER BY created_at DESC, id ASC
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE e.subject_id = $1
+AND (e.title ILIKE '%' || $2::text || '%' OR e.description ILIKE '%' || $2::text || '%')
+AND e.deleted_at IS NULL
+ORDER BY e.created_at DESC, e.id ASC
 LIMIT $3 OFFSET $4;
 
 -- name: CountSearchExamsBySubject :one
@@ -88,12 +109,17 @@ AND deleted_at IS NULL;
 UPDATE exams SET deleted_at = NOW() WHERE id = $1;
 
 -- name: ListExamsCreatedBy :many
-SELECT * FROM exams 
-WHERE created_by = $1 AND deleted_at IS NULL 
-ORDER BY created_at DESC;
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
+FROM exams e 
+WHERE e.created_by = $1 AND e.deleted_at IS NULL 
+ORDER BY e.created_at DESC;
 
 -- name: ListExamsForStudent :many
-SELECT e.* 
+SELECT 
+    sqlc.embed(e),
+    (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id AND q.deleted_at IS NULL) as total_questions
 FROM exams e
 JOIN subject_students ss ON e.subject_id = ss.subject_id
 WHERE ss.student_id = $1 AND e.deleted_at IS NULL AND ss.deleted_at IS NULL

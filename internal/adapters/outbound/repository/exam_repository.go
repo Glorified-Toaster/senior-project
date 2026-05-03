@@ -35,7 +35,7 @@ func (r *ExamRepository) ListAll(ctx context.Context, arg ports.ListAllExamsPara
 
 	var exams []domain.Exam
 	for _, exam := range claimedExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -58,7 +58,7 @@ func (r *ExamRepository) Search(ctx context.Context, arg ports.SearchExamsParams
 
 	var exams []domain.Exam
 	for _, exam := range claimedExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -107,6 +107,12 @@ func mapSqlcExamToDomain(exam sqlc.Exam) domain.Exam {
 	}
 }
 
+func mapSqlcFullExamToDomain(exam sqlc.Exam, totalQuestions int64) domain.Exam {
+	d := mapSqlcExamToDomain(exam)
+	d.TotalQuestions = totalQuestions
+	return d
+}
+
 func (r *ExamRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.Exam, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {
@@ -118,7 +124,7 @@ func (r *ExamRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.Exam
 		return domain.Exam{}, err
 	}
 
-	return mapSqlcExamToDomain(exam), nil
+	return mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions), nil
 }
 
 func (r *ExamRepository) Create(ctx context.Context, arg ports.CreateExamParams) (domain.Exam, error) {
@@ -156,7 +162,7 @@ func (r *ExamRepository) ListBySubject(ctx context.Context, subjectID uuid.UUID)
 
 	var exams []domain.Exam
 	for _, exam := range sqlcExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -201,7 +207,7 @@ func (r *ExamRepository) SearchBySubject(ctx context.Context, arg ports.SearchEx
 
 	var exams []domain.Exam
 	for _, exam := range sqlcExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -232,7 +238,7 @@ func (r *ExamRepository) ListExamsForStudent(ctx context.Context, studentID uuid
 
 	var exams []domain.Exam
 	for _, exam := range sqlcExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -251,7 +257,7 @@ func (r *ExamRepository) ListExamsCreatedBy(ctx context.Context, instructorID uu
 
 	var exams []domain.Exam
 	for _, exam := range sqlcExams {
-		exams = append(exams, mapSqlcExamToDomain(exam))
+		exams = append(exams, mapSqlcFullExamToDomain(exam.Exam, exam.TotalQuestions))
 	}
 
 	return exams, nil
@@ -523,7 +529,7 @@ func (r *ExamRepository) GetExamAnalytics(ctx context.Context, examID uuid.UUID)
 			minScore = score
 		}
 
-		if score >= exam.PassScore {
+		if score >= exam.Exam.PassScore {
 			passCount++
 		} else {
 			failCount++
@@ -632,7 +638,7 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 	var examStats []domain.ExamSummaryAnalytics
 
 	for _, exam := range exams {
-		attempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: exam.ID, Valid: true})
+		attempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: exam.Exam.ID, Valid: true})
 		if err != nil {
 			continue
 		}
@@ -660,7 +666,7 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 				minScore = score
 			}
 
-			if score >= exam.PassScore {
+			if score >= exam.Exam.PassScore {
 				examPassCount++
 				totalPassCount++
 			} else {
@@ -674,8 +680,8 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 		}
 
 		examStats = append(examStats, domain.ExamSummaryAnalytics{
-			ExamID:        exam.ID,
-			Title:         exam.Title,
+			ExamID:        exam.Exam.ID,
+			Title:         exam.Exam.Title,
 			PassRate:      examPassRate,
 			TotalAttempts: int64(len(attempts)),
 		})

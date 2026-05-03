@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -136,7 +137,7 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
 	fileName := fmt.Sprintf("exam-%d.csv", time.Now().Unix())
 	ctx.Header("Content-Description", "File Transfer")
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", url.PathEscape(fileName)))
 	ctx.Header("Content-Type", "text/csv")
 	ctx.Data(http.StatusOK, "text/csv", file.Bytes())
 }
@@ -265,7 +266,7 @@ func ExportStudentsCSV(ctx *gin.Context, students []domain.User) {
 
 	fileName := fmt.Sprintf("students-%d.csv", time.Now().Unix())
 	ctx.Header("Content-Description", "File Transfer")
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", url.PathEscape(fileName)))
 	ctx.Header("Content-Type", "text/csv")
 	ctx.Data(http.StatusOK, "text/csv", file.Bytes())
 }

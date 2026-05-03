@@ -26,4 +26,6 @@ type Subject struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       *time.Time
+
+	TotalEnrolled int64
 }

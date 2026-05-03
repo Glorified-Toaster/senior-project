@@ -1,4 +1,4 @@
-= Chapter 2: Literature Review
+= Literature Review
 == E-Assessment Systems
 *Electronic Assessment* (E-Assessment) or *compouter-based assessment*, is the use of _digital technologies_ to measure and evaluate student learning outcome.
 The *e-assessment systems* have been on the rise for the past few years, caused by the rapid development and innovation in the _computer network_ field, and the rise of the *_internet_*. Providing a replacement for the traditional _paper-based_ exams.
@@ -22,10 +22,7 @@ After the rise of the *WWW (World Wide Web)*, an online examination system began
 
 Over the years, advances in computer-based online examinations have been remarkable and fast, shifting focus from the simple examination platform to platforms that are trying to solve problems like _Security, Scalability, and automation_.
 
-In the *COVID-19* pandemic, the need for a _secure, convenient, automated, and performant_ examination system was critical @ai-based-proctoring2025. examination management systems increasingly adopt _cloud-native architectures, microservice decomposition, modern frontend and backend frameworks to address scalability, maintainability, and user experience challenges_.
-
-#pagebreak()
-
+In the *COVID-19* pandemic, the need for a _secure, convenient, automated, and performant_ examination system was critical @ai-based-proctoring2025. examination management systems increasingly adopt _cloud-native architectures, microservice decomposition, modern frontend and backend frameworks to address scalability, maintainability, and user experience challenges_
 == Static sites vs. Dynamic sites
 === Static sites
 static site page or a flat page is a web page that is deliviered to the end user without any modification on the page file content.
@@ -68,7 +65,6 @@ The traditional template engine that is used in programming languages like *Pyth
 )
 
 It is quite easy to misuse the string interpolation technique. A caution is needed when developing with a type of template engine @Pisu_2026.
-#pagebreak()
 === Type-Safe Templating Engines
 On the contrary, the alternative to the traditional template engines is much stricter and more secure, by implication of _strong-typing_ and stricter escaping rules, such as *Rust*'s (*askama*) and *Go*'s (*Templ*), which are _compiled optimized template engines_.
 
@@ -114,7 +110,6 @@ While *SSR (Server-Side Rendering)* is a more traditional approach, it is still 
   image("../assets/htmx-flow.png", width: 150mm),
   caption: "HTMX Flow Diagram",
 )
-#pagebreak()
 == Database Design
 To implement such a _performance and data-driven_ application, a database with a _well-designed and optimized schema_ must be designed and implemented. Such a design can be obtained by using the following principles:
 
@@ -265,6 +260,26 @@ CREATE TYPE user_role_type AS
 ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
 ```
 
+== Time-Bound Exams and Auto-Submission
+To preserve academic integrity, the system must implement an auto-submission mechanism that renders the examination session immutable once the duration expires. Ensuring high-fidelity synchronization for this feature necessitates a selection between two distinct architectural communication patterns: Full-Duplex WebSockets or Periodic HTTP Polling.
+
+
+=== HTTP Polling
+HTTP Polling is a traditional communication technique where the client (the browser) periodically sends requests to the server to check for new data or status updates. Unlike WebSockets, which keep a connection open, polling follows the standard "request-response" cycle of the HTTP protocol.
+
+
+=== WebSockets
+
+The *WebSocket protocol (RFC 6455)* facilitates a persistent, full-duplex communication channel over a single TCP connection. Unlike the standard HTTP request-response paradigm, *WebSockets* bypass the overhead of repeated handshake negotiations, allowing the server to push "*Force-Submit*" events to the client in real-time. This provides a low-latency solution suitable for high-concurrency examination environments where sub-second synchronization is paramount @ws2021.
+
+
+#figure(
+  image("../assets/ws.svg", width: 130mm),
+  caption: "WebSockets Vs HTTP Polling",
+)
+
+In this system, the *WebSocket* approach is chosen for its superior performance and real-time capabilities, ensuring that all clients receive immediate notifications when the examination duration expires, thus maintaining the integrity of the examination process.
+
 == User Interface
 The user interface is designed using *Tailwind CSS* and *TemplUI* component library with *HTMX* for the interactivity. The UI is designed to be _user-friendly_.
 
@@ -274,7 +289,7 @@ The Use of *TemplUI* component library gives the UI a modern and unified look an
   image("../assets/templui.png", width: 130%),
   caption: "TemplUI Component Library",
 )
-
+#pagebreak()
 == Related Work
 
 === Moodle

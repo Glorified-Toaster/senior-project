@@ -176,7 +176,7 @@ func populateExams(query sqlc.Querier) {
 		log.Println("no subjects found to populate exams")
 		return
 	}
-	subjectID := subjects[0].ID
+	subjectID := subjects[0].Subject.ID
 
 	// Get a user (instructor or admin)
 	users, err := query.ListAllUsers(ctx, sqlc.ListAllUsersParams{Limit: 1, Offset: 0})

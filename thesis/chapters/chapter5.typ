@@ -1,4 +1,4 @@
-= Chapter 5: Conclusion and Future Work
+= Conclusion and Future Work
 
 == Conclusion
 This thesis presents a design and implementation of a web-based examination management application that is fast, secure, and easy to use. The system is built with modern technologies and clean architectural patterns to provide a reliable, fast, and scalable solution for managing examinations. The system is solving the problems, such as: 

@@ -47,13 +47,21 @@ templ ExamTakePage(param ExamTakeParam) {
 		data-duration={ strconv.Itoa(int(param.Subject.DurationMinutes)) }>
 		
 		<!-- Sticky Header with Timer -->
-		<header class="sticky top-0 z-50 border-b bg-slate-50 shadow-sm">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-				<div class="flex items-center gap-3">
-					@icon.FileText(icon.Props{Class: "h-5 w-5 text-primary"})
-					<div>
-						<h1 class="text-lg font-bold text-slate-900">{ param.Exam.Title }</h1>
-						<p class="text-xs text-slate-500">{ param.Subject.Title }</p>
+		<header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm w-full">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between w-full">
+				<div class="flex items-center gap-4">
+					<a href={ templ.URL(fmt.Sprintf("/student/subject/%s", param.Subject.ID.String())) } class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" title="Back to Subject">
+						@icon.ArrowLeft(icon.Props{Class: "h-5 w-5"})
+					</a>
+					<div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+					<div class="flex items-center gap-3">
+						<div class="p-2 rounded-xl bg-primary/10 text-primary hidden sm:flex">
+							@icon.FileText(icon.Props{Class: "h-5 w-5"})
+						</div>
+						<div>
+							<h1 class="text-base font-bold text-slate-900 leading-none mb-1">{ param.Exam.Title }</h1>
+							<p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider leading-none">{ param.Subject.Title }</p>
+						</div>
 					</div>
 				</div>
 				<div class="flex items-center gap-4">
@@ -78,57 +86,78 @@ templ ExamTakePage(param ExamTakeParam) {
 				</div>
 			</div>
 			<!-- Progress bar -->
-			<div class="h-1 bg-slate-100">
+			<div class="h-1 bg-slate-100 w-full">
 				<div id="progress-bar" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
-			</div>
-			<!-- Question Navigation Indicator -->
-			<div class="bg-white border-b shadow-sm overflow-x-auto py-2 px-4 text-center">
-				<div class="inline-flex items-center gap-2">
-					for qIndex, question := range param.Questions {
-						<a href={ templ.SafeURL("#question-" + question.ID.String()) }
-							id={ "nav-indicator-" + question.ID.String() }
-							class={
-								"flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md text-sm font-medium transition-colors border shadow-sm",
-								templ.KV("bg-primary text-white border-primary", isAnswered(param.AnsweredChoices, question.ID)),
-								templ.KV("bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100", !isAnswered(param.AnsweredChoices, question.ID)),
-							}>
-							{ fmt.Sprint(qIndex + 1) }
-						</a>
-					}
-				</div>
 			</div>
 		</header>
 
 		<!-- Questions -->
-		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			<div class="space-y-6" id="question-list">
-				for qIndex, question := range param.Questions {
-					<div class="animate-in fade-in slide-in-from-bottom-4 duration-500"
-						style={ fmt.Sprintf("animation-delay: %dms", (qIndex+1)*80) }
-						id={ "question-" + question.ID.String() }>
-						switch question.QuestionType {
-							case string(domain.QuestionTypeText):
-								@ExamQuestionItem(question, question.Choices, qIndex+1, param)
-							case string(domain.QuestionTypeCode):
-								@ExamQuestionCodeItem(question, question.Choices, qIndex+1, param)
-							case string(domain.QuestionTypeImage):
-								@ExamImageQuestionItem(question, question.Choices, qIndex+1, param)
+		<main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="w-full flex flex-col lg:flex-row gap-8 items-start">
+				<!-- Questions -->
+				<div class="flex-1 space-y-6 order-2 lg:order-1">
+					<div class="space-y-6" id="question-list">
+						for qIndex, question := range param.Questions {
+							<div class="animate-in fade-in slide-in-from-bottom-4 duration-500"
+								style={ fmt.Sprintf("animation-delay: %dms", (qIndex+1)*80) }
+								id={ "question-" + question.ID.String() }>
+								switch question.QuestionType {
+									case string(domain.QuestionTypeText):
+										@ExamQuestionItem(question, question.Choices, qIndex+1, param)
+									case string(domain.QuestionTypeCode):
+										@ExamQuestionCodeItem(question, question.Choices, qIndex+1, param)
+									case string(domain.QuestionTypeImage):
+										@ExamImageQuestionItem(question, question.Choices, qIndex+1, param)
+								}
+							</div>
 						}
 					</div>
-				}
-			</div>
 
-			<!-- Bottom submit button -->
-			<div class="mt-8 flex justify-center pb-8">
-				@dialog.Trigger(dialog.TriggerProps{For: "submit-exam-dialog"}) {
-					@button.Button(button.Props{
-						Variant: button.VariantDefault,
-						Class: "flex items-center gap-2 px-8 py-3",
-					}) {
-						@icon.Send(icon.Props{Class: "h-4 w-4"})
-						Submit Exam
-					}
-				}
+					<!-- Bottom submit button -->
+					<div class="mt-8 flex justify-center pb-8">
+						@dialog.Trigger(dialog.TriggerProps{For: "submit-exam-dialog"}) {
+							@button.Button(button.Props{
+								Variant: button.VariantDefault,
+								Class: "flex items-center gap-2 px-8 py-3",
+							}) {
+								@icon.Send(icon.Props{Class: "h-4 w-4"})
+								Submit Exam
+							}
+						}
+					</div>
+				</div>
+
+				<!-- Sidebar Indicator (Sticky) -->
+				<aside class="w-full lg:w-80 shrink-0 order-1 lg:order-2 lg:sticky lg:top-24">
+					<div class="bg-[#F9F8F7] rounded-lg p-6 border border-slate-200 shadow-sm">
+						<div class="flex items-center justify-between mb-4">
+							<h3 class="font-bold text-slate-900 flex items-center gap-2">
+								@icon.LayoutGrid(icon.Props{Class: "h-4 w-4 text-primary"})
+								Questions
+							</h3>
+							<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ fmt.Sprintf("%d Total", len(param.Questions)) }</span>
+						</div>
+						
+						<div class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2">
+							for qIndex, question := range param.Questions {
+								@QuestionIndicator(question, qIndex, param)
+							}
+						</div>
+
+						<div class="mt-6 pt-6 border-t border-slate-200/60">
+							<div class="flex items-center justify-between text-xs mb-4">
+								<span class="flex items-center gap-1.5 text-slate-500">
+									<span class="w-2 h-2 rounded-full bg-primary"></span>
+									Answered
+								</span>
+								<span class="flex items-center gap-1.5 text-slate-500">
+									<span class="w-2 h-2 rounded-full bg-white border border-slate-200"></span>
+									Pending
+								</span>
+							</div>
+						</div>
+					</div>
+				</aside>
 			</div>
 		</main>
 	</div>
@@ -138,7 +167,7 @@ templ ExamTakePage(param ExamTakeParam) {
 		@dialog.Content() {
 			@dialog.Header() {
 				@dialog.Title() { Submit Exam }
-				@dialog.Description() { Are you sure you want to submit this exam? You cannot change your answers after submission. If you submit, you will be automatically redirected to the subject page when other exams are available, or the results page if all are completed. }
+				@dialog.Description() { Are you sure you want to submit this exam? You cannot change your answers after submission. }
 			}
 			@dialog.Footer() {
 				@dialog.Close() {
@@ -184,17 +213,60 @@ templ ExamTakePage(param ExamTakeParam) {
 		let socket = new WebSocket(wsUrl);
 
 		function showToast(title, description, variant) {
-			const container = document.getElementById('toast-container');
-			if (!container) return;
-			const colors = {
-				warning: 'border-yellow-400 bg-yellow-50',
-				error: 'border-red-400 bg-red-50'
-			};
 			const toast = document.createElement('div');
-			toast.className = 'fixed top-4 right-4 z-[100] p-4 rounded-lg border shadow-lg ' + (colors[variant] || 'border-slate-200 bg-white');
-			toast.innerHTML = '<div class="font-semibold text-sm">' + title + '</div><div class="text-sm mt-1">' + description + '</div>';
+			const duration = 5000;
+			
+			toast.setAttribute('data-tui-toast', '');
+			toast.setAttribute('data-tui-toast-duration', duration.toString());
+			toast.setAttribute('data-position', 'bottom-right');
+			toast.setAttribute('data-variant', variant);
+			
+			// Base classes for the toast container to match templui
+			toast.className = 'z-[100] fixed pointer-events-auto p-4 w-full md:max-w-[420px] animate-in fade-in slide-in-from-bottom-4 duration-300 bottom-0 right-0';
+			
+			const icons = {
+				warning: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-500 mr-3 flex-shrink-0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+				error: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500 mr-3 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+				success: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500 mr-3 flex-shrink-0"><path d="M20 6 9 17l-5-5"/></svg>',
+				info: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500 mr-3 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+			};
+
+			const progressClass = {
+				warning: 'bg-yellow-500',
+				error: 'bg-red-500',
+				success: 'bg-green-500',
+				info: 'bg-blue-500'
+			};
+
+			toast.innerHTML = `
+				<div class="w-full bg-white text-slate-900 rounded-xl shadow-xl border border-slate-200 pt-5 pb-4 px-4 flex items-center justify-center relative overflow-hidden group">
+					<div class="absolute top-0 left-0 right-0 h-1 overflow-hidden">
+						<style>
+							@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+						</style>
+						<div class="h-full origin-left ${progressClass[variant] || 'bg-slate-500'}" 
+							 style="animation: toast-progress ${duration}ms linear forwards"></div>
+					</div>
+					${icons[variant] || ''}
+					<span class="flex-1 min-w-0">
+						<p class="text-sm font-semibold truncate">${title}</p>
+						<p class="text-sm text-slate-500 mt-0.5">${description}</p>
+					</span>
+					<button type="button" class="ml-4 p-1 rounded-md hover:bg-slate-100 text-slate-400 transition-colors" onclick="this.closest('[data-tui-toast]').remove()">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+					</button>
+				</div>
+			`;
+			
 			document.body.appendChild(toast);
-			setTimeout(() => toast.remove(), 5000);
+			
+			setTimeout(() => {
+				if (toast.parentNode) {
+					toast.classList.replace('animate-in', 'animate-out');
+					toast.classList.add('fade-out', 'slide-out-to-top-4');
+					setTimeout(() => toast.remove(), 300);
+				}
+			}, duration);
 		}
 
 		socket.onmessage = function(event) {
@@ -269,8 +341,8 @@ templ ExamTakePage(param ExamTakeParam) {
 					}
 					const navIndicator = document.getElementById('nav-indicator-' + body.question_id);
 					if (navIndicator) {
-						navIndicator.classList.remove('bg-slate-50', 'text-slate-500', 'border-slate-200', 'hover:bg-slate-100');
-						navIndicator.classList.add('bg-primary', 'text-white', 'border-primary');
+						navIndicator.classList.remove('bg-white', 'text-slate-400', 'border-slate-200', 'hover:border-primary/30', 'hover:text-primary', 'hover:bg-primary/5');
+						navIndicator.classList.add('bg-primary', 'text-white', 'border-primary', 'shadow-primary/20', 'scale-105');
 					}
 					updateAnsweredCount();
 				}
@@ -449,4 +521,16 @@ func isAnswered(answeredChoices map[uuid.UUID]uuid.UUID, questionID uuid.UUID) b
 func isSelected(answeredChoices map[uuid.UUID]uuid.UUID, questionID uuid.UUID, choiceID uuid.UUID) bool {
 	selected, ok := answeredChoices[questionID]
 	return ok && selected == choiceID
+}
+
+templ QuestionIndicator(question domain.Question, qIndex int, param ExamTakeParam) {
+	<a href={ templ.SafeURL("#question-" + question.ID.String()) }
+		id={ "nav-indicator-" + question.ID.String() }
+		class={
+			"flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold transition-all border shadow-sm",
+			templ.KV("bg-primary text-white border-primary shadow-primary/20 scale-105", isAnswered(param.AnsweredChoices, question.ID)),
+			templ.KV("bg-white text-slate-400 border-slate-200 hover:border-primary/30 hover:text-primary hover:bg-primary/5", !isAnswered(param.AnsweredChoices, question.ID)),
+		}>
+		{ fmt.Sprint(qIndex + 1) }
+	</a>
 }

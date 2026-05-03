@@ -16,7 +16,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/thinkerou/favicon"
 	csrf "github.com/utrack/gin-csrf"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -62,7 +61,7 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 	router.Static("/static", "./web/static")
 	router.LoadHTMLGlob("web/static/*.html")
 
-	router.Use(favicon.New("./web/static/images/favicon.ico"))
+	router.StaticFile("/favicon.ico", "./web/static/images/favicon.ico")
 
 	return &Router{
 		router:         router,
@@ -245,7 +244,7 @@ func enableCORS(router *gin.Engine, viperConfig *config.Config) {
 		AllowOrigins:     []string{location},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "X-CSRF-Token", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		ExposeHeaders:    []string{},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 		AllowOriginFunc: func(origin string) bool {

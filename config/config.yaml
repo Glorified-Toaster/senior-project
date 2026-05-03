@@ -1,5 +1,5 @@
 http_server:
-  address: "localhost"
+  address: "192.168.0.225"
   port: "8443"
   tls_cert_dir: "certs"
   cert_file: "certs/cert.pem"
@@ -32,7 +32,6 @@ lumberjack:
 
 gin_logger:
   filename: "logs/gin.log"
-
 
 jwt_auth:
   secret: "hKRsetU-zf]A%8IYxSrWS5Jm<0Ut3H$nAz:Fpy;{auj"

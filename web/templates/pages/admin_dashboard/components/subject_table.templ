@@ -76,15 +76,8 @@ templ ExamCard(exam domain.Exam, baseURL string) {
 						Variant: badge.VariantOutline,
 						Class:   "mt-2",
 					}) {
-						@icon.Users(icon.Props{Class: "h-4 w-4"})
-						{ 10 }
-					}
-					@badge.Badge(badge.Props{
-						Variant: badge.VariantOutline,
-						Class:   "mt-2",
-					}) {
 						@icon.CircleQuestionMark(icon.Props{Class: "h-4 w-4"})
-						{ 30 }
+						{ fmt.Sprintf("%d", exam.TotalQuestions) }
 					}
 
 					@badge.Badge(badge.Props{
@@ -159,6 +152,10 @@ templ SubjectCard(subject domain.Subject) {
 						@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
 							@icon.ChartBar(icon.Props{Class: "h-3 w-3 mr-1"})
 							{ fmt.Sprintf("%.2f / %.2f", subject.PassScore, subject.TotalMarks) }
+						}
+						@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+							@icon.Users(icon.Props{Class: "h-3 w-3 mr-1"})
+							{ fmt.Sprintf("%d", subject.TotalEnrolled) }
 						}
 					</div>
 				}
