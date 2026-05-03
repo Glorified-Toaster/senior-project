@@ -2,6 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"hash/fnv"
+	"math/rand"
 	"net/url"
 	"time"
 
@@ -246,6 +248,8 @@ func (h *UserHandler) StudentExamView() gin.HandlerFunc {
 				questions[i].Choices = choices
 			}
 		}
+
+		shuffleQuestionsAndChoices(userID, examID, questions)
 
 		// Get existing answers
 		answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
@@ -560,6 +564,7 @@ func (h *UserHandler) StudentSubjectResult() gin.HandlerFunc {
 			}
 
 			questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+			shuffleQuestionsAndChoices(userID, exam.ID, questions)
 			totalQuestions = len(questions)
 
 			for i, q := range questions {
@@ -753,6 +758,7 @@ func (h *UserHandler) StudentSubjectPDF() gin.HandlerFunc {
 			if err == nil {
 				answers, _ := h.App.ListAnswersByAttempt(ctx.Request.Context(), attempt.ID)
 				questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
+				shuffleQuestionsAndChoices(userID, exam.ID, questions)
 
 				answersMap := make(map[uuid.UUID]domain.StudentAnswer)
 				for _, a := range answers {
@@ -946,6 +952,28 @@ func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
 					break
 				}
 			}
+		}
+	}
+}
+
+func shuffleQuestionsAndChoices(userID, examID uuid.UUID, questions []domain.Question) {
+	h := fnv.New64a()
+	h.Write(userID[:])
+	h.Write(examID[:])
+	seed := int64(h.Sum64())
+
+	rng := rand.New(rand.NewSource(seed))
+
+	rng.Shuffle(len(questions), func(i, j int) {
+		questions[i], questions[j] = questions[j], questions[i]
+	})
+
+	for i := range questions {
+		if len(questions[i].Choices) > 0 {
+			choices := questions[i].Choices
+			rng.Shuffle(len(choices), func(a, b int) {
+				choices[a], choices[b] = choices[b], choices[a]
+			})
 		}
 	}
 }

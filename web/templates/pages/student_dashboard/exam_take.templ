@@ -310,7 +310,7 @@ templ ExamTakePage(param ExamTakeParam) {
 			}
 			if (totalSeconds <= 60 && totalSeconds > 55 && !warningShown1) {
 				warningShown1 = true;
-				showToast('Warning', '1 minute remaining! Your exam will be auto-submitted.', 'error');
+				showToast('Warning', '1 minute remaining! Your exam will be auto-submitted.', 'warning');
 			}
 		};
 
