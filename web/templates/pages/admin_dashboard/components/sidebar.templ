@@ -5,9 +5,8 @@ import "uot-exam/web/templates/components/collapsible"
 import "uot-exam/web/templates/components/dropdown"
 import "uot-exam/web/templates/components/icon"
 import "uot-exam/web/templates/components/navbar"
-import "uot-exam/web/templates/components/button"
 
-templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string, dashboardPath string) {
+templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string, fullname string, userID string, dashboardPath string) {
 	@sidebar.Layout() {
 		@sidebar.Sidebar(sidebar.Props{
 			Collapsible: sidebar.CollapsibleIcon,
@@ -165,43 +164,36 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 							@dropdown.Content(dropdown.ContentProps{
 								Class:     "w-56",
 								Placement: dropdown.PlacementTopStart,
+								ShowArrow: true,
+								Offset:    8,
 							}) {
 								@dropdown.Label() {
 									{ fullname }
 								}
 								@dropdown.Separator()
-								@dropdown.Item() {
-									@button.Button(button.Props{
-										Variant: button.VariantGhost,
-										Href:    "/admin/profile",
-									}) {
-										<span class="flex items-center">
-											@icon.User(icon.Props{Size: 16, Class: "mr-2"})
-											Profile
-										</span>
-									}
+								@dropdown.Item(dropdown.ItemProps{
+									Href: "/admin/dashboard/user/" + userID,
+								}) {
+									<span class="flex items-center w-full">
+										@icon.User(icon.Props{Size: 16, Class: "mr-2 text-slate-500"})
+										Profile
+									</span>
 								}
-								@dropdown.Item() {
-									@button.Button(button.Props{
-										Variant: button.VariantGhost,
-										Href:    "/admin/settings",
-									}) {
-										<span class="flex items-center">
-											@icon.Settings(icon.Props{Size: 16, Class: "mr-2"})
-											Settings
-										</span>
-									}
+								@dropdown.Item(dropdown.ItemProps{
+									Href: "/admin/settings",
+								}) {
+									<span class="flex items-center w-full">
+										@icon.Settings(icon.Props{Size: 16, Class: "mr-2 text-slate-500"})
+										Settings
+									</span>
 								}
-								@dropdown.Item() {
-									@button.Button(button.Props{
-										Variant: button.VariantGhost,
-										Href:    "/logout",
-									}) {
-										<span class="flex items-start">
-											@icon.LogOut(icon.Props{Class: "h-4 w-4 mr-2"})
-											Log out
-										</span>
-									}
+								@dropdown.Item(dropdown.ItemProps{
+									Href: "/logout",
+								}) {
+									<span class="flex items-center w-full text-red-600">
+										@icon.LogOut(icon.Props{Class: "h-4 w-4 mr-2"})
+										Log out
+									</span>
 								}
 							}
 						}

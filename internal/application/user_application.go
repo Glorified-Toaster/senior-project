@@ -229,6 +229,14 @@ func (app *Application) ListAllStudents(ctx context.Context, arg ports.ListAllSt
 	return users, nil
 }
 
+func (app *Application) CountInstructors(ctx context.Context) (int64, error) {
+	count, err := app.userRepo.CountInstructors(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (app *Application) CountStudents(ctx context.Context) (int64, error) {
 	count, err := app.userRepo.CountStudents(ctx)
 	if err != nil {

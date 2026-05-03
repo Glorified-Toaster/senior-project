@@ -535,6 +535,20 @@ func (r *UserRepository) ListAllStudents(ctx context.Context, arg ports.ListAllS
 	return domainUsers, nil
 }
 
+func (r *UserRepository) CountInstructors(ctx context.Context) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	count, err := queries.CountInstructors(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *UserRepository) CountStudents(ctx context.Context) (int64, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

@@ -138,6 +138,9 @@ func (r *Router) SetupRoutes() {
 			dashboardRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
 			dashboardRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
 		}
+		adminRoutes.GET("/settings", r.userHandler.AdminSettingsPageRender())
+		adminRoutes.POST("/settings/general", r.userHandler.UpdateSettings())
+		adminRoutes.GET("/settings/backup", r.userHandler.ExportBackup())
 	}
 
 	// User routes

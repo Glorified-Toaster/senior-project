@@ -36,3 +36,7 @@ func NewApplication(userRepo ports.UserRepository,
 		log:          log,
 	}
 }
+
+func (a *Application) DB() *database.PostgresAdapter {
+	return a.db
+}

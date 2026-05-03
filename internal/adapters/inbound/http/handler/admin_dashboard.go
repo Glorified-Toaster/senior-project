@@ -3,8 +3,11 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -33,6 +36,8 @@ import (
 	"github.com/johnfercher/maroto/v2/pkg/props"
 )
 
+var startTime = time.Now()
+
 func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		users, err := h.App.ListAllUsers(ctx.Request.Context(), ports.ListAllUsersParams{Limit: 6, Offset: 0})
@@ -41,7 +46,7 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname, _ := parseUsername(ctx)
+		username, fullname, userID := parseUsername(ctx)
 		exams, err := h.App.ListAllExams(ctx.Request.Context(), ports.ListAllExamsParams{Limit: 6, Offset: 0})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -57,6 +62,7 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 			Users:           users,
 			Username:        username,
 			FullName:        fullname,
+			UserID:          userID.String(),
 			Exams:           exams,
 			TotalUsers:      fmt.Sprintf("%d", userCount),
 			TotalUsersCount: userCount,
@@ -67,7 +73,18 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 
 func (h *UserHandler) LandingPage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		render.Render(ctx, pages.BasePage("UoT Examination System", page.LandingPage()))
+		var systemName, adminEmail string
+		_ = h.App.DB().Pool.QueryRow(ctx.Request.Context(), "SELECT value FROM system_settings WHERE key = 'system_name'").Scan(&systemName)
+		_ = h.App.DB().Pool.QueryRow(ctx.Request.Context(), "SELECT value FROM system_settings WHERE key = 'admin_email'").Scan(&adminEmail)
+
+		if systemName == "" {
+			systemName = "UoT Examination System"
+		}
+		if adminEmail == "" {
+			adminEmail = "admin@uotechnology.edu.iq"
+		}
+
+		render.Render(ctx, pages.BasePage(systemName, page.LandingPage(systemName, adminEmail)))
 	}
 }
 
@@ -122,22 +139,28 @@ func (h *UserHandler) UserPageRender() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-		deletedUsersCount, err := h.App.CountDeletedUsers(ctx)
+		username, fullname, userID := parseUsername(ctx)
+		userCount, err = h.App.CountUsers(ctx)
 		if err != nil {
 			return
 		}
 
-		username, fullname, _ := parseUsername(ctx)
+		deletedUsers, _ = h.App.ListDeletedUsers(ctx.Request.Context(), ports.ListDeletedUsersParams{Limit: 12, Offset: 0})
+		deletedCount, _ := h.App.CountDeletedUsers(ctx)
+		instructorCount, _ := h.App.CountInstructors(ctx.Request.Context())
+		studentCount, _ := h.App.CountStudents(ctx.Request.Context())
 
 		params := page.AdminDashboardParam{
 			Users:             users,
-			TotalUsers:        fmt.Sprintf("%d", userCount),
-			TotalUsersCount:   userCount,
 			Username:          username,
 			FullName:          fullname,
+			UserID:            userID.String(),
+			TotalUsers:        fmt.Sprintf("%d", userCount),
+			TotalUsersCount:   userCount,
+			TotalInstructors:  fmt.Sprintf("%d", instructorCount),
+			TotalStudents:     fmt.Sprintf("%d", studentCount),
 			DeletedUsers:      deletedUsers,
-			DeletedUsersCount: deletedUsersCount,
+			DeletedUsersCount: deletedCount,
 		}
 		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AllUsers(params)))
 	}
@@ -202,11 +225,12 @@ func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 			return
 		}
 
-		username, fullname, _ := parseUsername(ctx)
+		username, fullname, userID := parseUsername(ctx)
 
 		params := page.AllExamsPageParam{
 			FullName:   fullname,
 			Username:   username,
+			UserID:     userID.String(),
 			Exams:      exams,
 			TotalExams: examCount,
 			Limit:      int32(limit),
@@ -346,7 +370,7 @@ func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 			totalCount = 0
 		}
 
-		username, fullname, _ := parseUsername(ctx)
+		username, fullname, userID := parseUsername(ctx)
 
 		if ctx.GetHeader("HX-Request") != "" {
 			render.Render(ctx, components.SubjectTableContainer(components.SubjectTableContainerProps{
@@ -363,6 +387,7 @@ func (h *UserHandler) AllSubjectsPageRender() gin.HandlerFunc {
 			Subjects:   subjects,
 			Username:   username,
 			FullName:   fullname,
+			UserID:     userID.String(),
 			TotalCount: totalCount,
 			Limit:      int32(limitInt),
 			Offset:     int32(offsetInt),
@@ -916,12 +941,13 @@ func (h *UserHandler) EditExamPageRender() gin.HandlerFunc {
 			questions[i].Choices = choices
 		}
 
-		username, fullname, _ := parseUsername(ctx)
+		username, fullname, userID := parseUsername(ctx)
 		render.Render(ctx, pages.BasePage("Edit Exam", page.EditExamPage(page.EditExamPageParam{
-			Exam:      exam,
-			Subject:   subject,
 			Username:  username,
 			FullName:  fullname,
+			UserID:    userID.String(),
+			Exam:      exam,
+			Subject:   subject,
 			Questions: questions,
 			Attempts:  attempts,
 			Analytics: analytics,
@@ -2440,5 +2466,97 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=exam_attempts_%s.pdf", url.PathEscape(exam.Title)))
 		ctx.Header("Content-Type", "application/pdf")
 		ctx.Data(200, "application/pdf", document.GetBytes())
+	}
+}
+func (h *UserHandler) AdminSettingsPageRender() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		username, fullname, userID := parseUsername(ctx)
+
+		// Fetch settings from DB
+		var systemName, adminEmail string
+		_ = h.App.DB().Pool.QueryRow(ctx.Request.Context(), "SELECT value FROM system_settings WHERE key = 'system_name'").Scan(&systemName)
+		_ = h.App.DB().Pool.QueryRow(ctx.Request.Context(), "SELECT value FROM system_settings WHERE key = 'admin_email'").Scan(&adminEmail)
+
+		if systemName == "" {
+			systemName = "UoT Examination System"
+		}
+		if adminEmail == "" {
+			adminEmail = "admin@uot.edu.iq"
+		}
+
+		params := page.SettingsPageParam{
+			Username:   username,
+			FullName:   fullname,
+			UserID:     userID.String(),
+			SystemName: systemName,
+			AdminEmail: adminEmail,
+			AppVersion: h.viperConfig.AppVersion,
+			GoVersion:  runtime.Version(),
+			OS:         runtime.GOOS,
+			Arch:       runtime.GOARCH,
+			CPUs:       runtime.NumCPU(),
+			Uptime:     time.Since(startTime).Truncate(time.Second).String(),
+		}
+		render.Render(ctx, pages.BasePage("System Settings", page.SettingsPage(params)))
+	}
+}
+
+func (h *UserHandler) UpdateSettings() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		systemName := ctx.PostForm("system_name")
+		adminEmail := ctx.PostForm("admin_email")
+
+		if systemName != "" {
+			_, _ = h.App.DB().Pool.Exec(ctx.Request.Context(),
+				"INSERT INTO system_settings (key, value) VALUES ('system_name', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+				systemName)
+		}
+		if adminEmail != "" {
+			_, _ = h.App.DB().Pool.Exec(ctx.Request.Context(),
+				"INSERT INTO system_settings (key, value) VALUES ('admin_email', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+				adminEmail)
+		}
+
+		helpers.Toast(ctx, "Settings Saved", "System configurations have been updated successfully.", toast.VariantSuccess)
+	}
+}
+
+func (h *UserHandler) ExportBackup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		dbCfg := h.viperConfig.Database
+
+		// Set PGPASSWORD environment variable for pg_dump
+		cmd := exec.Command("pg_dump",
+			"-h", dbCfg.Host,
+			"-p", strconv.Itoa(dbCfg.Port),
+			"-U", dbCfg.Username,
+			"-d", dbCfg.DatabaseName,
+			"--no-owner", "--no-privileges",
+		)
+		cmd.Env = append(cmd.Env, "PGPASSWORD="+dbCfg.Password)
+
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=backup_%s.sql", time.Now().Format("2006-01-02_150405")))
+		ctx.Header("Content-Type", "application/sql")
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
+
+		if err := cmd.Start(); err != nil {
+			h.logger.LogErrorWithLevel("error", "BACKUP_FAILED", "BACKUP_FAILED", "Failed to start pg_dump", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
+
+		// Stream the output directly to the response writer
+		_, _ = io.Copy(ctx.Writer, stdout)
+
+		if err := cmd.Wait(); err != nil {
+			h.logger.LogErrorWithLevel("error", "BACKUP_FAILED", "BACKUP_FAILED", "pg_dump failed during execution", err)
+			// Headers already sent, so we can't change the status code here
+			return
+		}
 	}
 }

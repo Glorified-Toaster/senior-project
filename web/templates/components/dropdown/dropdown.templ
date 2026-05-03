@@ -47,6 +47,8 @@ type ContentProps struct {
 	Class      string
 	Attributes templ.Attributes
 	Placement  Placement
+	ShowArrow  bool
+	Offset     int
 }
 
 type GroupProps struct {
@@ -162,6 +164,8 @@ templ Content(props ...ContentProps) {
 	@popover.Content(popover.ContentProps{
 		ID:        contentID,
 		Placement: placement,
+		ShowArrow: p.ShowArrow,
+		Offset:    p.Offset,
 		Class: utils.TwMerge(
 			"z-50 rounded-md bg-popover p-1 shadow-md focus:outline-none overflow-auto",
 			"border border-border",

@@ -27,7 +27,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8443:8443"
+      - "443:8443"
     volumes:
       - ./config/config.docker.yaml:/app/config/config.yaml:ro
       - ./certs:/app/certs:ro

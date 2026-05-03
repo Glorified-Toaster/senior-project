@@ -14,6 +14,7 @@ type Configuration struct {
 }
 
 type Config struct {
+	AppVersion  string            `yaml:"app_version" mapstructure:"app_version"`
 	HTTPServer  *HTTPServerConf   `yaml:"http_server" mapstructure:"http_server"`
 	Database    *DatabaseConf     `yaml:"database" mapstructure:"database"`
 	DragonflyDB *DragonflyDBConf  `yaml:"dragonflydb" mapstructure:"dragonflydb"`

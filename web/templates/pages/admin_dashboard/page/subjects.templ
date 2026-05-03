@@ -18,6 +18,7 @@ import "uot-exam/web/templates/components/selectbox"
 type AllSubjectsPageParam struct {
 	FullName   string
 	Username   string
+	UserID     string
 	Subjects   []domain.Subject
 	TotalCount int64
 	Limit      int32
@@ -38,7 +39,7 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 		@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/dashboard/subjects", Path: "Subjects"},
-		}, param.Username, param.FullName, "/admin/dashboard") {
+		}, param.Username, param.FullName, param.UserID, "/admin/dashboard") {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>

@@ -15,12 +15,15 @@ import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/button"
 
 type AdminDashboardParam struct {
-	Users           []domain.User
-	Exams           []domain.Exam
+	Users             []domain.User
+	Exams             []domain.Exam
 	TotalUsers        string
 	TotalUsersCount   int64
+	TotalInstructors  string
+	TotalStudents     string
 	Username          string
 	FullName          string
+	UserID            string
 	DeletedUsers      []domain.User
 	DeletedUsersCount int64
 }
@@ -36,7 +39,7 @@ templ AdminMainPage(params AdminDashboardParam) {
 		@chart.Script()
 		@components.Sidebar("", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
-		}, params.Username, params.FullName, "/admin/dashboard") {
+		}, params.Username, params.FullName, params.UserID, "/admin/dashboard") {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>

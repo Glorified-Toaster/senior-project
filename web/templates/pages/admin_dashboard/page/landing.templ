@@ -9,12 +9,12 @@ import (
 	"uot-exam/web/templates/components/particles"
 )
 
-templ LandingPage() {
+templ LandingPage(systemName, adminEmail string) {
 	@dialog.Script()
 	@particles.ParticlesScript()
 	@particles.Particles()
 	<div class="fixed inset-0 flex flex-col items-center justify-center p-4 z-10">
-		<div class="max-w-lg">
+		<div class="max-w-lg w-full">
 			@card.Card() {
 				@card.Header(card.HeaderProps{
 					Class: "flex flex-col items-center gap-1 pb-6 text-center",
@@ -23,7 +23,7 @@ templ LandingPage() {
 						<img src="/images/uotLogo.png" alt="University of Technology Logo" class="h-24 w-auto"/>
 					</div>
 					@card.Title(card.TitleProps{Class: "text-2xl"}) {
-						UoT Examination System
+						{ systemName }
 					}
 					@card.Description() {
 						University of Technology — Online Examination Management Portal
@@ -317,7 +317,7 @@ templ LandingPage() {
 					</div>
 				}
 				@card.Footer(card.FooterProps{
-					Class: "flex justify-center pt-4",
+					Class: "flex flex-col items-center gap-4 pt-4",
 				}) {
 					@button.Button(button.Props{
 						Href:  "/login",
@@ -326,6 +326,10 @@ templ LandingPage() {
 						@icon.LogIn(icon.Props{Class: "size-4 mr-2"})
 						Sign In to Portal
 					}
+					<div class="flex items-center gap-2 text-xs text-muted-foreground border-t border-muted w-full justify-center pt-4 mt-2">
+						@icon.Mail(icon.Props{Class: "size-3"})
+						<span>Support: { adminEmail }</span>
+					</div>
 				}
 			}
 		</div>

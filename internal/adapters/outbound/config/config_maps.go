@@ -16,6 +16,7 @@ const (
 	DefaultDBHost = "localhost"
 	DefaultDBPort = "5432"
 	DefaultDBName = "UOT-MCQ-Exam"
+	DefaultAppVersion = "v1.2.4-stable"
 )
 
 type HTTPServerConf struct {
@@ -80,6 +81,7 @@ type GinLoggerConf struct {
 // setDefaultConfig : to set important default values.
 func setDefaultConfig(viperInst *viper.Viper) {
 	// setting important default values
+	viperInst.SetDefault("app_version", DefaultAppVersion)
 	viperInst.SetDefault("http_server.address", DefaultHTTPAdress)
 	viperInst.SetDefault("http_server.port", DefaultHTTPPort)
 	viperInst.SetDefault("http_server.tls_cert_dir", DefaultTLSDir)

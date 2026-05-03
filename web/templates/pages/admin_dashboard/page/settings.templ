@@ -1,0 +1,152 @@
+package page
+
+import "uot-exam/web/templates/pages/admin_dashboard/components"
+import "uot-exam/web/templates/components/card"
+import "uot-exam/web/templates/components/icon"
+import "uot-exam/web/templates/components/button"
+import "uot-exam/web/templates/components/navbar"
+import "uot-exam/web/templates/components/sidebar"
+import "uot-exam/web/templates/components/collapsible"
+import "uot-exam/web/templates/components/dropdown"
+import "uot-exam/web/templates/components/popover"
+import "uot-exam/web/templates/components/toast"
+
+type SettingsPageParam struct {
+	Username   string
+	FullName   string
+	UserID     string
+	SystemName string
+	AdminEmail string
+	// System Info
+	AppVersion string
+	GoVersion  string
+	OS         string
+	Arch       string
+	CPUs       int
+	Uptime     string
+}
+
+templ SettingsPage(params SettingsPageParam) {
+	<div class="h-screen">
+		@sidebar.Script()
+		@collapsible.Script()
+		@dropdown.Script()
+		@popover.Script()
+		@toast.Script()
+		@components.Sidebar("/admin/settings", []navbar.BreadPath{
+			{Href: "/admin/dashboard", Path: "Dashboard"},
+			{Href: "/admin/settings", Path: "Settings"},
+		}, params.Username, params.FullName, params.UserID, "/admin/dashboard") {
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+				<div>
+					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+						@icon.Settings(icon.Props{Class: "h-8 w-8 text-slate-600"})
+						System Settings
+					</h1>
+					<p class="text-slate-500 mt-1">Manage global system configurations and data maintenance.</p>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<div class="space-y-8">
+						@card.Card(card.Props{Class: "shadow-sm border-slate-200"}) {
+							@card.Header() {
+								<div class="flex items-center gap-2">
+									@icon.Globe(icon.Props{Class: "h-5 w-5 text-blue-500"})
+									@card.Title() { General Configuration }
+								</div>
+								@card.Description() { Basic system identification. }
+							}
+							@card.Content(card.ContentProps{}) {
+								<form hx-post="/admin/settings/general" hx-swap="none" class="space-y-6">
+									<div class="space-y-4">
+										<div class="space-y-2">
+											<label class="text-sm font-semibold text-slate-700">System Name</label>
+											<input name="system_name" type="text" value={ params.SystemName } class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-slate-50" />
+										</div>
+										<div class="space-y-2">
+											<label class="text-sm font-semibold text-slate-700">Contact Email</label>
+											<input name="admin_email" type="email" value={ params.AdminEmail } class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-slate-50" />
+										</div>
+									</div>
+									<div class="flex justify-end pt-2">
+										@button.Button(button.Props{Variant: button.VariantDefault, Type: button.TypeSubmit}) { Save Changes }
+									</div>
+								</form>
+							}
+						}
+
+						@card.Card(card.Props{Class: "shadow-sm border-slate-200"}) {
+							@card.Header() {
+								<div class="flex items-center gap-2">
+									@icon.Database(icon.Props{Class: "h-5 w-5 text-purple-500"})
+									@card.Title() { Maintenance & Data }
+								</div>
+								@card.Description() { Manage system data and backups. }
+							}
+							@card.Content(card.ContentProps{}) {
+								<div class="space-y-4">
+									@button.Button(button.Props{
+										Variant: button.VariantOutline, 
+										Class: "w-full flex items-center justify-center gap-2",
+										Href: "/admin/settings/backup",
+									}) {
+										@icon.Download(icon.Props{Class: "h-4 w-4"})
+										Export Database Backup (SQL)
+									}
+									<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+										<div class="text-sm">
+											<p class="font-semibold text-slate-900">Database Version</p>
+											<p class="text-slate-500">PostgreSQL 17.0 (Alpine)</p>
+										</div>
+										@icon.CircleCheck(icon.Props{Class: "h-5 w-5 text-green-500"})
+									</div>
+								</div>
+							}
+						}
+					</div>
+
+					<div class="space-y-8">
+						@card.Card(card.Props{Class: "shadow-sm border-slate-200"}) {
+							@card.Header() {
+								<div class="flex items-center gap-2">
+									@icon.Info(icon.Props{Class: "h-5 w-5 text-amber-500"})
+									@card.Title() { System Information }
+								</div>
+								@card.Description() { Technical details about the running environment. }
+							}
+							@card.Content(card.ContentProps{}) {
+								<div class="space-y-4">
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">Application Version</span>
+										<span class="text-sm font-mono font-semibold text-slate-900">{ params.AppVersion }</span>
+									</div>
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">Go Runtime</span>
+										<span class="text-sm font-mono text-slate-900">{ params.GoVersion }</span>
+									</div>
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">Operating System</span>
+										<span class="text-sm text-slate-900">{ params.OS }</span>
+									</div>
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">Architecture</span>
+										<span class="text-sm text-slate-900">{ params.Arch }</span>
+									</div>
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">CPU Cores</span>
+										<span class="text-sm text-slate-900">{ templ.JSONString(params.CPUs) }</span>
+									</div>
+									<div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+										<span class="text-sm text-slate-500">System Uptime</span>
+										<span class="text-sm text-slate-900">{ params.Uptime }</span>
+									</div>
+								</div>
+							}
+						}
+					</div>
+				</div>
+			</div>
+		}
+		<div id="toast-container"></div>
+	</div>
+}
