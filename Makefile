@@ -34,7 +34,7 @@ tailwind-dev:
 	tailwindcss -w -i ./web/static/src/css/input.css -o ./web/static/css/output.css --minify
 
 tailwind-build:
-	tailwindcss -m -i ./web/static/src/css/input.css -o ./web/static/css/output.css --minify
+	tailwindcss -i ./web/static/src/css/input.css -o ./web/static/css/output.css --minify
 
 # Templ
 generate-templ:

@@ -1,0 +1,10 @@
+6.git
+tmp/
+logs/
+main
+node_modules/
+thesis/
+thesis.zip
+**/*_templ.go
+web/static/uploads/*
+*.log

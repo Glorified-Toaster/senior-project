@@ -49,7 +49,7 @@ func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.Auth
 
 	// config and enable CORS Middleware
 	enableCORS(router, viperConfig)
-	//enableCSRF(router, viperConfig)
+	enableCSRF(router, viperConfig)
 
 	// setting security headers
 	setSecurityHeaders(router)

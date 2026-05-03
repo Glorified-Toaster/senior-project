@@ -1,0 +1,43 @@
+http_server:
+  address: "0.0.0.0"
+  port: "8443"
+  tls_cert_dir: "certs"
+  cert_file: "certs/cert.pem"
+  key_file: "certs/key.pem"
+
+database:
+  host: "db"
+  port: 5432
+  username: "testuser"
+  password: "123456"
+  database_name: "testdb"
+  ssl_mode: "disable"
+  max_connections: 25
+  min_connections: 5
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+
+zap_logger:
+  development: true # development : true , production : false
+  level: "debug"
+  encoding: "json"
+  log_dir: "./logs"
+  log_file: "app.log"
+
+lumberjack:
+  max_size: 100 #MB
+  max_backups: 10
+  max_age: 30 #days
+  compress: true # useing Gzip
+
+gin_logger:
+  filename: "logs/gin.log"
+
+jwt_auth:
+  secret: "hKRsetU-zf]A%8IYxSrWS5Jm<0Ut3H$nAz:Fpy;{auj"
+
+csrf:
+  secret: "8ceadc1baf8d10aee536cfd42a83137c"
+
+gin_session:
+  secret: "df6945b25aa3549bb991d14d5bc730ff"

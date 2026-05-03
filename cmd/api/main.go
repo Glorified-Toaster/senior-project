@@ -31,7 +31,7 @@ import (
 func main() {
 	// Initialize Configuration
 	configInstance := &config.Configuration{}
-	if err := configInstance.Init("/home/potato/Dev/senior-project/config", "config"); err != nil {
+	if err := configInstance.Init("./config", "config"); err != nil {
 		log.Fatalf("Failed to initialize configuration: %v", err)
 	}
 
