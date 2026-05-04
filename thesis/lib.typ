@@ -40,7 +40,7 @@
     paper: "a4",
     numbering: none,
   )[
-    #set text(size: 12pt, font: ("Liberation Sans", "sans"))
+    #set text(size: 12pt, font: ("Libertinus Serif", "serif"))
 
     // Header
     #grid(
@@ -55,7 +55,7 @@
 
           College of Computer Engineering
 
-          Computer Network Engineering  & Cyber Security Department
+          Network Engineering & \ Cyber Security Department
         ]
       ],
       move(image("assets/logoPNG.png", width: 25mm), dy: -16pt),
@@ -113,6 +113,14 @@
 
 
   // Supervisor page (optional)
+  page(
+    header: none,
+    numbering: none,
+  )[
+    #align(center + horizon, image("assets/a.jpeg", width: 100%))
+  ]
+
+  // Supervisor page (optional)
   if supervisorCert != none {
     page(
       header: none,
@@ -148,7 +156,6 @@
       ]
     ]
   }
-
 
   // Examination page (optional)
   if supervisorCert != none {
@@ -206,6 +213,34 @@
         Head of Computer Engineering Department
       ]]
   }
+
+  page(
+    header: none,
+    numbering: none,
+  )[
+    #set text(size: 12pt)
+
+    #align(center + horizon, block(
+      above: 0pt,
+      below: 25pt,
+      {
+        set text(size: 25pt, weight: "regular")
+        align(center)[Dedication]
+        v(0.5em)
+      },
+    ))
+
+    #set par(justify: true, leading: 0.65em)
+    #text(size: 15pt)[
+      This work is dedicated to the academic community in computer engineering and technological innovation to researchers, educators, and students whose continuous pursuit of knowledge drives the evolution of digital systems and intelligent technologies.
+
+      It is further dedicated to those who believe in the transformative power of computing,
+      and who contribute to advancing fields such as data science, software engineering, and emerging technologies that shape modern society.
+
+      May this work serve as a modest contribution to the expanding body of scientific knowledge,
+      and inspire further exploration, innovation, and excellence in the field of computer systems.
+    ]
+  ]
 
   // Acknowledgements page (optional)
   if acknowledgements != none {
@@ -290,7 +325,7 @@
       below: 25pt,
       {
         set text(size: 30pt, weight: "regular")
-        align(right)[Table of Contents]
+        align(left)[Table of Contents]
         v(-0.9em)
         line(length: 100%, stroke: 0.5pt)
         v(0.5em)
@@ -327,7 +362,7 @@
           below: 25pt,
           {
             set text(size: 30pt, weight: "regular")
-            align(right)[List of Figures]
+            align(left)[List of Figures]
             v(-0.9em)
             line(length: 100%, stroke: 0.5pt)
             v(0.5em)
@@ -339,44 +374,6 @@
         #outline(
           title: none,
           target: figure.where(kind: image),
-        )
-      ]
-    }
-  }
-
-  // List of Tables (optional - only shows if document has tables)
-  context {
-    let tables = query(figure.where(kind: table))
-    if tables.len() > 0 {
-      page(
-        header: none,
-        numbering: none,
-      )[
-        // Style outline entries in blue with spacing
-        #show outline.entry: it => {
-          v(12pt, weak: true)
-          text(fill: school-color)[#it]
-        }
-
-        #set text(size: 12pt)
-
-        #block(
-          above: 0pt,
-          below: 25pt,
-          {
-            set text(size: 30pt, weight: "regular")
-            align(right)[List of Tables]
-            v(-0.9em)
-            line(length: 100%, stroke: 0.5pt)
-            v(0.5em)
-          },
-        )
-
-        #set par(leading: 1.8em)
-
-        #outline(
-          title: none,
-          target: figure.where(kind: table),
         )
       ]
     }
@@ -429,7 +426,7 @@
   counter(page).update(1)
 
   // Text setup
-  set text(size: 14pt, font: "Liberation Sans")
+  set text(size: 14pt, font: "Libertinus Serif")
 
   set par(
     leading: 0.65em,
@@ -439,7 +436,7 @@
   )
 
   // Heading setup
-  show heading: set text(font: "Liberation Sans")
+  show heading: set text(font: "Libertinus Serif")
 
   // Chapter headings (level 1)
   show heading.where(level: 1): it => {
@@ -447,7 +444,7 @@
       // separator page
       page(header: none, footer: none)[
         #set align(center + horizon)
-        #set text(font: "Liberation Sans", fill: school-color)
+        #set text(font: "Libertinus Serif", fill: school-color)
 
         #image("assets/chapter_top.png", width: 40%)
         #v(0.1em)
@@ -468,7 +465,7 @@
     } else {
       // Standard h1 for non-numbered sectons (Bibliography, etc.)
       pagebreak(weak: true)
-      set text(size: 30pt, weight: "regular", font: "Liberation Sans")
+      set text(size: 30pt, weight: "regular", font: "Libertinus Serif")
 
       block(
         above: 0pt,
@@ -576,7 +573,7 @@
       header: none,
       numbering: none,
     )[
-      #set text(size: 12pt, font: ("Noto Naskh Arabic", "Liberation Sans"))
+      #set text(size: 12pt, font: ("Noto Naskh Arabic", "Libertinus Serif"))
       #set align(center)
 
       // Header

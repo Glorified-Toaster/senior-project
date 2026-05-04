@@ -15,20 +15,14 @@ const (
 // info
 var (
 	// mongodb info
-	MongoIsConnected = Info{
+	PostgresIsConnected = Info{
 		DatabaseInfo,
-		"Connected to mongodb successfully...",
+		"Connected to PostgreSQL successfully...",
 	}
 
-	MongoIsDisconnected = Info{
+	PostgresIsDisconnected = Info{
 		DatabaseInfo,
 		"Disconnected from mangodb successfully...",
-	}
-
-	// dragonfly info
-	DragonflyIsConnected = Info{
-		CacheInfo,
-		"Connected to dragonflydb successfully...",
 	}
 
 	// internal info

@@ -1,3 +1,4 @@
+#set text(font: "Times New Roman")
 = Introduction
 
 == Overview

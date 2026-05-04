@@ -260,26 +260,6 @@ CREATE TYPE user_role_type AS
 ENUM ('STUDENT', 'INSTRUCTOR', 'ADMIN');
 ```
 
-== Time-Bound Exams and Auto-Submission
-To preserve academic integrity, the system must implement an auto-submission mechanism that renders the examination session immutable once the duration expires. Ensuring high-fidelity synchronization for this feature necessitates a selection between two distinct architectural communication patterns: Full-Duplex WebSockets or Periodic HTTP Polling.
-
-
-=== HTTP Polling
-HTTP Polling is a traditional communication technique where the client (the browser) periodically sends requests to the server to check for new data or status updates. Unlike WebSockets, which keep a connection open, polling follows the standard "request-response" cycle of the HTTP protocol.
-
-
-=== WebSockets
-
-The *WebSocket protocol (RFC 6455)* facilitates a persistent, full-duplex communication channel over a single TCP connection. Unlike the standard HTTP request-response paradigm, *WebSockets* bypass the overhead of repeated handshake negotiations, allowing the server to push "*Force-Submit*" events to the client in real-time. This provides a low-latency solution suitable for high-concurrency examination environments where sub-second synchronization is paramount @ws2021.
-
-
-#figure(
-  image("../assets/ws.svg", width: 130mm),
-  caption: "WebSockets Vs HTTP Polling",
-)
-
-In this system, the *WebSocket* approach is chosen for its superior performance and real-time capabilities, ensuring that all clients receive immediate notifications when the examination duration expires, thus maintaining the integrity of the examination process.
-
 == User Interface
 The user interface is designed using *Tailwind CSS* and *TemplUI* component library with *HTMX* for the interactivity. The UI is designed to be _user-friendly_.
 

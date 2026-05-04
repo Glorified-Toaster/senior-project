@@ -1,7 +1,7 @@
 = Conclusion and Future Work
 
 == Conclusion
-This thesis presents a design and implementation of a web-based examination management application that is fast, secure, and easy to use. The system is built with modern technologies and clean architectural patterns to provide a reliable, fast, and scalable solution for managing examinations. The system is solving the problems, such as: 
+This thesis presents a design and implementation of a web-based examination management application that is fast, secure, and easy to use. The system is built with modern technologies and clean architectural patterns to provide a reliable, fast, and scalable solution for managing examinations. The system is solving the problems, such as:
 
 - *Automated grading and scoring*: The system grading process is automatic, with the ability to download the results as a PDF file.
 
@@ -15,9 +15,11 @@ This thesis presents a design and implementation of a web-based examination mana
 
 == Future Work
 
-+ Proctoring and Anti-Cheating Mechanisms
++ Proctoring and Anti-Cheating Mechanisms : providing a page lock mechanism, webcam proctoring, and AI-based proctoring.
 
-+ Advanced Question Types
++ Advanced Question Types : Short answer questions, matching questions, coding exam, and essay questions.
 
-+ Mobile-Responsive Application
++ Mobile-Responsive Application : making the UI responsive and mobile-friendly.
+
++ Desktop Application : providing a desktop application using communication protocols like gRPC or WebSockets.
 

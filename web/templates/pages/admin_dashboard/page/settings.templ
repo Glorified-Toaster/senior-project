@@ -37,7 +37,7 @@ templ SettingsPage(params SettingsPageParam) {
 			{Href: "/admin/dashboard", Path: "Dashboard"},
 			{Href: "/admin/settings", Path: "Settings"},
 		}, params.Username, params.FullName, params.UserID, "/admin/dashboard") {
-			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div>
 					<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
 						@icon.Settings(icon.Props{Class: "h-8 w-8 text-slate-600"})
@@ -93,7 +93,7 @@ templ SettingsPage(params SettingsPageParam) {
 										@icon.Download(icon.Props{Class: "h-4 w-4"})
 										Export Database Backup (SQL)
 									}
-									<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+									<div class="p-4 bg-secondary rounded-lg border border-secondary flex items-center justify-between">
 										<div class="text-sm">
 											<p class="font-semibold text-slate-900">Database Version</p>
 											<p class="text-slate-500">PostgreSQL 17.0 (Alpine)</p>

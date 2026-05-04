@@ -5,7 +5,6 @@ import "uot-exam/web/templates/components/card"
 import "uot-exam/web/templates/components/radio"
 import "uot-exam/web/templates/components/label"
 import "fmt"
-import "uot-exam/web/templates/components/aspectratio"
 import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/web/templates/components/input"
@@ -171,18 +170,15 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 			</div>
 		}
 		@card.Content() {
-			<div class="w-full rounded-md overflow-x-auto">
+			<div class="rounded-md overflow-x-auto">
 				<span class="latex-content">{ question.QuestionText }</span>
-				@aspectratio.AspectRatio(aspectratio.Props{
-					Ratio: aspectratio.RatioWide,
-					Class: "rounded-md overflow-hidden",
-				}) {
+				<div class="flex justify-center items-center mt-4">
 					<img
 						src={ question.QuestionImage }
 						alt="Question Image"
-						class="h-full w-full object-cover "
+						class="max-w-full max-h-96 w-auto h-auto object-contain rounded-md"
 					/>
-				}
+            </div>
 			</div>
 		}
 		@card.Footer() {

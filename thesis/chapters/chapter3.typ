@@ -18,6 +18,9 @@ The system was built using the *_Hexagonal Architecture_* pattern, which is a _d
 
 #pagebreak()
 == System Design
+
+
+
 === System Architecture Overview
 This system, as mentioned before, follows a Hexagonal architecture pattern, which separates code into separate domains:
 \
@@ -373,7 +376,7 @@ The mechanism by which the system checks if the user is authorized to access a s
   caption: [Role-based authentication middleware],
 )
 
-==== System Flowchart
+==== System RBAC Flowchart
 
 #align(center)[
   #figure(
