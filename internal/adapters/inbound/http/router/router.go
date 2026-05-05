@@ -83,7 +83,6 @@ func (r *Router) SetupRoutes() {
 	publicRoutes := r.router.Group("/")
 	{
 		publicRoutes.POST("/login", r.userHandler.Login())
-		publicRoutes.GET("/test", r.userHandler.TestPage())
 		publicRoutes.GET("/login", r.userHandler.AdminLogin())
 		publicRoutes.GET("/logout", r.userHandler.Logout())
 		publicRoutes.GET("/", r.userHandler.LandingPage())

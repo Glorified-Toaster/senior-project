@@ -14,7 +14,6 @@ import (
 	"uot-exam/internal/ports"
 	"uot-exam/internal/utils/random"
 	"uot-exam/web/templates/components/toast"
-	"uot-exam/web/templates/pages"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
 	"uot-exam/web/templates/render"
 
@@ -300,45 +299,6 @@ func (h *UserHandler) ListAllUsers() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, gin.H{
 			"users": users,
 		})
-	}
-}
-
-func (h *UserHandler) TestPage() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		limitStr := ctx.Query("limit")
-		offsetStr := ctx.Query("offset")
-
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil {
-			limit = 12
-		}
-		offset, err := strconv.Atoi(offsetStr)
-		if err != nil {
-			offset = 0
-		}
-
-		users, err := h.App.ListAllUsers(ctx, ports.ListAllUsersParams{
-			Limit:  int32(limit),
-			Offset: int32(offset),
-		})
-		if err != nil {
-			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to list all users", err)
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to list all users"})
-			return
-		}
-
-		totalCount, err := h.App.CountUsers(ctx)
-		if err != nil {
-			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "DATABASE_ERROR", "Failed to count users", err)
-			totalCount = 0
-		}
-
-		if ctx.GetHeader("HX-Request") == "true" {
-			render.Render(ctx, pages.UserTableContainer(users, totalCount, int32(limit), int32(offset)))
-			return
-		}
-
-		render.Render(ctx, pages.TestPage(users, totalCount, int32(limit), int32(offset)))
 	}
 }
 
