@@ -246,3 +246,12 @@ func (r *QuestionRepository) SoftDeleteChoiceByID(ctx context.Context, id uuid.U
 
 	return queries.SoftDeleteChoiceByID(ctx, id)
 }
+
+func (r *QuestionRepository) CountQuestions(ctx context.Context) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountQuestions(ctx)
+}

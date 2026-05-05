@@ -68,7 +68,7 @@ func main() {
 
 	pool, err := database.NowConnection(*DBConfig)
 	if err != nil {
-		zlog.LogErrorWithLevel("fatal", logger.DatabaseError, logger.PostgresFailedToConnect.Code, "Database failed to connect", err)
+		zlog.LogErrorWithLevel("fatal", logger.DatabaseError, logger.PosFailedToConnect.Code, "Database failed to connect", err)
 		return
 	}
 	zlog.LogInfo(logger.PostgresIsConnected.Type, logger.PostgresIsConnected.Msg)

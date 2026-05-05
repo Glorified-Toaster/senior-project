@@ -20,6 +20,7 @@ type QuestionRepository interface {
 	ListAllChoicesByQuestion(ctx context.Context, arg uuid.UUID) ([]domain.Choice, error)
 	UpdateChoice(ctx context.Context, arg UpdateChoiceParams) (domain.Choice, error)
 	SoftDeleteChoiceByID(ctx context.Context, id uuid.UUID) error
+	CountQuestions(ctx context.Context) (int64, error)
 }
 
 type UpdateQuestionParams struct {

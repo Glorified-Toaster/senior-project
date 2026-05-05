@@ -58,14 +58,28 @@ func (h *UserHandler) AdminDashboardMainRender() gin.HandlerFunc {
 			return
 		}
 
+		examCount, err := h.App.CountExams(ctx.Request.Context())
+		if err != nil {
+			return
+		}
+
+		questionCount, err := h.App.CountQuestions(ctx.Request.Context())
+		if err != nil {
+			return
+		}
+
 		params := page.AdminDashboardParam{
-			Users:           users,
-			Username:        username,
-			FullName:        fullname,
-			UserID:          userID.String(),
-			Exams:           exams,
-			TotalUsers:      fmt.Sprintf("%d", userCount),
-			TotalUsersCount: userCount,
+			Users:               users,
+			Username:            username,
+			FullName:            fullname,
+			UserID:              userID.String(),
+			Exams:               exams,
+			TotalUsers:          fmt.Sprintf("%d", userCount),
+			TotalUsersCount:     userCount,
+			TotalExams:          fmt.Sprintf("%d", examCount),
+			TotalExamsCount:     examCount,
+			TotalQuestions:      fmt.Sprintf("%d", questionCount),
+			TotalQuestionsCount: questionCount,
 		}
 		render.Render(ctx, pages.BasePage("Admin Dashboard", page.AdminMainPage(params)))
 	}

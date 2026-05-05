@@ -8,7 +8,7 @@ type Error struct {
 
 // error types
 const (
-	DatabaseError       string = "DATABASE_ERROR" // for mongo errors
+	DatabaseError       string = "DATABASE_ERROR" // for postgres errors
 	CacheError          string = "CACHE_ERROR"    // for Dragonfly errors
 	InternalServerError string = "INTERNAL_ERROR" // for internal errors
 )
@@ -16,53 +16,22 @@ const (
 // errors
 var (
 
-	// mongo errors
-	MongoFailedToConnect = Error{
+	// postgres errors
+	PosFailedToConnect = Error{
 		DatabaseError,
-		"MONGODB_CONNECTION_ERROR",
-		"failed to connect to mongodb",
+		"POSTGRES_CONNECTION_ERROR",
+		"failed to connect to postgres",
 	}
-	MongoFailedToDisconnect = Error{
+	PosFailedToDisconnect = Error{
 		DatabaseError,
-		"MONGODB_DISCONNECTION_ERROR",
-		"failed to disconnect from mongodb",
+		"POSTGRES_DISCONNECTION_ERROR",
+		"failed to disconnect from postgres",
 	}
 
-	MongoNotInitialized = Error{
+	PosNotInitialized = Error{
 		DatabaseError,
-		"MONGODB_NOT_INITIALIZED_ERROR",
-		"mongodb client is not initialized",
-	}
-
-	MongoFailedToGetCollection = Error{
-		DatabaseError,
-		"MONGODB_FAILED_TO_GET_COLLECTION_ERROR",
-		"failed to get collection",
-	}
-
-	// dragonfly errors
-	DragonflyFailedToInit = Error{
-		CacheError,
-		"DRAGONFLYDB_CONNECTION_ERROR",
-		"failed to init dragonflydb",
-	}
-
-	DragonflyFailedToLoadOptions = Error{
-		CacheError,
-		"DRAGONFLYDB_CONFIG_LOAD_ERROR",
-		"unable to load dragonfly config options",
-	}
-
-	DragonflyFailedToWriteCache = Error{
-		CacheError,
-		"FAILED_TO_WRITE_CACHE_ERROR",
-		"unable to write cache",
-	}
-
-	DragonflyFailedToDeleteCache = Error{
-		CacheError,
-		"FAILED_TO_DELETE_CACHE_ERROR",
-		"failed to delete cache",
+		"POSTGRES_NOT_INITIALIZED_ERROR",
+		"postgres client is not initialized",
 	}
 
 	// internal errors

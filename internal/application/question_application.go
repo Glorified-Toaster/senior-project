@@ -155,3 +155,13 @@ func (app *Application) UploadQuestionImage(questionImage *multipart.FileHeader,
 	defer file.Close()
 	return app.localDisk.UploadFile(file, hashedFilename)
 }
+
+func (app *Application) CountQuestions(ctx context.Context) (int64, error) {
+	var count int64
+	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		count, err = app.questionRepo.CountQuestions(txCtx)
+		return err
+	})
+	return count, err
+}

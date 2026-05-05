@@ -622,6 +622,11 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 		queries = queries.WithTx(tx)
 	}
 
+	subject, err := queries.GetSubjectByID(ctx, subjectID)
+	if err != nil {
+		return domain.SubjectAnalytics{}, err
+	}
+
 	exams, err := queries.ListExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
 	if err != nil {
 		return domain.SubjectAnalytics{}, err
@@ -629,13 +634,11 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 
 	var totalExams int64 = int64(len(exams))
 	var totalAttempts int64
-	var totalPassCount int64
-	var totalFailCount int64
-	var totalScore float64
-	var submittedCount int64
-	var maxScore float64 = -1.0
-	var minScore float64 = -1.0
 	var examStats []domain.ExamSummaryAnalytics
+
+	// Map to store total score per student across all exams
+	studentScores := make(map[uuid.UUID]float64)
+	studentAttempted := make(map[uuid.UUID]bool)
 
 	for _, exam := range exams {
 		attempts, err := queries.ListAttemptsByExam(ctx, uuid.NullUUID{UUID: exam.Exam.ID, Valid: true})
@@ -652,25 +655,18 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 				continue
 			}
 			examSubmittedCount++
-			submittedCount++
 			score := 0.0
 			if att.Score.Valid {
 				score = att.Score.Float64
 			}
 
-			totalScore += score
-			if maxScore == -1.0 || score > maxScore {
-				maxScore = score
-			}
-			if minScore == -1.0 || score < minScore {
-				minScore = score
-			}
+			// Add to student's total score
+			studentScores[att.StudentID.UUID] += score
+			studentAttempted[att.StudentID.UUID] = true
 
+			// For per-exam stats, check against exam pass score
 			if score >= exam.Exam.PassScore {
 				examPassCount++
-				totalPassCount++
-			} else {
-				totalFailCount++
 			}
 		}
 
@@ -687,6 +683,34 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 		})
 	}
 
+	// Calculate subject-level pass/fail based on sum of scores vs subject pass score
+	var passCount int64
+	var failCount int64
+	var totalScore float64
+	var submittedCount int64
+	var maxScore float64 = -1.0
+	var minScore float64 = -1.0
+
+	for studentID, score := range studentScores {
+		if !studentAttempted[studentID] {
+			continue
+		}
+		submittedCount++
+		totalScore += score
+		if maxScore == -1.0 || score > maxScore {
+			maxScore = score
+		}
+		if minScore == -1.0 || score < minScore {
+			minScore = score
+		}
+
+		if score >= subject.Subject.PassScore {
+			passCount++
+		} else {
+			failCount++
+		}
+	}
+
 	if minScore == -1.0 {
 		minScore = 0
 	}
@@ -701,7 +725,7 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 
 	var passRate float64
 	if submittedCount > 0 {
-		passRate = (float64(totalPassCount) / float64(submittedCount)) * 100
+		passRate = (float64(passCount) / float64(submittedCount)) * 100
 	}
 
 	return domain.SubjectAnalytics{
@@ -711,8 +735,8 @@ func (r *ExamRepository) GetSubjectAnalytics(ctx context.Context, subjectID uuid
 		AverageScore:  avgScore,
 		MaxScore:      maxScore,
 		MinScore:      minScore,
-		PassCount:     totalPassCount,
-		FailCount:     totalFailCount,
+		PassCount:     passCount,
+		FailCount:     failCount,
 		PassRate:      passRate,
 		ExamStats:     examStats,
 	}, nil
