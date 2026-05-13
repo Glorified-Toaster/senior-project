@@ -2092,6 +2092,8 @@ func subjectStudentsTableProps(subjectID uuid.UUID, students, allStudents []doma
 		AddStudentAPI:           base + "/students/assign",
 		StudentAssignSwapTarget: "#students-user-table-root",
 		AddStudentCSVAPI:        base + "/students/assign-csv",
+		ExportURL:               base + "/students/export",
+		UnassignAPI:             base + "/students/unassign/:user_id",
 		TotalCount:              totalCount,
 		Limit:                   limit,
 		Offset:                  offset,
@@ -2449,7 +2451,8 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 			AddStudent:              true,
 			Students:                allStudents,
 			AddStudentAPI:           "/admin/dashboard/subject/" + subjectID + "/students/assign",
-			StudentAssignSwapTarget: "#students-table-container",
+			AddStudentCSVAPI:        "/admin/dashboard/subject/" + subjectID + "/students/assign-csv",
+			StudentAssignSwapTarget: "#students-user-table-root",
 			ExportURL:               "/admin/dashboard/subject/" + subjectID + "/students/export",
 			UnassignAPI:             "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
 		}).Render(ctx, ctx.Writer)
