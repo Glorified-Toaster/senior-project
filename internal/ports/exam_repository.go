@@ -34,6 +34,8 @@ type ExamRepository interface {
 	ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.UUID) error
 	ListInProgressAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error)
 	ListAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error)
+	ListAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.ExamAttempt, error)
+	ListOverallAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.SubjectAttempt, error)
 	GetExamAnalytics(ctx context.Context, examID uuid.UUID) (domain.ExamAnalytics, error)
 	GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error)
 }

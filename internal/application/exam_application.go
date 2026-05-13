@@ -261,6 +261,26 @@ func (app *Application) GetExamAnalytics(ctx context.Context, examID uuid.UUID) 
 	})
 	return analytics, err
 }
+
+func (app *Application) ListAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.ExamAttempt, error) {
+	var attempts []domain.ExamAttempt
+	var err error
+	_ = app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		attempts, err = app.examRepo.ListAttemptsBySubject(txCtx, subjectID)
+		return err
+	})
+	return attempts, err
+}
+
+func (app *Application) ListOverallAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.SubjectAttempt, error) {
+	var attempts []domain.SubjectAttempt
+	var err error
+	_ = app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		attempts, err = app.examRepo.ListOverallAttemptsBySubject(txCtx, subjectID)
+		return err
+	})
+	return attempts, err
+}
 func (app *Application) GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error) {
 	var analytics domain.SubjectAnalytics
 	err := app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {

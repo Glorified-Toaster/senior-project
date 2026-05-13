@@ -548,20 +548,26 @@ func (h *UserHandler) EditSubjectPageRender() gin.HandlerFunc {
 			analytics = domain.SubjectAnalytics{}
 		}
 
+		attempts, err := h.App.ListOverallAttemptsBySubject(ctx.Request.Context(), parsedID)
+		if err != nil {
+			attempts = []domain.SubjectAttempt{}
+		}
+
 		render.Render(ctx, pages.BasePage("Edit Subject", page.EditSubjectPage(page.EditSubjectPageParam{
-			Subject:        subject,
-			Username:       username,
-			FullName:       fullname,
-			Instructors:    instructors,
-			Exams:          exams,
-			UserID:         userID,
-			AllInstructors: availableInstructors,
-			Students:       students,
-			AllStudents:    availableStudents,
-			StudentCount:   studentCount,
-			Analytics:      analytics,
-			Limit:          int32(limit),
-			Offset:         int32(offset),
+			Subject:         subject,
+			Username:        username,
+			FullName:        fullname,
+			Instructors:     instructors,
+			Exams:           exams,
+			UserID:          userID,
+			AllInstructors:  availableInstructors,
+			Students:        students,
+			AllStudents:     availableStudents,
+			StudentCount:    studentCount,
+			Analytics:       analytics,
+			OverallAttempts: attempts,
+			Limit:           int32(limit),
+			Offset:          int32(offset),
 		})))
 	}
 }
@@ -786,6 +792,25 @@ func (h *UserHandler) PublishSubject() gin.HandlerFunc {
 
 		if subject.Status == domain.SubjectStatusPublished {
 			helpers.Toast(ctx, "Notice", "Subject is already published", toast.VariantWarning)
+			return
+		}
+
+		if subject.PassScore <= 0 {
+			helpers.Toast(ctx, "Publish Failed", "Pass score cannot be zero. Please set a pass score before publishing.", toast.VariantError)
+			return
+		}
+
+		// check for students
+		students, err := h.App.ListStudentsBySubjectID(ctx.Request.Context(), subjectID)
+		if err != nil || len(students) == 0 {
+			helpers.Toast(ctx, "Publish Failed", "Subject must have at least one student assigned.", toast.VariantError)
+			return
+		}
+
+		// check for exams
+		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+		if err != nil || len(exams) == 0 {
+			helpers.Toast(ctx, "Publish Failed", "Subject must have at least one exam.", toast.VariantError)
 			return
 		}
 

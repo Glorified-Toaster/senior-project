@@ -317,6 +317,105 @@ func (r *ExamRepository) ListAttemptsByStudent(ctx context.Context, studentID uu
 	return attempts, nil
 }
 
+func mapSqlcAttemptWithExamToDomain(attempt sqlc.ListAttemptsBySubjectRow) domain.ExamAttempt {
+	return domain.ExamAttempt{
+		ID:              attempt.ID,
+		ExamID:          attempt.ExamID.UUID,
+		StudentID:       attempt.StudentID.UUID,
+		StartedAt:       attempt.StartedAt.Time,
+		SubmittedAt:     toTimePtr(attempt.SubmittedAt),
+		Score:           toFloat64Ptr(attempt.Score),
+		Status:          domain.AttemptStatus(attempt.Status),
+		CreatedAt:       attempt.CreatedAt.Time,
+		StudentName:     attempt.StudentName,
+		StudentUsername: attempt.StudentUsername,
+		ExamTitle:       attempt.ExamTitle,
+	}
+}
+
+func (r *ExamRepository) ListAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.ExamAttempt, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	sqlcAttempts, err := queries.ListAttemptsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var attempts []domain.ExamAttempt
+	for _, attempt := range sqlcAttempts {
+		attempts = append(attempts, mapSqlcAttemptWithExamToDomain(attempt))
+	}
+	return attempts, nil
+}
+
+func (r *ExamRepository) ListOverallAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.SubjectAttempt, error) {
+	attempts, err := r.ListAttemptsBySubject(ctx, subjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Group by student and then by exam to get best score per exam
+	type studentExamKey struct {
+		studentID uuid.UUID
+		examID    uuid.UUID
+	}
+	bestScores := make(map[studentExamKey]float64)
+	studentInfo := make(map[uuid.UUID]domain.SubjectAttempt)
+
+	for _, att := range attempts {
+		if att.Status != domain.AttemptStatusSubmitted && att.Status != domain.AttemptStatusGraded {
+			continue
+		}
+
+		key := studentExamKey{att.StudentID, att.ExamID}
+		score := 0.0
+		if att.Score != nil {
+			score = *att.Score
+		}
+
+		if score > bestScores[key] {
+			bestScores[key] = score
+		}
+
+		info, ok := studentInfo[att.StudentID]
+		if !ok {
+			info = domain.SubjectAttempt{
+				StudentID:       att.StudentID,
+				StudentName:     att.StudentName,
+				StudentUsername: att.StudentUsername,
+			}
+		}
+
+		if att.SubmittedAt != nil {
+			duration := att.SubmittedAt.Sub(att.StartedAt)
+			info.TotalDuration += duration
+
+			if info.LastSubmittedAt == nil || att.SubmittedAt.After(*info.LastSubmittedAt) {
+				info.LastSubmittedAt = att.SubmittedAt
+			}
+		}
+		studentInfo[att.StudentID] = info
+	}
+
+	// Sum best scores
+	for key, score := range bestScores {
+		info := studentInfo[key.studentID]
+		info.TotalScore += score
+		info.ExamsAttempted++
+		studentInfo[key.studentID] = info
+	}
+
+	var result []domain.SubjectAttempt
+	for _, sa := range studentInfo {
+		result = append(result, sa)
+	}
+
+	return result, nil
+}
+
 func (r *ExamRepository) GetAttemptByExamAndStudent(ctx context.Context, examID uuid.UUID, studentID uuid.UUID) (domain.ExamAttempt, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

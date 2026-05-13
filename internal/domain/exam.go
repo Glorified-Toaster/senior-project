@@ -57,6 +57,16 @@ type ExamAttempt struct {
 	StudentUsername string
 }
 
+type SubjectAttempt struct {
+	StudentID       uuid.UUID
+	StudentName     string
+	StudentUsername string
+	TotalScore      float64
+	ExamsAttempted  int
+	LastSubmittedAt *time.Time
+	TotalDuration   time.Duration
+}
+
 type StudentAnswer struct {
 	ID               uuid.UUID
 	AttemptID        uuid.UUID

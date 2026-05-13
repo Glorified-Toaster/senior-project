@@ -170,6 +170,14 @@ JOIN users u ON ea.student_id = u.id
 WHERE ea.exam_id = $1
 ORDER BY ea.started_at DESC;
 
+-- name: ListAttemptsBySubject :many
+SELECT ea.*, u.full_name as student_name, u.username as student_username, e.title as exam_title
+FROM exam_attempts ea
+JOIN users u ON ea.student_id = u.id
+JOIN exams e ON ea.exam_id = e.id
+WHERE e.subject_id = $1 AND e.deleted_at IS NULL
+ORDER BY ea.started_at DESC;
+
 -- name: GetExamQuestionAnalytics :many
 SELECT 
     q.id as question_id,
