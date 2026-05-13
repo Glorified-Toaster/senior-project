@@ -192,3 +192,13 @@ LEFT JOIN exam_attempts ea ON sa.attempt_id = ea.id AND ea.status IN ('SUBMITTED
 WHERE q.exam_id = $1 AND q.deleted_at IS NULL
 GROUP BY q.id, q.question_title, q.question_type, q.marks, q.created_at
 ORDER BY q.created_at ASC;
+
+-- name: ShiftExamsTimer :exec
+UPDATE exams
+SET updated_at = updated_at + (sqlc.arg(minutes)::int * INTERVAL '1 minute')
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL;
+
+-- name: EndExamsTimer :exec
+UPDATE exams
+SET updated_at = NOW() - (SELECT s.duration_minutes FROM subjects s WHERE s.id = $1) * INTERVAL '1 minute'
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL;

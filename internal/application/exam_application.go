@@ -290,3 +290,15 @@ func (app *Application) GetSubjectAnalytics(ctx context.Context, subjectID uuid.
 	})
 	return analytics, err
 }
+
+func (app *Application) ShiftExamsTimer(ctx context.Context, subjectID uuid.UUID, minutes int32) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return app.examRepo.ShiftExamsTimer(txCtx, subjectID, minutes)
+	})
+}
+
+func (app *Application) EndExamsTimer(ctx context.Context, subjectID uuid.UUID) error {
+	return app.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		return app.examRepo.EndExamsTimer(txCtx, subjectID)
+	})
+}

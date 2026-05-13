@@ -2287,34 +2287,35 @@ func (h *UserHandler) AdminSubjectTrackerWS() gin.HandlerFunc {
 		}
 		defer conn.Close()
 
-		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
-		if err != nil || subject.Status != domain.SubjectStatusPublished {
-			return
-		}
-
-		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
-		if err != nil {
-			return
-		}
-
-		var examEndTime *time.Time
-		for _, exam := range exams {
-			if exam.Status == domain.ExamStatusPublished {
-				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
-				if examEndTime == nil || t.After(*examEndTime) {
-					examEndTime = &t
-				}
-			}
-		}
-
-		if examEndTime == nil {
-			return
-		}
-
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
 		for range ticker.C {
+			// Re-calculate end time on every tick to pick up manual extensions/ending
+			subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+			if err != nil || subject.Status != domain.SubjectStatusPublished {
+				break
+			}
+
+			exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+			if err != nil {
+				break
+			}
+
+			var examEndTime *time.Time
+			for _, exam := range exams {
+				if exam.Status == domain.ExamStatusPublished {
+					t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+					if examEndTime == nil || t.After(*examEndTime) {
+						examEndTime = &t
+					}
+				}
+			}
+
+			if examEndTime == nil {
+				break
+			}
+
 			now := time.Now()
 			remaining := int(examEndTime.Sub(now).Seconds())
 			if remaining <= 0 {
@@ -2730,5 +2731,302 @@ func (h *UserHandler) ExportBackup() gin.HandlerFunc {
 			// Headers already sent, so we can't change the status code here
 			return
 		}
+	}
+}
+
+func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subject ID"})
+			return
+		}
+
+		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Subject not found"})
+			return
+		}
+
+		attempts, err := h.App.ListOverallAttemptsBySubject(ctx.Request.Context(), subjectID)
+		if err != nil {
+			attempts = []domain.SubjectAttempt{}
+		}
+
+		m := maroto.New(config.NewBuilder().Build())
+
+		// Issue Date
+		m.AddRows(
+			row.New(5).Add(
+				col.New(12).Add(
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{
+						Size:  6,
+						Align: align.Right,
+						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
+					}),
+				),
+			),
+		)
+
+		// Header Bar
+		m.AddRows(
+			row.New(20).Add(
+				col.New(4).Add(
+					image.NewFromFile("./web/static/images/uotLogo.png", props.Rect{
+						Center:  true,
+						Percent: 90,
+					}),
+				),
+				col.New(8).Add(
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{
+						Size:  14,
+						Style: fontstyle.Bold,
+						Align: align.Right,
+						Top:   5,
+						Color: &props.Color{Red: 30, Green: 58, Blue: 138}, // Dark Blue
+					}),
+				),
+			),
+			line.NewRow(1),
+		)
+
+		m.AddRows(row.New(10))
+
+		// Title Section
+		m.AddRows(
+			row.New(15).Add(
+				col.New(12).Add(
+					text.New("OVERALL PERFORMANCE REPORT", props.Text{
+						Size:  20,
+						Style: fontstyle.Bold,
+						Align: align.Center,
+						Color: &props.Color{Red: 15, Green: 23, Blue: 42}, // Slate 900
+					}),
+				),
+			),
+			row.New(10).Add(
+				col.New(12).Add(
+					text.New(subject.Title, props.Text{
+						Size:  12,
+						Style: fontstyle.BoldItalic,
+						Align: align.Center,
+						Color: &props.Color{Red: 71, Green: 85, Blue: 105}, // Slate 600
+					}),
+				),
+			),
+		)
+
+		m.AddRows(row.New(10))
+
+		// Subject Info Box
+		m.AddRows(
+			row.New(8).Add(
+				col.New(12).Add(
+					text.New("SUBJECT INFORMATION", props.Text{Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+			row.New(18).Add(
+				col.New(3).Add(
+					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
+					text.New(fmt.Sprintf("%.2f", subject.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
+				),
+				col.New(3).Add(
+					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%.2f", subject.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(3).Add(
+					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+				col.New(3).Add(
+					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+				),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
+		)
+
+		m.AddRows(row.New(15))
+
+		// Performance Table Header
+		m.AddRows(
+			row.New(10).Add(
+				col.New(3).Add(text.New("STUDENT NAME", props.Text{Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
+				col.New(1).Add(text.New("ID", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("DURATION", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("SCORE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(1).Add(text.New("RESULT", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(3).Add(text.New("SUBMITTED AT", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
+			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 30, Green: 41, Blue: 59}}), // Slate 800
+		)
+
+		for i, attempt := range attempts {
+			result := "FAIL"
+			resultColor := &props.Color{Red: 185, Green: 28, Blue: 28} // Red 700
+			if attempt.TotalScore >= subject.PassScore {
+				result = "PASS"
+				resultColor = &props.Color{Red: 21, Green: 128, Blue: 61} // Green 700
+			}
+
+			submittedAt := "-"
+			if attempt.LastSubmittedAt != nil {
+				submittedAt = attempt.LastSubmittedAt.Format("2006-01-02 15:04")
+			}
+
+			rowStyle := &props.Cell{BackgroundColor: &props.Color{Red: 255, Green: 255, Blue: 255}}
+			if i%2 == 1 {
+				rowStyle.BackgroundColor = &props.Color{Red: 241, Green: 245, Blue: 249} // Slate 100
+			}
+
+			m.AddRows(
+				row.New(10).Add(
+					col.New(3).Add(text.New(attempt.StudentName, props.Text{Size: 9, Top: 2, Left: 3})),
+					col.New(1).Add(text.New(attempt.StudentUsername, props.Text{Size: 8, Align: align.Center, Top: 2})),
+					col.New(2).Add(text.New(formatDuration(attempt.TotalDuration), props.Text{Size: 8, Align: align.Center, Top: 2})),
+					col.New(2).Add(text.New(fmt.Sprintf("%.2f", attempt.TotalScore), props.Text{Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
+					col.New(1).Add(text.New(result, props.Text{Size: 8, Align: align.Center, Color: resultColor, Top: 2, Style: fontstyle.Bold})),
+					col.New(3).Add(text.New(submittedAt, props.Text{Size: 8, Align: align.Center, Top: 2, Right: 3})),
+				).WithStyle(rowStyle),
+			)
+		}
+
+		m.AddRows(row.New(40))
+
+		// Signature Section
+		m.AddRows(
+			row.New(20).Add(
+				col.New(7).Add(text.New("")),
+				col.New(5).Add(
+					line.New(props.Line{Thickness: 0.5, Color: &props.Color{Red: 148, Green: 163, Blue: 184}}),
+					text.New("Examiner Official Signature", props.Text{Size: 8, Align: align.Center, Top: 4, Color: &props.Color{Red: 71, Green: 85, Blue: 105}}),
+				),
+			),
+		)
+		// Footer
+		m.AddRows(
+			row.New(10).Add(
+				col.New(12).Add(
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{
+						Size:  8,
+						Align: align.Center,
+						Style: fontstyle.Italic,
+						Color: &props.Color{Red: 100, Green: 116, Blue: 139},
+					}),
+				),
+			),
+		)
+
+		document, _ := m.Generate()
+
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=overall_performance_%s.pdf", url.PathEscape(subject.Title)))
+		ctx.Header("Content-Type", "application/pdf")
+		ctx.Data(200, "application/pdf", document.GetBytes())
+	}
+}
+
+func formatDuration(d time.Duration) string {
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	d -= m * time.Minute
+	s := d / time.Second
+
+	if h > 0 {
+		return fmt.Sprintf("%dh %dm", h, m)
+	}
+	if m > 0 {
+		return fmt.Sprintf("%dm %ds", m, s)
+	}
+	return fmt.Sprintf("%ds", s)
+}
+
+func (h *UserHandler) AdminSubjectEndTimer() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Error", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		// Check if timer is already expired
+		subject, _ := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		exams, _ := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+
+		var examEndTime *time.Time
+		for _, exam := range exams {
+			if exam.Status == domain.ExamStatusPublished {
+				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+				if examEndTime == nil || t.After(*examEndTime) {
+					examEndTime = &t
+				}
+			}
+		}
+
+		if examEndTime == nil || time.Now().After(*examEndTime) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Notice", "The examination session has already concluded.", toast.VariantInfo)
+			return
+		}
+
+		err = h.App.EndExamsTimer(ctx.Request.Context(), subjectID)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Error", "Failed to end timer: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Reswap", "none")
+		helpers.Toast(ctx, "Success", "Exam timer ended. Students will be auto-submitted shortly.", toast.VariantSuccess)
+	}
+}
+
+func (h *UserHandler) AdminSubjectExtendTimer() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectIDStr := ctx.Param("id")
+		subjectID, err := uuid.Parse(subjectIDStr)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Error", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		minutesStr := ctx.PostForm("minutes")
+		var minutes int32
+		fmt.Sscanf(minutesStr, "%d", &minutes)
+		if minutes <= 0 {
+			minutes = 10 // Default extension
+		}
+
+		// Check if timer is already expired
+		subject, _ := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+		exams, _ := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+
+		var examEndTime *time.Time
+		for _, exam := range exams {
+			if exam.Status == domain.ExamStatusPublished {
+				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+				if examEndTime == nil || t.After(*examEndTime) {
+					examEndTime = &t
+				}
+			}
+		}
+
+		if examEndTime == nil || time.Now().After(*examEndTime) {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Notice", "The examination session has already concluded.", toast.VariantInfo)
+			return
+		}
+
+		err = h.App.ShiftExamsTimer(ctx.Request.Context(), subjectID, minutes)
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Error", "Failed to extend timer: "+err.Error(), toast.VariantError)
+			return
+		}
+
+		ctx.Header("HX-Reswap", "none")
+		helpers.Toast(ctx, "Success", fmt.Sprintf("Timer extended by %d minutes", minutes), toast.VariantSuccess)
 	}
 }

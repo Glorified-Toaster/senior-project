@@ -875,41 +875,43 @@ func (h *UserHandler) StudentSubjectTrackerWS() gin.HandlerFunc {
 		}
 		defer conn.Close()
 
-		// Setup timer logic loop
-		subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
-		if err != nil {
-			return
-		}
-
-		exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
-		if err != nil {
-			return
-		}
-
-		var examEndTime *time.Time
-		for _, exam := range exams {
-			if exam.Status == domain.ExamStatusPublished {
-				t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
-				if examEndTime == nil || t.After(*examEndTime) {
-					examEndTime = &t
-				}
-			}
-		}
-
-		if examEndTime == nil {
-			return
-		}
-
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
 		for range ticker.C {
+			// Re-calculate end time on every tick to pick up manual extensions/ending
+			subject, err := h.App.GetSubjectByID(ctx.Request.Context(), subjectID)
+			if err != nil {
+				break
+			}
+
+			exams, err := h.App.ListExamsBySubject(ctx.Request.Context(), subjectID)
+			if err != nil {
+				break
+			}
+
+			var examEndTime *time.Time
+			for _, exam := range exams {
+				if exam.Status == domain.ExamStatusPublished {
+					t := exam.UpdatedAt.Add(time.Duration(subject.DurationMinutes) * time.Minute)
+					if examEndTime == nil || t.After(*examEndTime) {
+						examEndTime = &t
+					}
+				}
+			}
+
 			now := time.Now()
-			remaining := int(examEndTime.Sub(now).Seconds())
+			var remaining int
+			if examEndTime != nil {
+				remaining = int(examEndTime.Sub(now).Seconds())
+			} else {
+				remaining = -1 // Force auto-submit if no published exams (e.g. admin ended timer)
+			}
+
 			if remaining <= 0 {
-				// Time up! Force submit
+				// Time up or manually ended! Force submit
 				for _, exam := range exams {
-					if exam.Status != domain.ExamStatusPublished {
+					if exam.Status != domain.ExamStatusPublished && exam.Status != domain.ExamStatusClosed {
 						continue
 					}
 					attempt, attemptErr := h.App.GetAttemptByExamAndStudent(ctx.Request.Context(), exam.ID, userID)

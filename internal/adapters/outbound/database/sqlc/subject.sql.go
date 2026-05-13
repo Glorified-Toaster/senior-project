@@ -149,22 +149,6 @@ func (q *Queries) CountSubjects(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const countSubjectsForInstructor = `-- name: CountSubjectsForInstructor :one
-SELECT COUNT(*)
-FROM subjects s
-JOIN subject_instructors si ON s.id = si.subject_id
-WHERE si.instructor_id = $1
-  AND si.deleted_at IS NULL
-  AND s.deleted_at IS NULL
-`
-
-func (q *Queries) CountSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countSubjectsForInstructor, instructorID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const createSubject = `-- name: CreateSubject :one
 INSERT INTO subjects (title, description, duration_minutes, pass_score, status)
 VALUES ($1, $2, $3, $4, $5)
@@ -223,6 +207,22 @@ func (q *Queries) DeleteSubject(ctx context.Context, id uuid.UUID) (Subject, err
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const extendSubjectDuration = `-- name: ExtendSubjectDuration :exec
+UPDATE subjects
+SET duration_minutes = duration_minutes + $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type ExtendSubjectDurationParams struct {
+	ID              uuid.UUID `json:"id"`
+	DurationMinutes int32     `json:"duration_minutes"`
+}
+
+func (q *Queries) ExtendSubjectDuration(ctx context.Context, arg ExtendSubjectDurationParams) error {
+	_, err := q.db.Exec(ctx, extendSubjectDuration, arg.ID, arg.DurationMinutes)
+	return err
 }
 
 const getSubjectByID = `-- name: GetSubjectByID :one

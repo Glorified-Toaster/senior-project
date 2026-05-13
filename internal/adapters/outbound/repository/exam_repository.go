@@ -563,6 +563,27 @@ func (r *ExamRepository) ClosePublishedExamsBySubject(ctx context.Context, subje
 	return queries.ClosePublishedExamsBySubject(ctx, uuid.NullUUID{UUID: subjectID, Valid: true})
 }
 
+func (r *ExamRepository) ShiftExamsTimer(ctx context.Context, subjectID uuid.UUID, minutes int32) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.ShiftExamsTimer(ctx, sqlc.ShiftExamsTimerParams{
+		SubjectID: uuid.NullUUID{UUID: subjectID, Valid: true},
+		Minutes:   minutes,
+	})
+}
+
+func (r *ExamRepository) EndExamsTimer(ctx context.Context, subjectID uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.EndExamsTimer(ctx, subjectID)
+}
+
 func (r *ExamRepository) ListInProgressAttemptsByExam(ctx context.Context, examID uuid.UUID) ([]domain.ExamAttempt, error) {
 	queries := r.queries
 	if tx := database.ExtractTx(ctx); tx != nil {

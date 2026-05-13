@@ -38,6 +38,8 @@ type ExamRepository interface {
 	ListOverallAttemptsBySubject(ctx context.Context, subjectID uuid.UUID) ([]domain.SubjectAttempt, error)
 	GetExamAnalytics(ctx context.Context, examID uuid.UUID) (domain.ExamAnalytics, error)
 	GetSubjectAnalytics(ctx context.Context, subjectID uuid.UUID) (domain.SubjectAnalytics, error)
+	ShiftExamsTimer(ctx context.Context, subjectID uuid.UUID, minutes int32) error
+	EndExamsTimer(ctx context.Context, subjectID uuid.UUID) error
 }
 
 type SearchExamsParams struct {

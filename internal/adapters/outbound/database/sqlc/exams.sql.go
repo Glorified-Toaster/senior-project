@@ -155,6 +155,17 @@ func (q *Queries) CreateExam(ctx context.Context, arg CreateExamParams) (Exam, e
 	return i, err
 }
 
+const endExamsTimer = `-- name: EndExamsTimer :exec
+UPDATE exams
+SET updated_at = NOW() - (SELECT s.duration_minutes FROM subjects s WHERE s.id = $1) * INTERVAL '1 minute'
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL
+`
+
+func (q *Queries) EndExamsTimer(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, endExamsTimer, id)
+	return err
+}
+
 const getAttemptByExamAndStudent = `-- name: GetAttemptByExamAndStudent :one
 SELECT id, exam_id, student_id, started_at, submitted_at, score, status, created_at FROM exam_attempts
 WHERE exam_id = $1 AND student_id = $2
@@ -869,6 +880,22 @@ func (q *Queries) SearchExamsBySubject(ctx context.Context, arg SearchExamsBySub
 		return nil, err
 	}
 	return items, nil
+}
+
+const shiftExamsTimer = `-- name: ShiftExamsTimer :exec
+UPDATE exams
+SET updated_at = updated_at + ($2::int * INTERVAL '1 minute')
+WHERE subject_id = $1 AND status = 'PUBLISHED' AND deleted_at IS NULL
+`
+
+type ShiftExamsTimerParams struct {
+	SubjectID uuid.NullUUID `json:"subject_id"`
+	Minutes   int32         `json:"minutes"`
+}
+
+func (q *Queries) ShiftExamsTimer(ctx context.Context, arg ShiftExamsTimerParams) error {
+	_, err := q.db.Exec(ctx, shiftExamsTimer, arg.SubjectID, arg.Minutes)
+	return err
 }
 
 const softDeleteExam = `-- name: SoftDeleteExam :exec

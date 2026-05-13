@@ -56,6 +56,34 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 	@textarea.Script()
 	@timepicker.Script()
 	@selectbox.Script()
+
+	<!-- End Timer Dialog (Top level for correct stacking context) -->
+	@dialog.Dialog(dialog.Props{ID: "end-timer-dialog"}) {
+		@dialog.Content(dialog.ContentProps{Class: "max-w-md"}) {
+			@dialog.Header() {
+				@dialog.Title() { End Examination Timer? }
+				@dialog.Description() {
+					This action will immediately expire the timer for all students currently taking exams in this subject. They will be auto-submitted with their current progress. This action cannot be reversed.
+				}
+			}
+			@dialog.Footer() {
+				@dialog.Close() {
+					@button.Button(button.Props{Variant: button.VariantOutline}) { Cancel }
+				}
+				@button.Button(button.Props{
+					Variant: button.VariantDestructive,
+					Attributes: templ.Attributes{
+						"hx-post": "/admin/dashboard/subject/" + param.Subject.ID.String() + "/timer/end",
+						"hx-swap": "none",
+						"data-tui-dialog-close": "end-timer-dialog",
+					},
+				}) {
+					Confirm End
+				}
+			}
+		}
+	}
+
 	@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
 		{
 			Href: "/admin/dashboard",
@@ -97,6 +125,63 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 		</div>
 		<div id="toast-container"></div>
 		if param.Subject.Status == domain.SubjectStatusPublished {
+			<div class="fixed bottom-8 left-8 flex flex-col gap-3 z-40 animate-in slide-in-from-left-8 duration-500">
+				<!-- Extend Timer Button -->
+				<div class="relative">
+					@popover.Trigger(popover.TriggerProps{
+						For:   "extend-timer-popover",
+						Class: "w-full",
+					}) {
+						@button.Button(button.Props{
+							Class: "px-4 py-2 h-auto bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all hover:scale-105 active:scale-95 group w-full",
+						}) {
+							<div class="flex items-center gap-2">
+								<div class="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 group-hover:rotate-12 transition-transform">
+									@icon.Plus(icon.Props{Class: "h-4 w-4"})
+								</div>
+								<span class="font-bold tracking-tight text-sm">Add More Time</span>
+							</div>
+						}
+					}
+
+					@popover.Content(popover.ContentProps{
+						ID:        "extend-timer-popover",
+						Placement: popover.PlacementTopStart,
+						Class:     "p-4 bg-white rounded-xl border border-slate-100 min-w-[200px]",
+						ShowArrow: true,
+					}) {
+						<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Select Duration</h4>
+						<div class="grid grid-cols-2 gap-2">
+							for _, mins := range []int{5, 10, 15, 30} {
+								@button.Button(button.Props{
+									Variant: button.VariantOutline,
+									Class:   "h-auto py-2 font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors border border-slate-100",
+									Attributes: templ.Attributes{
+										"hx-post": "/admin/dashboard/subject/" + param.Subject.ID.String() + "/timer/extend",
+										"hx-vals": fmt.Sprintf(`{"minutes": %d}`, mins),
+									},
+								}) {
+									+{ fmt.Sprint(mins) } min
+								}
+							}
+						</div>
+					}
+				</div>
+				<!-- End Timer Button -->
+				@dialog.Trigger(dialog.TriggerProps{For: "end-timer-dialog"}) {
+					@button.Button(button.Props{
+						Variant: button.VariantDestructive,
+						Class:   "px-4 py-2 h-auto rounded-xl transition-all hover:scale-105 active:scale-95 group",
+					}) {
+						<div class="flex items-center gap-2">
+							<div class="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 group-hover:rotate-12 transition-transform">
+								@icon.Square(icon.Props{Class: "h-3.5 w-3.5 fill-white"})
+							</div>
+							<span class="font-bold tracking-tight text-sm">End Timer Now</span>
+						</div>
+					}
+				}
+			</div>
 			<script>
 			(function() {
 				const subjectPage = document.getElementById('subject-page');
@@ -979,15 +1064,28 @@ templ AttemptsTab(param EditSubjectPageParam) {
 
 		@card.Card() {
 			@card.Header(card.HeaderProps{Class: "p-0"}) {
-				<div class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 p-4 rounded-t-xl">
-					<div class="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
-						@icon.History(icon.Props{
-							Class: "h-8 w-8",
-						})
+				<div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-4 rounded-t-xl">
+					<div class="flex items-center gap-3">
+						<div class="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+							@icon.History(icon.Props{
+								Class: "h-8 w-8",
+							})
+						</div>
+						<div>
+							<h3 class="text-xl font-bold text-slate-800 tracking-tight">Overall Student Performance</h3>
+							<p class="text-xs text-slate-500 font-medium">Total score and pass/fail status for each student based on the subject pass score.</p>
+						</div>
 					</div>
-					<div>
-						<h3 class="text-xl font-bold text-slate-800 tracking-tight">Overall Student Performance</h3>
-						<p class="text-xs text-slate-500 font-medium">Total score and pass/fail status for each student based on the subject pass score.</p>
+					<div class="flex items-center gap-2">
+						@button.Button(button.Props{
+							Href:    "/admin/dashboard/subject/" + param.Subject.ID.String() + "/export-pdf",
+							Target:  "_blank",
+							Variant: button.VariantSecondary,
+							Size:    button.SizeSm,
+						}) {
+							@icon.FileText(icon.Props{Class: "size-4"})
+							Export PDF
+						}
 					</div>
 				</div>
 			}

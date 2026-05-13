@@ -31,7 +31,6 @@ type Querier interface {
 	CountStudents(ctx context.Context) (int64, error)
 	CountStudentsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error)
 	CountSubjects(ctx context.Context) (int64, error)
-	CountSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) (int64, error)
 	CountSubmittedAttemptsBySubjectForStudent(ctx context.Context, arg CountSubmittedAttemptsBySubjectForStudentParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error)
@@ -46,6 +45,8 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	DisableUser(ctx context.Context, id uuid.UUID) error
 	EnableUser(ctx context.Context, id uuid.UUID) error
+	EndExamsTimer(ctx context.Context, id uuid.UUID) error
+	ExtendSubjectDuration(ctx context.Context, arg ExtendSubjectDurationParams) error
 	GetAttemptByExamAndStudent(ctx context.Context, arg GetAttemptByExamAndStudentParams) (ExamAttempt, error)
 	GetAttemptByID(ctx context.Context, id uuid.UUID) (ExamAttempt, error)
 	GetExamByID(ctx context.Context, id uuid.UUID) (GetExamByIDRow, error)
@@ -95,6 +96,7 @@ type Querier interface {
 	SearchSubjects(ctx context.Context, arg SearchSubjectsParams) ([]SearchSubjectsRow, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	SetQuestionImagePath(ctx context.Context, arg SetQuestionImagePathParams) error
+	ShiftExamsTimer(ctx context.Context, arg ShiftExamsTimerParams) error
 	SoftDeleteChoiceByID(ctx context.Context, id uuid.UUID) error
 	SoftDeleteExam(ctx context.Context, id uuid.UUID) error
 	SoftDeleteInstructorsBySubject(ctx context.Context, subjectID uuid.UUID) error

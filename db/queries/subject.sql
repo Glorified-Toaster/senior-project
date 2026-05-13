@@ -220,10 +220,7 @@ WHERE si.instructor_id = $1
   AND s.deleted_at IS NULL
 ORDER BY s.title ASC;
 
--- name: CountSubjectsForInstructor :one
-SELECT COUNT(*)
-FROM subjects s
-JOIN subject_instructors si ON s.id = si.subject_id
-WHERE si.instructor_id = $1
-  AND si.deleted_at IS NULL
-  AND s.deleted_at IS NULL;
+-- name: ExtendSubjectDuration :exec
+UPDATE subjects
+SET duration_minutes = duration_minutes + $2, updated_at = NOW()
+WHERE id = $1;
