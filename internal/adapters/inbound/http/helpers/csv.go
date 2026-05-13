@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 	"uot-exam/internal/domain"
@@ -30,7 +29,7 @@ func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, erro
 	defer fileReader.Close()
 
 	csvReader := csv.NewReader(fileReader)
-	csvReader.FieldsPerRecord = 9
+	csvReader.FieldsPerRecord = 8
 	csvReader.Read()
 
 	for {
@@ -49,31 +48,27 @@ func MapQuestionCSVToStruct(file *multipart.FileHeader) ([]domain.Question, erro
 			continue
 		}
 
-		marks, err := strconv.ParseFloat(record[1], 64)
-		if err != nil {
-			return nil, err
-		}
 		questions = append(questions, domain.Question{
 			QuestionTitle: record[0],
-			Marks:         marks,
-			QuestionType:  record[2],
-			QuestionText:  record[3],
+			Marks:         1.0,
+			QuestionType:  record[1],
+			QuestionText:  record[2],
 			Choices: []domain.Choice{
 				{
+					ChoiceText: record[3],
+					IsCorrect:  "choice_1" == record[7],
+				},
+				{
 					ChoiceText: record[4],
-					IsCorrect:  "choice_1" == record[8],
+					IsCorrect:  "choice_2" == record[7],
 				},
 				{
 					ChoiceText: record[5],
-					IsCorrect:  "choice_2" == record[8],
+					IsCorrect:  "choice_3" == record[7],
 				},
 				{
 					ChoiceText: record[6],
-					IsCorrect:  "choice_3" == record[8],
-				},
-				{
-					ChoiceText: record[7],
-					IsCorrect:  "choice_4" == record[8],
+					IsCorrect:  "choice_4" == record[7],
 				},
 			},
 		})
@@ -89,7 +84,6 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
 	csvWriter.Write([]string{
 		"Question Title",
-		"Marks",
 		"Question Type",
 		"Question Text",
 		"Choice 1",
@@ -118,7 +112,6 @@ func ExportExamCSV(ctx *gin.Context, questions []domain.Question) {
 
 		csvWriter.Write([]string{
 			question.QuestionTitle,
-			fmt.Sprintf("%.2f", question.Marks),
 			question.QuestionType,
 			question.QuestionText,
 			choices[0],

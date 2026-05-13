@@ -367,28 +367,6 @@ templ CodeQuestionForm(question domain.Question, id string) {
 				Class: "mb-4",
 			})
 		</div>
-		<div>
-			@label.Label(label.Props{
-				For: "question_marks",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.BadgeCheck(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Question Marks
-			}
-			@input.Input(input.Props{
-				Type: input.TypeNumber,
-				ID: "question_marks",
-				Name: "question_marks",
-				Class: "mb-4",
-				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
-				Attributes: templ.Attributes{
-					"min": "0.1",
-					"step": "0.1",
-				},
-			})
-		</div>
 		
 		<div>
 			@label.Label(label.Props{
@@ -429,28 +407,6 @@ templ ImageQuestionForm(question domain.Question , imgReq bool, id string) {
 				Name: "question_title",
 				Value: question.QuestionTitle,
 				Class: "mb-4",
-			})
-		</div>
-		<div>
-			@label.Label(label.Props{
-				For: "question_marks",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.BadgeCheck(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Question Marks
-			}
-			@input.Input(input.Props{
-				Type: input.TypeNumber,
-				ID: "question_marks",
-				Name: "question_marks",
-				Class: "mb-4",
-				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
-				Attributes: templ.Attributes{
-					"min": "0.1",
-					"step": "0.1",
-				},
 			})
 		</div>
 		<div>
@@ -703,28 +659,6 @@ templ TextQuestionForm(question domain.Question, id string) {
 				},
 			})
 		</div>
-		<div>
-			@label.Label(label.Props{
-				For: "question_marks",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}) {
-				@icon.BadgeCheck(icon.Props{
-					Class: "h-4 w-4",
-				})
-				Question Marks
-			}
-			@input.Input(input.Props{
-				Type: input.TypeNumber,
-				ID: "question_marks",
-				Name: "question_marks",
-				Class: "mb-4",
-				Value: fmt.Sprintf("%.2f", utils.IfElse(question.Marks > 0, question.Marks, 1.0)),
-				Attributes: templ.Attributes{
-					"min": "0.1",
-					"step": "0.1",
-				},
-			})
-		</div>
 
 		<div>
 			@label.Label(label.Props{
@@ -884,7 +818,6 @@ templ QuestionChoicesPreview(content string) {
 }
 
 templ AddViaCSVDialog(param EditExamPageParam) {
-
 	@dialog.Dialog(dialog.Props{
 		ID: "add_via_csv_dialog"}){
 			@dialog.Trigger(){
@@ -896,67 +829,149 @@ templ AddViaCSVDialog(param EditExamPageParam) {
 					@icon.Upload(icon.Props{
 						Class: "h-4 w-4",
 					})
-					Add Questions via CSV
+					Add via CSV
 				}
 			}
 			
 			@dialog.Content(dialog.ContentProps{
-				Class: "m-10",
+				Class: "m-10 max-w-2xl",
 			}){
-			<form id="add_via_csv_form"
-				hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv" }
-				hx-target="#question-list"
-				hx-swap="innerHTML"
-				enctype="multipart/form-data"
-				hx-encoding="multipart/form-data"
-			>
+				@dialog.Header(){
+					@dialog.Title(){
+						Add Questions via CSV
+					}
+					@dialog.Description(){
+						Upload a CSV file to add questions to the exam. You can import all questions or a random subset.
+					}
+				}
 
-			@dialog.Header(){
-				@dialog.Title(){
-					Add Questions via CSV
-				}
-				@dialog.Description(){
-					Upload a CSV file to add questions to the exam
-				}
-			}
-			@label.Label(label.Props{
-				For: "file",
-				Class: "flex items-center gap-2 mb-2 mt-4",
-			}){
-				@icon.File(icon.Props{
-					Class: "h-4 w-4",
-				})
-				CSV File
-			}
-			@upload.Upload(upload.Props{
-				ID:          "file",
-				Name:        "file",
-				Accept:      ".csv",
-				Placeholder: "Upload a CSV file with questions",
-				Required:    true,
-				Class:       "mb-4",
-			})
-			@upload.CSVRequirement("CSV Format Requirement", "The CSV should contain 9 columns: Question Title, Marks, Question Type (TEXT/CODE), Question Text, Choice 1, Choice 2, Choice 3, Choice 4, Correct Choice (choice_1 to choice_4)")
-		
-			@dialog.Footer(){
-				@dialog.Close(){
-					@button.Button(button.Props{
-						Type: button.TypeButton,
-						Variant: button.VariantOutline,
-					}){
-						Cancel
+				@tabs.Tabs(tabs.Props{ID: "csv_import_tabs", Class: "mt-4"}) {
+					@tabs.List(tabs.ListProps{Class: "w-full"}) {
+						@tabs.Trigger(tabs.TriggerProps{
+							Value:    "all",
+							IsActive: true,
+							TabsID:   "csv_import_tabs",
+							Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							@icon.Upload(icon.Props{Class: "h-4 w-4 mr-1"})
+							All Questions
+						}
+						@tabs.Trigger(tabs.TriggerProps{
+							Value:    "random",
+							TabsID:   "csv_import_tabs",
+							Class:    "data-[tui-tabs-state=active]:bg-primary data-[tui-tabs-state=active]:text-primary-foreground",
+						}) {
+							@icon.Shuffle(icon.Props{Class: "h-4 w-4 mr-1"})
+							Random Subset
+						}
 					}
 
-				}
-				@button.Button(button.Props{
-					Type: button.TypeSubmit,
-					Form: "add_via_csv_form",
-					Variant: button.VariantDefault,
-				}){
-					Add Questions
-				}
+					<div class="mt-4">
+						@tabs.Content(tabs.ContentProps{Value: "all", IsActive: true, TabsID: "csv_import_tabs"}) {
+						<form id="add_via_csv_form"
+							hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv" }
+							hx-target="#question-list"
+							hx-swap="innerHTML"
+							enctype="multipart/form-data"
+							hx-encoding="multipart/form-data"
+						>
+							@label.Label(label.Props{
+								For: "file_all",
+								Class: "flex items-center gap-2 mb-2",
+							}){
+								@icon.File(icon.Props{Class: "h-4 w-4"})
+								CSV File
+							}
+							@upload.Upload(upload.Props{
+								ID:          "file_all",
+								Name:        "file",
+								Accept:      ".csv",
+								Placeholder: "Upload a CSV file with questions",
+								Required:    true,
+								Class:       "mb-4",
+							})
+							@upload.CSVRequirement("CSV Format Requirement", "The CSV should contain 8 columns: Question Title, Question Type (TEXT/CODE), Question Text, Choice 1, Choice 2, Choice 3, Choice 4, Correct Choice (choice_1 to choice_4)")
+						
+							@dialog.Footer(dialog.FooterProps{Class: "mt-6"}){
+								@dialog.Close(){
+									@button.Button(button.Props{Type: button.TypeButton, Variant: button.VariantOutline}){Cancel}
+								}
+								@button.Button(button.Props{Type: button.TypeSubmit, Form: "add_via_csv_form", Variant: button.VariantDefault}){
+									Add All Questions
+								}
+							}
+						</form>
+					}
+					@tabs.Content(tabs.ContentProps{Value: "random", TabsID: "csv_import_tabs"}) {
+						<form id="add_random_csv_form"
+							hx-post={ "/admin/dashboard/exam/" + param.Exam.ID.String() + "/question/upload-csv-random" }
+							hx-target="#question-list"
+							hx-swap="innerHTML"
+							enctype="multipart/form-data"
+							hx-encoding="multipart/form-data"
+						>
+							@label.Label(label.Props{
+								For: "file_random",
+								Class: "flex items-center gap-2 mb-2",
+							}){
+								@icon.File(icon.Props{Class: "h-4 w-4"})
+								CSV File
+							}
+							@upload.Upload(upload.Props{
+								ID:          "file_random",
+								Name:        "file",
+								Accept:      ".csv",
+								Placeholder: "Upload a CSV file with questions",
+								Required:    true,
+								Class:       "mb-4",
+							})
+
+							@label.Label(label.Props{
+								For: "random_question_count",
+								Class: "flex items-center gap-2 mb-2 mt-4",
+							}){
+								@icon.Hash(icon.Props{Class: "h-4 w-4"})
+								Number of Questions to Add
+							}
+							@input.Input(input.Props{
+								Type:        input.TypeNumber,
+								ID:          "random_question_count",
+								Name:        "count",
+								Placeholder: "Enter number of questions",
+								Class:       "mb-4",
+								Value:       "5",
+								Attributes: templ.Attributes{
+									"min":  "1",
+									"step": "1",
+									"required": "true",
+								},
+							})
+
+							<div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-4 mt-2">
+								<p class="text-xs text-amber-600 font-bold flex items-center gap-2">
+									@icon.Info(icon.Props{Class: "h-3.5 w-3.5"})
+									Note
+								</p>
+								<p class="text-[10px] text-slate-900 mt-1 leading-relaxed font-medium">
+									If the number you enter exceeds the total questions in the CSV, all questions will be added. Duplicate questions will be skipped.
+								</p>
+							</div>
+
+							@upload.CSVRequirement("CSV Format Requirement", "The CSV should contain 8 columns: Question Title, Question Type (TEXT/CODE), Question Text, Choice 1, Choice 2, Choice 3, Choice 4, Correct Choice (choice_1 to choice_4)")
+
+							@dialog.Footer(dialog.FooterProps{Class: "mt-6"}){
+								@dialog.Close(){
+									@button.Button(button.Props{Type: button.TypeButton, Variant: button.VariantOutline}){Cancel}
+								}
+								@button.Button(button.Props{Type: button.TypeSubmit, Form: "add_random_csv_form", Variant: button.VariantDefault}){
+									@icon.Shuffle(icon.Props{Class: "h-4 w-4 mr-2"})
+									Add Random Subset
+								}
+							}
+						</form>
+					}
+				</div>
 			}
-			</form>
 		}
 	}
 }

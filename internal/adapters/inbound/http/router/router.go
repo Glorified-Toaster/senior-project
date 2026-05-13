@@ -200,6 +200,7 @@ func (r *Router) SetupRoutes() {
 		// Question Management (Instructor restricted)
 		instructorRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
 		instructorRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
+		instructorRoutes.POST("/exam/:id/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
 		instructorRoutes.POST("/exam/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
 		instructorRoutes.POST("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 
@@ -216,6 +217,7 @@ func (r *Router) SetupRoutes() {
 		sharedExamRoutes.POST("/preview/question-form", r.userHandler.GetQuestionForm())
 		sharedExamRoutes.POST("/:id/question/create", r.userHandler.CreateQuestion())
 		sharedExamRoutes.POST("/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
+		sharedExamRoutes.POST("/:id/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
 		sharedExamRoutes.POST("/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
 		sharedExamRoutes.DELETE("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
 		sharedExamRoutes.POST("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
