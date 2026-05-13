@@ -78,27 +78,41 @@ templ SettingsPage(params SettingsPageParam) {
 						@card.Card(card.Props{Class: "shadow-sm border-slate-200"}) {
 							@card.Header() {
 								<div class="flex items-center gap-2">
-									@icon.Database(icon.Props{Class: "h-5 w-5 text-purple-500"})
+									@icon.Database(icon.Props{Class: "h-5 w-5 text-primary"})
 									@card.Title() { Maintenance & Data }
 								</div>
 								@card.Description() { Manage system data and backups. }
 							}
 							@card.Content(card.ContentProps{}) {
-								<div class="space-y-4">
+								<div class="space-y-6">
 									@button.Button(button.Props{
 										Variant: button.VariantOutline, 
-										Class: "w-full flex items-center justify-center gap-2",
+										Class: "w-full flex items-center justify-center gap-3 py-6 rounded-2xl border-2 border-dashed border-slate-200 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-300 font-bold group",
 										Href: "/admin/settings/backup",
 									}) {
-										@icon.Download(icon.Props{Class: "h-4 w-4"})
-										Export Database Backup (SQL)
-									}
-									<div class="p-4 bg-secondary rounded-lg border border-secondary flex items-center justify-between">
-										<div class="text-sm">
-											<p class="font-semibold text-slate-900">Database Version</p>
-											<p class="text-slate-500">PostgreSQL 17.0 (Alpine)</p>
+										<div class="p-2 rounded-lg bg-primary/10 group-hover:bg-primary transition-colors">
+											@icon.Download(icon.Props{Class: "h-5 w-5 text-primary group-hover:text-white"})
 										</div>
-										@icon.CircleCheck(icon.Props{Class: "h-5 w-5 text-green-500"})
+										<span>Export Full Database Backup (.sql)</span>
+									}
+
+									<div class="relative overflow-hidden p-5 bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md transition-all duration-300">
+										<div class="flex flex-col sm:flex-row sm:items-center gap-4 relative z-10">
+											<div class="h-12 w-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
+												@icon.Database(icon.Props{Class: "h-6 w-6"})
+											</div>
+											<div class="flex-1">
+												<p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 group-hover:text-primary transition-colors">DATABASE</p>
+												<h4 class="text-lg font-bold text-slate-900 leading-none flex items-center gap-2">
+                                                    PostgreSQL 17.0
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 uppercase tracking-tighter group-hover:bg-primary/10 group-hover:text-primary transition-colors">Alpine Linux</span>
+                                                </h4>
+											</div>
+											<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-100 shadow-sm self-start sm:self-center">
+												<div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+												<span class="text-[10px] font-black text-green-600 uppercase tracking-wider">Operational</span>
+											</div>
+										</div>
 									</div>
 								</div>
 							}

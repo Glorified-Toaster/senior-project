@@ -125,7 +125,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 		</div>
 		<div id="toast-container"></div>
 		if param.Subject.Status == domain.SubjectStatusPublished {
-			<div class="fixed bottom-8 left-8 flex flex-col gap-3 z-40 animate-in slide-in-from-left-8 duration-500">
+			<div class="fixed bottom-8 left-72 flex flex-col gap-3 z-40 animate-in slide-in-from-left-8 duration-500">
 				<!-- Extend Timer Button -->
 				<div class="relative">
 					@popover.Trigger(popover.TriggerProps{
@@ -773,61 +773,7 @@ templ ExamForm(param EditSubjectPageParam) {
 			})
 		</div>
 
-		<div class="space-y-2 mb-4">
-			@form.Label(form.LabelProps{For: "status", Class: "block text-sm font-medium mb-2"}) {
-				Status
-			}
-			@selectbox.SelectBox() {
-				@selectbox.Trigger(selectbox.TriggerProps{
-					Name: "exam_status",
-				}) {
-					@selectbox.Value(selectbox.ValueProps{
-						Placeholder: "Select the status",
-					}) {
-						@badge.Badge(badge.Props{
-							Variant: badge.VariantSecondary,
-						}) {
-							Draft
-						}
-					}
-				}
-				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-					@selectbox.Group() {
-						@selectbox.Label() {
-							Status
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value:    "DRAFT",
-							Selected: true,
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantSecondary,
-							}) {
-								Draft
-							}
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value: "PUBLISHED",
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantDefault,
-							}) {
-								Published
-							}
-						}
-						@selectbox.Item(selectbox.ItemProps{
-							Value: "ARCHIVED",
-						}) {
-							@badge.Badge(badge.Props{
-								Variant: badge.VariantDestructive,
-							}) {
-								Archived
-							}
-						}
-					}
-				}
-			}
-		</div>
+		<input type="hidden" name="exam_status" value="DRAFT" />
 		<div class="space-y-2 mb-4 md:col-span-2">
 			@form.Label(form.LabelProps{For: "description", Class: "block text-sm font-medium mb-2"}) {
 				Description

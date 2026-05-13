@@ -21,6 +21,7 @@ import "uot-exam/web/templates/components/badge"
 type QuestionListProps struct {
 	RoutePrefix string
 	Questions []domain.Question
+	ExamStatus string
 }
 
 type EditExamPageParam struct {
@@ -34,17 +35,17 @@ templ QuestionList(props QuestionListProps) {
 	for i, question := range props.Questions {
 		switch question.QuestionType {
 			case string(domain.QuestionTypeText):
-				@QuestionItem(question, question.Choices, i+1)
+				@QuestionItem(question, question.Choices, i+1, props.ExamStatus)
 			case string(domain.QuestionTypeCode):
-				@QuestionCodeItem(question, question.Choices, i+1)
+				@QuestionCodeItem(question, question.Choices, i+1, props.ExamStatus)
 			case string(domain.QuestionTypeImage):
-				@ImageQuestionItem(question, question.Choices, i+1)
+				@ImageQuestionItem(question, question.Choices, i+1, props.ExamStatus)
 		}
 	}
 	</div>
 }
 
-templ QuestionItem(question domain.Question, choices []domain.Choice, number int) {
+templ QuestionItem(question domain.Question, choices []domain.Choice, number int, examStatus string) {
 	@card.Card(card.Props{
 		Class: "mb-6",
 	}) {
@@ -69,11 +70,13 @@ templ QuestionItem(question domain.Question, choices []domain.Choice, number int
 				}
 			</div>
 		}
-		@card.Footer(card.FooterProps{
-			Class: "flex justify-end",
-		}) {
-			@EditDialog(question)
-			@DeleteDialog(question.ID, question.ExamID)
+		if examStatus == "DRAFT" {
+			@card.Footer(card.FooterProps{
+				Class: "flex justify-end",
+			}) {
+				@EditDialog(question)
+				@DeleteDialog(question.ID, question.ExamID)
+			}
 		}
 	}
 }
@@ -118,7 +121,7 @@ templ ChoiceItem(choice domain.Choice, qIndex int, cIndex string) {
     }
 }
 
-templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number int) {
+templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number int, examStatus string) {
 	@card.Card(card.Props{
 		Class: "mb-6",
 	}) {
@@ -145,16 +148,18 @@ templ QuestionCodeItem(question domain.Question, choices []domain.Choice, number
 				}
 			</div>
 		}
-		@card.Footer(card.FooterProps{
-			Class: "flex justify-end",
-		}) {
-			@EditDialog(question)
-			@DeleteDialog(question.ID, question.ExamID)
+		if examStatus == "DRAFT" {
+			@card.Footer(card.FooterProps{
+				Class: "flex justify-end",
+			}) {
+				@EditDialog(question)
+				@DeleteDialog(question.ID, question.ExamID)
+			}
 		}
 	}
 }
 
-templ ImageQuestionItem(question domain.Question, choices []domain.Choice, number int) {
+templ ImageQuestionItem(question domain.Question, choices []domain.Choice, number int, examStatus string) {
 	@card.Card(card.Props{
 		Class: "mb-6",
 	}) {
@@ -188,11 +193,13 @@ templ ImageQuestionItem(question domain.Question, choices []domain.Choice, numbe
 				}
 			</div>
 		}
-		@card.Footer(card.FooterProps{
-			Class: "flex justify-end",
-		}) {
-			@EditDialog(question)
-			@DeleteDialog(question.ID, question.ExamID)
+		if examStatus == "DRAFT" {
+			@card.Footer(card.FooterProps{
+				Class: "flex justify-end",
+			}) {
+				@EditDialog(question)
+				@DeleteDialog(question.ID, question.ExamID)
+			}
 		}
 	}
 }
