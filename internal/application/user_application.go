@@ -262,3 +262,7 @@ func (app *Application) UpdateUserPassword(ctx context.Context, id uuid.UUID, ne
 		return app.userRepo.UpdatePassword(txCtx, id, hashedPassword)
 	})
 }
+
+func (app *Application) UpdateLastInteraction(ctx context.Context, id uuid.UUID) error {
+	return app.userRepo.UpdateLastInteraction(ctx, id)
+}

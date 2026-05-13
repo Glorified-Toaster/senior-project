@@ -607,3 +607,12 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, id uuid.UUID, hashe
 		PasswordHash: hashedPassword,
 	})
 }
+
+func (r *UserRepository) UpdateLastInteraction(ctx context.Context, id uuid.UUID) error {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.UpdateUserLastLogin(ctx, id)
+}

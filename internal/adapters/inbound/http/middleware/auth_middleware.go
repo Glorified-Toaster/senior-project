@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (auth *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
@@ -38,6 +40,18 @@ func (auth *AuthMiddleware) AuthenticationMiddleware() gin.HandlerFunc {
 		}
 
 		setClaimsInContext(ctx, claims)
+
+		// Update last interaction asynchronously
+		if uid, err := uuid.Parse(claims.UserID); err == nil {
+			go func(userID uuid.UUID) {
+				// Create a background context for the async task
+				err := auth.app.UpdateLastInteraction(context.Background(), userID)
+				if err != nil {
+					auth.logger.LogErrorWithLevel("error", "DB_ERROR", "INTERACTION_UPDATE_ERROR", "Failed to update last interaction", err)
+				}
+			}(uid)
+		}
+
 		ctx.Next()
 	}
 }

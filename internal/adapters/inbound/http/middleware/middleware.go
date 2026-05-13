@@ -3,6 +3,7 @@ package middleware
 import (
 	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/adapters/outbound/logger"
+	"uot-exam/internal/application"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,12 +11,14 @@ import (
 type AuthMiddleware struct {
 	jwt    *helpers.JWTAuth
 	logger *logger.Logger
+	app    *application.Application
 }
 
-func NewAuthMiddleware(jwt *helpers.JWTAuth, logger *logger.Logger) *AuthMiddleware {
+func NewAuthMiddleware(jwt *helpers.JWTAuth, logger *logger.Logger, app *application.Application) *AuthMiddleware {
 	return &AuthMiddleware{
 		jwt:    jwt,
 		logger: logger,
+		app:    app,
 	}
 }
 

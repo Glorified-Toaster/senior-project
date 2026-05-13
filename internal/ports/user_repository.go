@@ -32,6 +32,7 @@ type UserRepository interface {
 	CountStudents(ctx context.Context) (int64, error)
 	SearchStudents(ctx context.Context, arg SearchStudentsParams) ([]domain.User, error)
 	UpdatePassword(ctx context.Context, id uuid.UUID, hashedPassword string) error
+	UpdateLastInteraction(ctx context.Context, id uuid.UUID) error
 }
 
 type CreateUserParams struct {

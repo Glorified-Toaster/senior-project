@@ -89,7 +89,7 @@ func main() {
 	// init jwt
 	jwt := helpers.NewJWT(cfg)
 	// init auth middleware
-	authMiddleware := middleware.NewAuthMiddleware(jwt, zlog)
+	authMiddleware := middleware.NewAuthMiddleware(jwt, zlog, app)
 	// pass cache, repo, validator, jwt to controllers
 	userCtrl := handler.NewUserHandler(app, validate, jwt, cfg, zlog)
 
