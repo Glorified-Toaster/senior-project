@@ -9,9 +9,9 @@ RUN go install github.com/a-h/templ/cmd/templ@latest
 # Install standalone tailwindcss CLI
 RUN arch=$(uname -m) && \
     if [ "$arch" = "x86_64" ]; then arch="x64"; elif [ "$arch" = "aarch64" ]; then arch="arm64"; fi && \
-    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-$arch && \
-    chmod +x tailwindcss-linux-$arch && \
-    mv tailwindcss-linux-$arch /usr/local/bin/tailwindcss
+    curl -fsLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-$arch-musl && \
+    chmod +x tailwindcss-linux-$arch-musl && \
+    mv tailwindcss-linux-$arch-musl /usr/local/bin/tailwindcss
 
 WORKDIR /app
 
