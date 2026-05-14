@@ -3,8 +3,9 @@ FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates curl libc6-compat libstdc++
 
-# Install templ CLI
+# Install templ CLI and goose
 RUN go install github.com/a-h/templ/cmd/templ@v0.3.1001
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Install standalone tailwindcss CLI
 RUN arch=$(uname -m) && \
@@ -38,8 +39,9 @@ RUN apk add --no-cache ca-certificates tzdata postgresql-client
 
 WORKDIR /app
 
-# Copy the compiled binary
+# Copy the compiled binary and goose
 COPY --from=builder /app/server .
+COPY --from=builder /go/bin/goose /usr/local/bin/goose
 
 # Copy runtime assets
 COPY --from=builder /app/web/static ./web/static
