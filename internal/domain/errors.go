@@ -5,6 +5,7 @@ import "errors"
 var (
 	// User errors (postgres)
 	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrAdminAlreadyExists = errors.New("an admin account already exists")
 	ErrUserNotFound      = errors.New("user not found")
 	// Exam errors
 	ErrExamNotFound = errors.New("exam not found")

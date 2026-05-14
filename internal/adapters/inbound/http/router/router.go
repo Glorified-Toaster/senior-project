@@ -166,47 +166,71 @@ func (r *Router) SetupRoutes() {
 	studentRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleStudent))
 	{
 		studentRoutes.GET("/dashboard", r.userHandler.StudentDashboardRender())
-		studentRoutes.GET("/subject/:id", r.userHandler.StudentSubjectView())
-		studentRoutes.POST("/exam/:id/start", r.userHandler.StudentStartExam())
-		studentRoutes.GET("/exam/:id/take", r.userHandler.StudentExamView())
-		studentRoutes.POST("/exam/:id/answer", r.userHandler.StudentSaveAnswer())
-		studentRoutes.POST("/exam/:id/submit", r.userHandler.StudentSubmitExam())
-		studentRoutes.GET("/subject/:id/ws", r.userHandler.StudentSubjectTrackerWS())
-		studentRoutes.POST("/subject/:id/auto-submit", r.userHandler.StudentSubjectAutoSubmit())
-		studentRoutes.POST("/exam/:id/auto-submit", r.userHandler.StudentAutoSubmit())
-		studentRoutes.GET("/subject/:id/result", r.userHandler.StudentSubjectResult())
-		studentRoutes.GET("/subject/:id/pdf", r.userHandler.StudentSubjectPDF())
+		
+		// Subject-specific routes
+		subjectRoutes := studentRoutes.Group("/subject/:id")
+		subjectRoutes.Use(r.authMiddleware.SubjectAccessMiddleware())
+		{
+			subjectRoutes.GET("", r.userHandler.StudentSubjectView())
+			subjectRoutes.GET("/ws", r.userHandler.StudentSubjectTrackerWS())
+			subjectRoutes.POST("/auto-submit", r.userHandler.StudentSubjectAutoSubmit())
+			subjectRoutes.GET("/result", r.userHandler.StudentSubjectResult())
+			subjectRoutes.GET("/pdf", r.userHandler.StudentSubjectPDF())
+		}
+
+		// Exam-specific routes
+		examRoutes := studentRoutes.Group("/exam/:id")
+		examRoutes.Use(r.authMiddleware.ExamAccessMiddleware())
+		{
+			examRoutes.POST("/start", r.userHandler.StudentStartExam())
+			examRoutes.GET("/take", r.userHandler.StudentExamView())
+			examRoutes.POST("/answer", r.userHandler.StudentSaveAnswer())
+			examRoutes.POST("/submit", r.userHandler.StudentSubmitExam())
+			examRoutes.POST("/auto-submit", r.userHandler.StudentAutoSubmit())
+		}
 	}
+
 	// Instructor routes
 	instructorRoutes := r.router.Group("/instructor")
 	instructorRoutes.Use(r.authMiddleware.AuthenticationMiddleware())
 	instructorRoutes.Use(r.authMiddleware.RoleAuthMiddleware(domain.RoleInstructor))
 	{
 		instructorRoutes.GET("/dashboard", r.userHandler.InstructorDashboardRender())
-		instructorRoutes.GET("/subject/:id/students/search", r.userHandler.SearchSubjectStudentsInstructor())
-		instructorRoutes.POST("/subject/:id/students/search", r.userHandler.SearchSubjectStudentsInstructor())
-		instructorRoutes.GET("/subject/:id", r.userHandler.InstructorSubjectView())
-		instructorRoutes.POST("/subject/:id/exams/search", r.userHandler.SearchExamsBySubject())
-		instructorRoutes.GET("/subject/:id/students/export", r.userHandler.ExportSubjectStudentsCSV())
-		instructorRoutes.POST("/subject/:id/students/assign", r.userHandler.AssignStudentToSubjectInstructor())
-		instructorRoutes.POST("/subject/:id/students/upload-csv", r.userHandler.AssignStudentToSubjectCSV())
-		instructorRoutes.POST("/subject/:id/students/unassign/:user_id", r.userHandler.UnassignStudentFromSubjectInstructor())
 		instructorRoutes.POST("/subjects/search", r.userHandler.SearchInstructorSubjects())
 
-		// Exam Management (Instructor restricted)
-		instructorRoutes.POST("/exams/create", r.userHandler.CreateExam())
-		instructorRoutes.GET("/exam/:id", r.userHandler.InstructorEditExamPageRender())
-		instructorRoutes.POST("/exam/edit/:id", r.userHandler.EditExamInfo())
-		instructorRoutes.POST("/exam/delete/:id", r.userHandler.SoftDeleteExam())
-		instructorRoutes.GET("/exam/:id/export-csv", r.userHandler.ExportExamCSV())
+		// Subject-specific routes
+		subjectRoutes := instructorRoutes.Group("/subject/:id")
+		subjectRoutes.Use(r.authMiddleware.SubjectAccessMiddleware())
+		{
+			subjectRoutes.GET("", r.userHandler.InstructorSubjectView())
+			subjectRoutes.GET("/students/search", r.userHandler.SearchSubjectStudentsInstructor())
+			subjectRoutes.POST("/students/search", r.userHandler.SearchSubjectStudentsInstructor())
+			subjectRoutes.POST("/exams/search", r.userHandler.SearchExamsBySubject())
+			subjectRoutes.GET("/students/export", r.userHandler.ExportSubjectStudentsCSV())
+			subjectRoutes.POST("/students/assign", r.userHandler.AssignStudentToSubjectInstructor())
+			subjectRoutes.POST("/students/upload-csv", r.userHandler.AssignStudentToSubjectCSV())
+			subjectRoutes.POST("/students/unassign/:user_id", r.userHandler.UnassignStudentFromSubjectInstructor())
+			
+			// Exam creation within a subject
+			subjectRoutes.POST("/exams/create", r.userHandler.CreateExam())
+		}
 
-		// Question Management (Instructor restricted)
-		instructorRoutes.POST("/exam/:id/question/create", r.userHandler.CreateQuestion())
-		instructorRoutes.POST("/exam/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
-		instructorRoutes.POST("/exam/:id/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
-		instructorRoutes.POST("/exam/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
-		instructorRoutes.POST("/exam/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
+		// Exam-specific routes (Instructor restricted)
+		examRoutes := instructorRoutes.Group("/exam/:id")
+		examRoutes.Use(r.authMiddleware.ExamAccessMiddleware())
+		{
+			examRoutes.GET("", r.userHandler.InstructorEditExamPageRender())
+			examRoutes.POST("/edit", r.userHandler.EditExamInfo())
+			examRoutes.POST("/delete", r.userHandler.SoftDeleteExam())
+			examRoutes.GET("/export-csv", r.userHandler.ExportExamCSV())
 
+			// Question Management
+			examRoutes.POST("/question/create", r.userHandler.CreateQuestion())
+			examRoutes.POST("/question/upload-csv", r.userHandler.UploadQuestionCSV())
+			examRoutes.POST("/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
+			examRoutes.POST("/question/edit/:question-id", r.userHandler.UpdateQuestion())
+			examRoutes.POST("/question/delete/:question-id", r.userHandler.DeleteQuestion())
+		}
 	}
 
 	// Shared routes for exam management (Admin + Instructor)

@@ -16,6 +16,7 @@ import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/form"
 import "uot-exam/web/templates/components/selectbox"
 import "uot-exam/web/templates/components/tabs"
+import "uot-exam/web/templates/components/textarea"
 
 templ SubjectViewPage(param SubjectViewParam) {
 	@sidebar.Script()
@@ -26,6 +27,7 @@ templ SubjectViewPage(param SubjectViewParam) {
 	@dialog.Script()
 	@toast.Script()
 	@input.Script()
+	@textarea.Script()
 	@selectbox.Script()
 	@Navbar([]navbar.BreadPath{
 		{
@@ -197,7 +199,7 @@ templ DialogAddExam(param SubjectViewParam) {
 			}
 			<form
 				id="add-exam-form"
-				hx-post="/instructor/exams/create"
+				hx-post={ fmt.Sprintf("/instructor/subject/%s/exams/create", param.Subject.ID.String()) }
 				hx-target="#exams-table-container"
 				hx-swap="outerHTML"
 			>
@@ -231,10 +233,11 @@ templ DialogAddExam(param SubjectViewParam) {
 						@form.Label(form.LabelProps{For: "description", Class: "text-sm font-medium"}) {
 							Description (Optional)
 						}
-						@input.Input(input.Props{
+						@textarea.Textarea(textarea.Props{
 							ID:          "description",
 							Name:        "description",
 							Placeholder: "Brief description of the exam",
+							Rows:        3,
 						})
 					</div>
 				</div>

@@ -57,6 +57,8 @@ type Querier interface {
 	GetSubjectByID(ctx context.Context, id uuid.UUID) (GetSubjectByIDRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	IsInstructorAssigned(ctx context.Context, arg IsInstructorAssignedParams) (bool, error)
+	IsStudentEnrolled(ctx context.Context, arg IsStudentEnrolledParams) (bool, error)
 	ListActiveUsers(ctx context.Context) ([]User, error)
 	ListAllChoicesByQuestion(ctx context.Context, questionID uuid.NullUUID) ([]Choice, error)
 	ListAllExams(ctx context.Context, arg ListAllExamsParams) ([]ListAllExamsRow, error)

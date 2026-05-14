@@ -531,3 +531,27 @@ func (r *SubjectRepository) ListSubjectsForInstructor(ctx context.Context, instr
 
 	return domainSubjects, nil
 }
+
+func (r *SubjectRepository) IsStudentEnrolled(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (bool, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.IsStudentEnrolled(ctx, sqlc.IsStudentEnrolledParams{
+		SubjectID: subjectID,
+		StudentID: studentID,
+	})
+}
+
+func (r *SubjectRepository) IsInstructorAssigned(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) (bool, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.IsInstructorAssigned(ctx, sqlc.IsInstructorAssignedParams{
+		SubjectID:    subjectID,
+		InstructorID: instructorID,
+	})
+}

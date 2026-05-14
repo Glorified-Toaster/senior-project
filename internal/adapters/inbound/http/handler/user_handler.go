@@ -116,17 +116,6 @@ func (h *UserHandler) SetupAdmin() gin.HandlerFunc {
 			}).Render(ctx.Request.Context(), ctx.Writer)
 		}
 
-		count, err := h.App.CountAdmins(ctx.Request.Context())
-		if err != nil {
-			renderError("Error checking for existing admins: " + err.Error())
-			return
-		}
-
-		if count > 0 {
-			renderError("An admin account already exists.")
-			return
-		}
-
 		fullname := ctx.PostForm("full_name")
 		username := ctx.PostForm("username")
 		password := ctx.PostForm("password")
@@ -136,7 +125,7 @@ func (h *UserHandler) SetupAdmin() gin.HandlerFunc {
 			return
 		}
 
-		_, err = h.App.CreateUser(ctx, ports.CreateUserParams{
+		_, err := h.App.SetupInitialAdmin(ctx, ports.CreateUserParams{
 			FullName: fullname,
 			Username: username,
 			Password: password,
@@ -144,7 +133,7 @@ func (h *UserHandler) SetupAdmin() gin.HandlerFunc {
 			IsActive: true,
 		})
 		if err != nil {
-			renderError("Error creating admin account: " + err.Error())
+			renderError(err.Error())
 			return
 		}
 

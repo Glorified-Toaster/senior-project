@@ -224,3 +224,15 @@ ORDER BY s.title ASC;
 UPDATE subjects
 SET duration_minutes = duration_minutes + $2, updated_at = NOW()
 WHERE id = $1;
+
+-- name: IsStudentEnrolled :one
+SELECT EXISTS (
+    SELECT 1 FROM subject_students
+    WHERE subject_id = $1 AND student_id = $2 AND deleted_at IS NULL
+);
+
+-- name: IsInstructorAssigned :one
+SELECT EXISTS (
+    SELECT 1 FROM subject_instructors
+    WHERE subject_id = $1 AND instructor_id = $2 AND deleted_at IS NULL
+);

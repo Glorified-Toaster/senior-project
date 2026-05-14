@@ -76,15 +76,7 @@ func (h *UserHandler) InstructorSubjectView() gin.HandlerFunc {
 		}
 
 		// Verify that the instructor is assigned to this subject
-		assignedInstructors, err := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), subjectID)
-		isAssigned := false
-		for _, inst := range assignedInstructors {
-			if inst.ID == userID {
-				isAssigned = true
-				break
-			}
-		}
-
+		isAssigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
 		if !isAssigned {
 			ctx.Redirect(302, "/instructor/dashboard")
 			return
@@ -160,20 +152,7 @@ func (h *UserHandler) InstructorEditExamPageRender() gin.HandlerFunc {
 			return
 		}
 
-		// Verify that the instructor is assigned to this subject
-		assignedInstructors, _ := h.App.ListInstructorsBySubjectID(ctx.Request.Context(), subject.ID)
-		isAssigned := false
-		for _, inst := range assignedInstructors {
-			if inst.ID == userID {
-				isAssigned = true
-				break
-			}
-		}
-
-		if !isAssigned {
-			ctx.Redirect(302, "/instructor/dashboard")
-			return
-		}
+		// Note: Subject/Exam authorization is now handled by ExamAccessMiddleware
 
 		questions, err := h.App.ListQuestionsByExam(ctx.Request.Context(), examID)
 		if err != nil {
@@ -238,6 +217,14 @@ func (h *UserHandler) SearchSubjectStudentsInstructor() gin.HandlerFunc {
 			return
 		}
 
+		// Verify instructor assignment
+		_, _, userID := parseUsername(ctx)
+		assigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
+		if !assigned {
+			ctx.Status(403)
+			return
+		}
+
 		search := ctx.PostForm("search")
 		if search == "" { search = ctx.Query("search") }
 		limit := int32(10)
@@ -294,6 +281,15 @@ func (h *UserHandler) AssignStudentToSubjectInstructor() gin.HandlerFunc {
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Assign Students Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		// Verify instructor assignment
+		_, _, userID := parseUsername(ctx)
+		assigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
+		if !assigned {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Forbidden", "You are not assigned to this subject", toast.VariantError)
 			return
 		}
 
@@ -368,6 +364,15 @@ func (h *UserHandler) UnassignStudentFromSubjectInstructor() gin.HandlerFunc {
 			return
 		}
 
+		// Verify instructor assignment
+		_, _, userID := parseUsername(ctx)
+		assigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
+		if !assigned {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Forbidden", "You are not assigned to this subject", toast.VariantError)
+			return
+		}
+
 		studentID, err := uuid.Parse(studentIDStr)
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -426,6 +431,15 @@ func (h *UserHandler) AssignStudentToSubjectCSVInstructor() gin.HandlerFunc {
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Assign Student Failed", "Invalid subject ID", toast.VariantError)
+			return
+		}
+
+		// Verify instructor assignment
+		_, _, userID := parseUsername(ctx)
+		assigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
+		if !assigned {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Forbidden", "You are not assigned to this subject", toast.VariantError)
 			return
 		}
 

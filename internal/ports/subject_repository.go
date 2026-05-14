@@ -34,4 +34,6 @@ type SubjectRepository interface {
 	PublishSubject(ctx context.Context, id uuid.UUID) error
 	CloseSubject(ctx context.Context, id uuid.UUID) error
 	ListSubjectsForInstructor(ctx context.Context, instructorID uuid.UUID) ([]domain.Subject, error)
+	IsStudentEnrolled(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (bool, error)
+	IsInstructorAssigned(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) (bool, error)
 }

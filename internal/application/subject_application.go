@@ -273,3 +273,23 @@ func (a *Application) ListSubjectsForInstructor(ctx context.Context, instructorI
 	})
 	return subjects, err
 }
+
+func (a *Application) IsStudentEnrolled(ctx context.Context, subjectID uuid.UUID, studentID uuid.UUID) (bool, error) {
+	var enrolled bool
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		enrolled, err = a.subjectRepo.IsStudentEnrolled(txCtx, subjectID, studentID)
+		return err
+	})
+	return enrolled, err
+}
+
+func (a *Application) IsInstructorAssigned(ctx context.Context, subjectID uuid.UUID, instructorID uuid.UUID) (bool, error) {
+	var assigned bool
+	err := a.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		var err error
+		assigned, err = a.subjectRepo.IsInstructorAssigned(txCtx, subjectID, instructorID)
+		return err
+	})
+	return assigned, err
+}

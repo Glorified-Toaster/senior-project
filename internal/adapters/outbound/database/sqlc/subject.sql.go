@@ -257,6 +257,44 @@ func (q *Queries) GetSubjectByID(ctx context.Context, id uuid.UUID) (GetSubjectB
 	return i, err
 }
 
+const isInstructorAssigned = `-- name: IsInstructorAssigned :one
+SELECT EXISTS (
+    SELECT 1 FROM subject_instructors
+    WHERE subject_id = $1 AND instructor_id = $2 AND deleted_at IS NULL
+)
+`
+
+type IsInstructorAssignedParams struct {
+	SubjectID    uuid.UUID `json:"subject_id"`
+	InstructorID uuid.UUID `json:"instructor_id"`
+}
+
+func (q *Queries) IsInstructorAssigned(ctx context.Context, arg IsInstructorAssignedParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isInstructorAssigned, arg.SubjectID, arg.InstructorID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const isStudentEnrolled = `-- name: IsStudentEnrolled :one
+SELECT EXISTS (
+    SELECT 1 FROM subject_students
+    WHERE subject_id = $1 AND student_id = $2 AND deleted_at IS NULL
+)
+`
+
+type IsStudentEnrolledParams struct {
+	SubjectID uuid.UUID `json:"subject_id"`
+	StudentID uuid.UUID `json:"student_id"`
+}
+
+func (q *Queries) IsStudentEnrolled(ctx context.Context, arg IsStudentEnrolledParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isStudentEnrolled, arg.SubjectID, arg.StudentID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listAllSubjects = `-- name: ListAllSubjects :many
 SELECT 
     s.id, s.title, s.description, s.duration_minutes, s.total_marks, s.pass_score, s.status, s.created_at, s.updated_at, s.deleted_at,
