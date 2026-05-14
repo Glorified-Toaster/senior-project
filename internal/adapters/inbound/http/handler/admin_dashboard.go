@@ -105,6 +105,17 @@ func (h *UserHandler) LandingPage() gin.HandlerFunc {
 
 func (h *UserHandler) AdminLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		count, err := h.App.CountAdmins(ctx.Request.Context())
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if count == 0 {
+			render.Render(ctx, pages.BasePage("Initial Setup", page.InitialSetupPage()))
+			return
+		}
+
 		render.Render(ctx, pages.BasePage("Admin Login", page.LoginPage("")))
 	}
 }

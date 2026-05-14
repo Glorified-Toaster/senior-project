@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -20,7 +19,6 @@ import (
 	"uot-exam/internal/adapters/outbound/repository"
 	"uot-exam/internal/adapters/outbound/storage"
 	"uot-exam/internal/application"
-	"uot-exam/internal/ports"
 
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
@@ -82,8 +80,6 @@ func main() {
 	localDisk := storage.NewLocalDiskAdapter()
 	app := application.NewApplication(userRepo, subjectRepo, examRepo, questionRepo, localDisk, txManager, pool, zlog)
 
-	Admin(app)
-
 	// init validator
 	validate := validator.New()
 	// init jwt
@@ -100,18 +96,4 @@ func main() {
 
 	// start the server over TLS
 	srv.StartOverTLS(cfg)
-}
-
-func Admin(app *application.Application) {
-	user, err := app.CreateUser(context.Background(), ports.CreateUserParams{
-		Role:     "ADMIN",
-		Username: "admin",
-		FullName: "Admin",
-		Password: "Admin123",
-		IsActive: true,
-	})
-	if err != nil {
-		return
-	}
-	log.Println("user", user)
 }

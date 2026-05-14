@@ -15,6 +15,7 @@ type Querier interface {
 	AssignStudentToSubject(ctx context.Context, arg AssignStudentToSubjectParams) (SubjectStudent, error)
 	ClosePublishedExamsBySubject(ctx context.Context, subjectID uuid.NullUUID) error
 	CloseSubject(ctx context.Context, id uuid.UUID) error
+	CountAdmins(ctx context.Context) (int64, error)
 	CountDeletedSubjects(ctx context.Context) (int64, error)
 	CountDeletedUsers(ctx context.Context) (int64, error)
 	CountExams(ctx context.Context) (int64, error)

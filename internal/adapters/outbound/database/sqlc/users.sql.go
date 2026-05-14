@@ -11,6 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const countAdmins = `-- name: CountAdmins :one
+SELECT count(*) FROM users 
+WHERE role = 'ADMIN' AND deleted_at IS NULL
+`
+
+func (q *Queries) CountAdmins(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countAdmins)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countDeletedUsers = `-- name: CountDeletedUsers :one
 SELECT count(*) FROM users 
 WHERE deleted_at IS NOT NULL

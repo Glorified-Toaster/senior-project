@@ -245,6 +245,14 @@ func (app *Application) CountStudents(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
+func (app *Application) CountAdmins(ctx context.Context) (int64, error) {
+	count, err := app.userRepo.CountAdmins(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (app *Application) SearchStudents(ctx context.Context, arg ports.SearchStudentsParams) ([]domain.User, error) {
 	users, err := app.userRepo.SearchStudents(ctx, arg)
 	if err != nil {

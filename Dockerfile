@@ -1,17 +1,17 @@
 # ── Stage 1: Build ──────────────────────────────────────────────
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
-RUN apk add --no-cache git ca-certificates curl libc6-compat
+RUN apk add --no-cache git ca-certificates curl libc6-compat libstdc++
 
 # Install templ CLI
-RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install github.com/a-h/templ/cmd/templ@v0.3.1001
 
 # Install standalone tailwindcss CLI
 RUN arch=$(uname -m) && \
     if [ "$arch" = "x86_64" ]; then arch="x64"; elif [ "$arch" = "aarch64" ]; then arch="arm64"; fi && \
-    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-$arch && \
-    chmod +x tailwindcss-linux-$arch && \
-    mv tailwindcss-linux-$arch /usr/local/bin/tailwindcss
+    curl -fsLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-$arch-musl && \
+    chmod +x tailwindcss-linux-$arch-musl && \
+    mv tailwindcss-linux-$arch-musl /usr/local/bin/tailwindcss
 
 WORKDIR /app
 

@@ -86,7 +86,7 @@ func (r *Router) SetupRoutes() {
 		publicRoutes.GET("/login", r.userHandler.AdminLogin())
 		publicRoutes.GET("/logout", r.userHandler.Logout())
 		publicRoutes.GET("/", r.userHandler.LandingPage())
-
+		publicRoutes.POST("/setup/admin", r.userHandler.SetupAdmin())
 	}
 
 	adminRoutes := r.router.Group("/admin")

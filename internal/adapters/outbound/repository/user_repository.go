@@ -616,3 +616,12 @@ func (r *UserRepository) UpdateLastInteraction(ctx context.Context, id uuid.UUID
 
 	return queries.UpdateUserLastLogin(ctx, id)
 }
+
+func (r *UserRepository) CountAdmins(ctx context.Context) (int64, error) {
+	queries := r.queries
+	if tx := database.ExtractTx(ctx); tx != nil {
+		queries = queries.WithTx(tx)
+	}
+
+	return queries.CountAdmins(ctx)
+}

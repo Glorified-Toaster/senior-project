@@ -1,0 +1,114 @@
+package page
+
+import (
+	"uot-exam/web/templates/components/badge"
+	"uot-exam/web/templates/components/button"
+	"uot-exam/web/templates/components/card"
+	"uot-exam/web/templates/components/icon"
+	"uot-exam/web/templates/components/input"
+	"uot-exam/web/templates/components/label"
+	"uot-exam/web/templates/components/particles"
+	"uot-exam/web/templates/components/toast"
+)
+
+templ InitialSetupPage() {
+	@label.Script()
+	@input.Script()
+	@toast.Script()
+	@particles.ParticlesScript()
+	@particles.Particles()
+	<div class="fixed inset-0 flex items-center justify-center p-4 z-10">
+		<div class="max-w-lg w-full">
+			@card.Card() {
+				@card.Header(card.HeaderProps{
+					Class: "flex flex-col items-center gap-1 pb-4 text-center",
+				}) {
+					<div class="flex items-center justify-center mb-3">
+						<img src="/images/uotLogo.png" alt="University of Technology Logo" class="h-20 w-auto"/>
+					</div>
+					<div class="mb-2">
+						@badge.Badge(badge.Props{
+							Variant: badge.VariantDefault,
+						}) {
+							@icon.Sparkles(icon.Props{Class: "size-3 mr-1"})
+							Initial Setup
+						}
+					</div>
+				}
+				@card.Content(card.ContentProps{Class: "pb-4"}) {
+					<!-- Admin creation form -->
+
+					<form id="setup-form" hx-post="/setup/admin" hx-swap="innerHTML" hx-target="#toast-container">
+						<div class="flex flex-col gap-4">
+							<div class="flex items-center gap-2 mb-1">
+								@icon.ShieldCheck(icon.Props{Class: "size-4 text-primary"})
+								<span class="text-sm font-medium">Administrator Account</span>
+							</div>
+							<div class="w-full grid gap-2">
+								@label.Label(label.Props{
+									For: "full_name",
+								}) {
+									Full Name
+								}
+								@input.Input(input.Props{
+									ID:          "full_name",
+									Name:        "full_name",
+									Placeholder: "e.g. System Administrator",
+									Required:    true,
+								})
+							</div>
+							<div class="w-full grid gap-2">
+								@label.Label(label.Props{
+									For: "username",
+								}) {
+									Username
+								}
+								@input.Input(input.Props{
+									ID:          "username",
+									Name:        "username",
+									Placeholder: "e.g. admin",
+									Required:    true,
+								})
+							</div>
+							<div class="w-full grid gap-2">
+								@label.Label(label.Props{
+									For: "password",
+								}) {
+									Password
+								}
+								@input.Input(input.Props{
+									ID:          "password",
+									Name:        "password",
+									Type:        input.TypePassword,
+									Placeholder: "Min. 8 characters",
+									Required:    true,
+								})
+								<p class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+									@icon.Info(icon.Props{Class: "size-3 shrink-0"})
+									Must contain uppercase, lowercase, and a number
+								</p>
+							</div>
+						</div>
+					</form>
+				}
+				@card.Footer(card.FooterProps{
+					Class: "flex flex-col items-center gap-3 pt-2",
+				}) {
+					@button.Button(button.Props{
+						Type:  "submit",
+						Form:  "setup-form",
+						Class: "w-full",
+					}) {
+						@icon.ShieldPlus(icon.Props{Class: "size-4 mr-2"})
+						Create Administrator
+					}
+					<div class="flex items-center gap-2 text-[11px] text-muted-foreground border-t border-muted w-full justify-center pt-3 mt-1">
+						@icon.Lock(icon.Props{Class: "size-3"})
+						<span>This page is only shown when no admin exists</span>
+					</div>
+				}
+			}
+		</div>
+	</div>
+	<div id="toast-container"></div>
+}

@@ -102,6 +102,65 @@ func (h *UserHandler) Create() gin.HandlerFunc {
 	}
 }
 
+func (h *UserHandler) SetupAdmin() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		renderError := func(msg string) {
+			toast.Toast(toast.Props{
+				Title:         "Setup Failed",
+				Description:   msg,
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			}).Render(ctx.Request.Context(), ctx.Writer)
+		}
+
+		count, err := h.App.CountAdmins(ctx.Request.Context())
+		if err != nil {
+			renderError("Error checking for existing admins: " + err.Error())
+			return
+		}
+
+		if count > 0 {
+			renderError("An admin account already exists.")
+			return
+		}
+
+		fullname := ctx.PostForm("full_name")
+		username := ctx.PostForm("username")
+		password := ctx.PostForm("password")
+
+		if helpers.IsTrimmedEmpty(fullname) || helpers.IsTrimmedEmpty(username) || helpers.IsTrimmedEmpty(password) {
+			renderError("All fields are required.")
+			return
+		}
+
+		_, err = h.App.CreateUser(ctx, ports.CreateUserParams{
+			FullName: fullname,
+			Username: username,
+			Password: password,
+			Role:     domain.RoleAdmin,
+			IsActive: true,
+		})
+		if err != nil {
+			renderError("Error creating admin account: " + err.Error())
+			return
+		}
+
+		ctx.Header("HX-Redirect", "/login")
+		toast.Toast(toast.Props{
+			Title:         "Setup Complete",
+			Description:   "Admin account created. Redirecting to login...",
+			Variant:       toast.VariantSuccess,
+			Duration:      3000,
+			ShowIndicator: true,
+			Dismissible:   true,
+			Icon:          true,
+		}).Render(ctx.Request.Context(), ctx.Writer)
+	}
+}
+
 func (h *UserHandler) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ports.LoginParams
