@@ -47,25 +47,13 @@ templ ResultPage(param ResultParam) {
 				</div>
 
 				<!-- Stats Overview -->
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					@card.Card(card.Props{Class: "bg-white shadow-sm border-slate-200/60"}) {
 						@card.Content(card.ContentProps{Class: "p-6 flex flex-col items-center justify-center text-center"}) {
 							<p class="text-sm font-medium text-slate-500 mb-1">Total Score</p>
 							<div class="flex items-baseline gap-1">
 								<span class="text-4xl font-bold text-primary">{ fmt.Sprintf("%.2f", param.TotalSubjectScore) }</span>
 								<span class="text-slate-400 font-medium">/ { fmt.Sprintf("%.2f", param.Subject.TotalMarks) }</span>
-							</div>
-						}
-					}
-					@card.Card(card.Props{Class: "bg-white shadow-sm border-slate-200/60"}) {
-						@card.Content(card.ContentProps{Class: "p-6 flex flex-col items-center justify-center text-center"}) {
-							<p class="text-sm font-medium text-slate-500 mb-1">Percentage</p>
-							<div class="text-4xl font-bold text-slate-900">
-								if param.Subject.TotalMarks > 0 {
-									{ fmt.Sprintf("%.2f%%", param.TotalSubjectScore / param.Subject.TotalMarks * 100) }
-								} else {
-									0%
-								}
 							</div>
 						}
 					}
@@ -109,9 +97,7 @@ templ ResultPage(param ResultParam) {
 											<div class="text-right flex items-center gap-4">
 												<div>
 													<p class="font-bold text-slate-900">{ fmt.Sprintf("%.2f", res.Score) }</p>
-													if res.TotalMarks > 0 {
-														<p class="text-xs text-slate-500">{ fmt.Sprintf("%.2f%%", res.Score / res.TotalMarks * 100) }</p>
-													}
+													
 												</div>
 												@icon.ChevronDown(icon.Props{Class: "h-5 w-5 text-slate-400 group-open:rotate-180 transition-transform"})
 											</div>
