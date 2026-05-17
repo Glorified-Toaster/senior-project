@@ -1,7 +1,7 @@
 # Development Config
 app_version: "v1.0.0-dev"
 http_server:
-  address: "192.168.0.225"
+  address: "localhost"
   port: "8443"
   tls_cert_dir: "certs"
   cert_file: "certs/cert.pem"

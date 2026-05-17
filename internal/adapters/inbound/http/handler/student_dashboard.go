@@ -369,17 +369,26 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 
 		// Build a map of question ID to marks
 		questionMarks := make(map[uuid.UUID]float64)
+		var totalQuestionMarks float64
 		for _, q := range questions {
 			questionMarks[q.ID] = q.Marks
+			totalQuestionMarks += q.Marks
 		}
 
-		var totalScore float64
+		var rawScore float64
 		for _, answer := range answers {
 			if answer.IsCorrect != nil && *answer.IsCorrect {
 				if marks, ok := questionMarks[answer.QuestionID]; ok {
-					totalScore += marks
+					rawScore += marks
 				}
 			}
+		}
+
+		exam, _ := h.App.GetExamByID(ctx.Request.Context(), examID)
+
+		var totalScore float64
+		if totalQuestionMarks > 0 {
+			totalScore = (rawScore / totalQuestionMarks) * exam.TotalMarks
 		}
 
 		err = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
@@ -388,8 +397,6 @@ func (h *UserHandler) StudentSubmitExam() gin.HandlerFunc {
 			helpers.Toast(ctx, "Error", "Failed to submit exam: "+err.Error(), toast.VariantError)
 			return
 		}
-
-		exam, _ := h.App.GetExamByID(ctx.Request.Context(), examID)
 
 		// Check if this was the last exam for the subject
 		totalExams, _ := h.App.CountPublishedExamsBySubject(ctx.Request.Context(), exam.SubjectID)
@@ -426,17 +433,26 @@ func (h *UserHandler) StudentAutoSubmit() gin.HandlerFunc {
 		questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), examID)
 
 		questionMarks := make(map[uuid.UUID]float64)
+		var totalQuestionMarks float64
 		for _, q := range questions {
 			questionMarks[q.ID] = q.Marks
+			totalQuestionMarks += q.Marks
 		}
 
-		var totalScore float64
+		var rawScore float64
 		for _, answer := range answers {
 			if answer.IsCorrect != nil && *answer.IsCorrect {
 				if marks, ok := questionMarks[answer.QuestionID]; ok {
-					totalScore += marks
+					rawScore += marks
 				}
 			}
+		}
+
+		exam, _ := h.App.GetExamByID(ctx.Request.Context(), examID)
+
+		var totalScore float64
+		if totalQuestionMarks > 0 {
+			totalScore = (rawScore / totalQuestionMarks) * exam.TotalMarks
 		}
 
 		_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)
@@ -471,17 +487,24 @@ func (h *UserHandler) StudentSubjectAutoSubmit() gin.HandlerFunc {
 			questions, _ := h.App.ListQuestionsByExam(ctx.Request.Context(), exam.ID)
 
 			questionMarks := make(map[uuid.UUID]float64)
+			var totalQuestionMarks float64
 			for _, q := range questions {
 				questionMarks[q.ID] = q.Marks
+				totalQuestionMarks += q.Marks
 			}
 
-			var totalScore float64
+			var rawScore float64
 			for _, answer := range answers {
 				if answer.IsCorrect != nil && *answer.IsCorrect {
 					if marks, ok := questionMarks[answer.QuestionID]; ok {
-						totalScore += marks
+						rawScore += marks
 					}
 				}
+			}
+
+			var totalScore float64
+			if totalQuestionMarks > 0 {
+				totalScore = (rawScore / totalQuestionMarks) * exam.TotalMarks
 			}
 
 			_ = h.App.SubmitExamAttempt(ctx.Request.Context(), attempt.ID, totalScore)

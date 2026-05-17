@@ -32,9 +32,9 @@ templ DashboardPage(param DashboardPageParam) {
 					<div>
 						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
 							@icon.LayoutPanelTop(icon.Props{Class: "h-8 w-8"})
-							Student Dashboard
+							Welcome, { param.Student.FullName }
 						</h1>
-						<p class="text-slate-500 mt-1">Take Your Exams Here</p>
+						<p class="text-slate-500 mt-1">{ "@" + param.Student.Username } - Take Your Exams Here</p>
 					</div>
 				</div>
 
