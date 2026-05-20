@@ -1042,7 +1042,7 @@ templ AttemptsTab(param EditSubjectPageParam) {
 								<th class="px-6 py-3">Student</th>
 								<th class="px-6 py-3 text-center">Exams Attempted</th>
 								<th class="px-6 py-3 text-center">Total Score</th>
-								<th class="px-6 py-3 text-center">Total Duration</th>
+
 								<th class="px-6 py-3 text-center">Result</th>
 								<th class="px-6 py-3 text-center">Submitted At</th>
 							</tr>
@@ -1068,9 +1068,6 @@ templ AttemptsTab(param EditSubjectPageParam) {
 										</td>
 										<td class="px-6 py-4 text-center font-mono">
 											{ fmt.Sprintf("%.2f", attempt.TotalScore) }
-										</td>
-										<td class="px-6 py-4 text-center text-slate-600">
-											{ formatDuration(attempt.TotalDuration) }
 										</td>
 										<td class="px-6 py-4 text-center">
 											if attempt.TotalScore >= param.Subject.PassScore {

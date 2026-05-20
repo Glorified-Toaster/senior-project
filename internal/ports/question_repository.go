@@ -30,6 +30,7 @@ type UpdateQuestionParams struct {
 	QuestionType  domain.QuestionType
 	Marks         float64
 	ImageURL      string
+	Checksum      string
 }
 
 type CreateQuestionParams struct {

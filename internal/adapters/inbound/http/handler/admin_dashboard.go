@@ -31,7 +31,7 @@ import (
 	"github.com/johnfercher/maroto/v2/pkg/components/line"
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
 	"github.com/johnfercher/maroto/v2/pkg/components/text"
-	"github.com/johnfercher/maroto/v2/pkg/config"
+
 	"github.com/johnfercher/maroto/v2/pkg/consts/align"
 	"github.com/johnfercher/maroto/v2/pkg/consts/fontstyle"
 	"github.com/johnfercher/maroto/v2/pkg/props"
@@ -1541,9 +1541,13 @@ func (h *UserHandler) DeleteQuestion() gin.HandlerFunc {
 			}
 		}
 
+		exam, _ := h.App.GetExamByID(ctx, parsedExamUUID)
+
+		ctx.Header("HX-Trigger", "close-dialog")
 		helpers.Toast(ctx, "Delete Question Success", "Question deleted successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
 			Questions: questions,
+			ExamStatus: string(exam.Status),
 		}))
 	}
 }
@@ -1577,7 +1581,14 @@ func (h *UserHandler) ExportExamCSV() gin.HandlerFunc {
 }
 func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		id, err := uuid.Parse(ctx.Param("id"))
+		examID, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Question Failed", "Invalid exam ID", toast.VariantError)
+			return
+		}
+		
+		id, err := uuid.Parse(ctx.Param("question-id"))
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
 			helpers.Toast(ctx, "Update Question Failed", "Invalid question ID", toast.VariantError)
@@ -1621,16 +1632,43 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			questionImageURL = existingQuestion.QuestionImage
 		}
 
+		domainChoices := []domain.Choice{}
 		choices := []ports.CreateChoiceParams{}
 
 		for i := 1; i <= 4; i++ {
 			choiceText := ctx.PostForm("choice_" + strconv.Itoa(i))
 			if !helpers.IsTrimmedEmpty(choiceText) {
+				isCorrect := fmt.Sprintf("choice_%d", i) == correctChoice
+				domainChoices = append(domainChoices, domain.Choice{
+					ChoiceText: choiceText,
+					IsCorrect:  isCorrect,
+				})
 				choices = append(choices, ports.CreateChoiceParams{
 					QuestionID: id,
 					ChoiceText: choiceText,
-					IsCorrect:  fmt.Sprintf("choice_%d", i) == correctChoice,
+					IsCorrect:  isCorrect,
 				})
+			}
+		}
+
+		questionChecksum, err := helpers.BuildQuestionChecksum(examID.String(), domain.Question{
+			QuestionText:  questionText,
+			QuestionType:  questionType,
+			Marks:         questionMarksFloat,
+			Choices:       domainChoices,
+		})
+		if err != nil {
+			ctx.Header("HX-Reswap", "none")
+			helpers.Toast(ctx, "Update Question Failed", "Failed to compute checksum", toast.VariantError)
+			return
+		}
+
+		if existingQuestion.Checksum != questionChecksum {
+			exists, err := h.App.GetQuestionByChecksum(ctx.Request.Context(), questionChecksum)
+			if err == nil && exists {
+				ctx.Header("HX-Reswap", "none")
+				helpers.Toast(ctx, "Update Question Failed", "Question already exists", toast.VariantError)
+				return
 			}
 		}
 
@@ -1641,6 +1679,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			QuestionType:  domain.QuestionType(questionType),
 			Marks:         questionMarksFloat,
 			ImageURL:      questionImageURL,
+			Checksum:      questionChecksum,
 		}
 
 		_, err = h.App.UpdateQuestionWithChoices(ctx.Request.Context(), updateParams, choices)
@@ -2496,13 +2535,13 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 			attempts = []domain.ExamAttempt{}
 		}
 
-		m := maroto.New(config.NewBuilder().Build())
+		m := maroto.New(getMarotoBuilder().Build())
 
 		// Issue Date
 		m.AddRows(
 			row.New(5).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri", 
 						Size:  6,
 						Align: align.Right,
 						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
@@ -2521,7 +2560,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 					}),
 				),
 				col.New(8).Add(
-					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri", 
 						Size:  14,
 						Style: fontstyle.Bold,
 						Align: align.Right,
@@ -2539,7 +2578,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(15).Add(
 				col.New(12).Add(
-					text.New("STUDENT ATTEMPTS REPORT", props.Text{
+					text.New("STUDENT ATTEMPTS REPORT", props.Text{Family: "Amiri", 
 						Size:  20,
 						Style: fontstyle.Bold,
 						Align: align.Center,
@@ -2549,7 +2588,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 			),
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("%s - %s", subject.Title, exam.Title), props.Text{
+					text.New(shapeTxt(fmt.Sprintf("%s - %s", subject.Title, exam.Title)), props.Text{Family: "Amiri", 
 						Size:  12,
 						Style: fontstyle.BoldItalic,
 						Align: align.Center,
@@ -2565,25 +2604,25 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(8).Add(
 				col.New(12).Add(
-					text.New("EXAM INFORMATION", props.Text{Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
+					text.New("EXAM INFORMATION", props.Text{Family: "Amiri", Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 			row.New(18).Add(
 				col.New(3).Add(
-					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
-					text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
+					text.New("Total Marks", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
+					text.New(fmt.Sprintf("%.2f", exam.TotalMarks), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
 				),
 				col.New(3).Add(
-					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(fmt.Sprintf("%.2f", exam.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Pass Score", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%.2f", exam.PassScore), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 				col.New(3).Add(
-					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Total Students", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 				col.New(3).Add(
-					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Report Date", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 		)
@@ -2593,11 +2632,11 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		// Attempts Table Header
 		m.AddRows(
 			row.New(10).Add(
-				col.New(4).Add(text.New("STUDENT NAME", props.Text{Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
-				col.New(2).Add(text.New("ID", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(2).Add(text.New("STATUS", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(2).Add(text.New("SCORE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(2).Add(text.New("DATE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
+				col.New(4).Add(text.New("STUDENT NAME", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
+				col.New(2).Add(text.New("ID", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("STATUS", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("SCORE", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("DATE", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 30, Green: 41, Blue: 59}}), // Slate 800
 		)
 
@@ -2623,11 +2662,11 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 
 			m.AddRows(
 				row.New(10).Add(
-					col.New(4).Add(text.New(attempt.StudentName, props.Text{Size: 9, Top: 2, Left: 3})),
-					col.New(2).Add(text.New(attempt.StudentUsername, props.Text{Size: 8, Align: align.Center, Top: 2})),
-					col.New(2).Add(text.New(string(attempt.Status), props.Text{Size: 8, Align: align.Center, Color: statusColor, Top: 2, Style: fontstyle.Bold})),
-					col.New(2).Add(text.New(score, props.Text{Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
-					col.New(2).Add(text.New(attempt.StartedAt.Format("Jan 02, 2006"), props.Text{Size: 8, Align: align.Center, Top: 2, Right: 3})),
+					col.New(4).Add(text.New(shapeTxt(attempt.StudentName), props.Text{Family: "Amiri", Size: 9, Top: 2, Left: 3})),
+					col.New(2).Add(text.New(shapeTxt(attempt.StudentUsername), props.Text{Family: "Amiri", Size: 8, Align: align.Center, Top: 2})),
+					col.New(2).Add(text.New(string(attempt.Status), props.Text{Family: "Amiri", Size: 8, Align: align.Center, Color: statusColor, Top: 2, Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(score, props.Text{Family: "Amiri", Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
+					col.New(2).Add(text.New(attempt.StartedAt.Format("Jan 02, 2006"), props.Text{Family: "Amiri", Size: 8, Align: align.Center, Top: 2, Right: 3})),
 				).WithStyle(rowStyle),
 			)
 		}
@@ -2638,7 +2677,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri", 
 						Size:  8,
 						Align: align.Center,
 						Style: fontstyle.Italic,
@@ -2768,13 +2807,13 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 			attempts = []domain.SubjectAttempt{}
 		}
 
-		m := maroto.New(config.NewBuilder().Build())
+		m := maroto.New(getMarotoBuilder().Build())
 
 		// Issue Date
 		m.AddRows(
 			row.New(5).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri", 
 						Size:  6,
 						Align: align.Right,
 						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
@@ -2793,7 +2832,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 					}),
 				),
 				col.New(8).Add(
-					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri", 
 						Size:  14,
 						Style: fontstyle.Bold,
 						Align: align.Right,
@@ -2811,7 +2850,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(15).Add(
 				col.New(12).Add(
-					text.New("OVERALL PERFORMANCE REPORT", props.Text{
+					text.New("OVERALL PERFORMANCE REPORT", props.Text{Family: "Amiri", 
 						Size:  20,
 						Style: fontstyle.Bold,
 						Align: align.Center,
@@ -2821,7 +2860,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 			),
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New(subject.Title, props.Text{
+					text.New(shapeTxt(subject.Title), props.Text{Family: "Amiri", 
 						Size:  12,
 						Style: fontstyle.BoldItalic,
 						Align: align.Center,
@@ -2837,25 +2876,25 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(8).Add(
 				col.New(12).Add(
-					text.New("SUBJECT INFORMATION", props.Text{Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
+					text.New("SUBJECT INFORMATION", props.Text{Family: "Amiri", Size: 7, Style: fontstyle.Bold, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3, Top: 2}),
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 			row.New(18).Add(
 				col.New(3).Add(
-					text.New("Total Marks", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
-					text.New(fmt.Sprintf("%.2f", subject.TotalMarks), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
+					text.New("Total Marks", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}, Left: 3}),
+					text.New(fmt.Sprintf("%.2f", subject.TotalMarks), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4, Left: 3}),
 				),
 				col.New(3).Add(
-					text.New("Pass Score", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(fmt.Sprintf("%.2f", subject.PassScore), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Pass Score", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%.2f", subject.PassScore), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 				col.New(3).Add(
-					text.New("Total Students", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Total Students", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(fmt.Sprintf("%d", len(attempts)), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 				col.New(3).Add(
-					text.New("Report Date", props.Text{Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
-					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Size: 10, Style: fontstyle.Bold, Top: 4}),
+					text.New("Report Date", props.Text{Family: "Amiri", Size: 7, Color: &props.Color{Red: 100, Green: 116, Blue: 139}}),
+					text.New(time.Now().Format("Jan 02, 2006"), props.Text{Family: "Amiri", Size: 10, Style: fontstyle.Bold, Top: 4}),
 				),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 248, Green: 250, Blue: 252}}),
 		)
@@ -2865,12 +2904,11 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		// Performance Table Header
 		m.AddRows(
 			row.New(10).Add(
-				col.New(3).Add(text.New("STUDENT NAME", props.Text{Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
-				col.New(1).Add(text.New("ID", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(2).Add(text.New("DURATION", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(2).Add(text.New("SCORE", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(1).Add(text.New("RESULT", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
-				col.New(3).Add(text.New("SUBMITTED AT", props.Text{Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
+				col.New(4).Add(text.New("STUDENT NAME", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Left: 3})),
+				col.New(2).Add(text.New("ID", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(2).Add(text.New("SCORE", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(1).Add(text.New("RESULT", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}})),
+				col.New(3).Add(text.New("SUBMITTED AT", props.Text{Family: "Amiri", Size: 9, Style: fontstyle.Bold, Align: align.Center, Color: &props.Color{Red: 255, Green: 255, Blue: 255}, Right: 3})),
 			).WithStyle(&props.Cell{BackgroundColor: &props.Color{Red: 30, Green: 41, Blue: 59}}), // Slate 800
 		)
 
@@ -2894,12 +2932,11 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 
 			m.AddRows(
 				row.New(10).Add(
-					col.New(3).Add(text.New(attempt.StudentName, props.Text{Size: 9, Top: 2, Left: 3})),
-					col.New(1).Add(text.New(attempt.StudentUsername, props.Text{Size: 8, Align: align.Center, Top: 2})),
-					col.New(2).Add(text.New(formatDuration(attempt.TotalDuration), props.Text{Size: 8, Align: align.Center, Top: 2})),
-					col.New(2).Add(text.New(fmt.Sprintf("%.2f", attempt.TotalScore), props.Text{Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
-					col.New(1).Add(text.New(result, props.Text{Size: 8, Align: align.Center, Color: resultColor, Top: 2, Style: fontstyle.Bold})),
-					col.New(3).Add(text.New(submittedAt, props.Text{Size: 8, Align: align.Center, Top: 2, Right: 3})),
+					col.New(4).Add(text.New(shapeTxt(attempt.StudentName), props.Text{Family: "Amiri", Size: 9, Top: 2, Left: 3})),
+					col.New(2).Add(text.New(shapeTxt(attempt.StudentUsername), props.Text{Family: "Amiri", Size: 8, Align: align.Center, Top: 2})),
+					col.New(2).Add(text.New(fmt.Sprintf("%.2f", attempt.TotalScore), props.Text{Family: "Amiri", Size: 9, Align: align.Center, Top: 2, Style: fontstyle.Bold})),
+					col.New(1).Add(text.New(result, props.Text{Family: "Amiri", Size: 8, Align: align.Center, Color: resultColor, Top: 2, Style: fontstyle.Bold})),
+					col.New(3).Add(text.New(submittedAt, props.Text{Family: "Amiri", Size: 8, Align: align.Center, Top: 2, Right: 3})),
 				).WithStyle(rowStyle),
 			)
 		}
@@ -2912,7 +2949,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 				col.New(7).Add(text.New("")),
 				col.New(5).Add(
 					line.New(props.Line{Thickness: 0.5, Color: &props.Color{Red: 148, Green: 163, Blue: 184}}),
-					text.New("Examiner Official Signature", props.Text{Size: 8, Align: align.Center, Top: 4, Color: &props.Color{Red: 71, Green: 85, Blue: 105}}),
+					text.New("Examiner Official Signature", props.Text{Family: "Amiri", Size: 8, Align: align.Center, Top: 4, Color: &props.Color{Red: 71, Green: 85, Blue: 105}}),
 				),
 			),
 		)
@@ -2920,7 +2957,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri", 
 						Size:  8,
 						Align: align.Center,
 						Style: fontstyle.Italic,

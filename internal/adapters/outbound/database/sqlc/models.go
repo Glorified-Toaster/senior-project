@@ -324,6 +324,12 @@ type SubjectStudent struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+type SystemSetting struct {
+	Key       string             `json:"key"`
+	Value     string             `json:"value"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type User struct {
 	ID           uuid.UUID          `json:"id"`
 	Username     string             `json:"username"`

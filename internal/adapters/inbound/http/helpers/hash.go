@@ -20,7 +20,6 @@ func StringToMD5Hash(text []byte) (string, error) {
 func BuildQuestionChecksum(examID string, q domain.Question) (string, error) {
 	var b strings.Builder
 	b.WriteString(examID)
-	b.WriteString(q.QuestionTitle)
 	b.WriteString(q.QuestionText)
 	b.WriteString(q.QuestionType)
 	b.WriteString(fmt.Sprintf("%.2f", q.Marks))

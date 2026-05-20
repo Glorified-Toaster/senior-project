@@ -184,6 +184,7 @@ func (r *QuestionRepository) Update(ctx context.Context, arg ports.UpdateQuestio
 		QuestionType:  sqlc.QuestionTypeType(arg.QuestionType),
 		Marks:         arg.Marks,
 		QuestionImage: &arg.ImageURL,
+		Checksum:      &arg.Checksum,
 	})
 	if err != nil {
 		return domain.Question{}, err

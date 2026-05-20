@@ -412,7 +412,8 @@ SET
   question_text = $3,
   question_type = $4,
   marks = $5,
-  question_image = $6
+  question_image = $6,
+  checksum = $7
 WHERE id = $1
 RETURNING id, exam_id, question_title, question_text, question_type, question_image, checksum, marks, created_at, updated_at, deleted_at
 `
@@ -424,6 +425,7 @@ type UpdateQuestionParams struct {
 	QuestionType  QuestionTypeType `json:"question_type"`
 	Marks         float64          `json:"marks"`
 	QuestionImage *string          `json:"question_image"`
+	Checksum      *string          `json:"checksum"`
 }
 
 func (q *Queries) UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (Question, error) {
@@ -434,6 +436,7 @@ func (q *Queries) UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) 
 		arg.QuestionType,
 		arg.Marks,
 		arg.QuestionImage,
+		arg.Checksum,
 	)
 	var i Question
 	err := row.Scan(

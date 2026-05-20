@@ -16,6 +16,13 @@ import (
 	"uot-exam/web/templates/components/toast"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
 	"uot-exam/web/templates/render"
+	"os"
+
+	"github.com/abdullahdiaa/garabic"
+	marotoconfig "github.com/johnfercher/maroto/v2/pkg/config"
+	"github.com/johnfercher/maroto/v2/pkg/consts/fontstyle"
+	"github.com/johnfercher/maroto/v2/pkg/core/entity"
+	"github.com/johnfercher/maroto/v2/pkg/props"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -690,4 +697,41 @@ func (h *UserHandler) UpdateUserPassword() gin.HandlerFunc {
 		helpers.Toast(ctx, "Password Updated", "Successfully updated user password", toast.VariantSuccess)
 		ctx.Header("HX-Trigger", "close-dialog")
 	}
+}
+
+func getMarotoBuilder() marotoconfig.Builder {
+	b, err := os.ReadFile("./web/static/fonts/Amiri-Regular.ttf")
+	if err != nil {
+		return marotoconfig.NewBuilder()
+	}
+
+	customFonts := []*entity.CustomFont{
+		{
+			Family: "Amiri",
+			Style:  fontstyle.Normal,
+			Bytes:  b,
+		},
+		{
+			Family: "Amiri",
+			Style:  fontstyle.Bold,
+			Bytes:  b,
+		},
+		{
+			Family: "Amiri",
+			Style:  fontstyle.Italic,
+			Bytes:  b,
+		},
+		{
+			Family: "Amiri",
+			Style:  fontstyle.BoldItalic,
+			Bytes:  b,
+		},
+	}
+	return marotoconfig.NewBuilder().
+		WithCustomFonts(customFonts).
+		WithDefaultFont(&props.Font{Family: "Amiri"})
+}
+
+func shapeTxt(s string) string {
+	return garabic.Shape(s)
 }

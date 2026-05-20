@@ -10,7 +10,8 @@ SET
   question_text = $3,
   question_type = $4,
   marks = $5,
-  question_image = $6
+  question_image = $6,
+  checksum = $7
 WHERE id = $1
 RETURNING *;
 

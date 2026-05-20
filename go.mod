@@ -5,6 +5,7 @@ go 1.25.6
 require (
 	github.com/Oudwins/tailwind-merge-go v0.2.1
 	github.com/a-h/templ v0.3.1001
+	github.com/abdullahdiaa/garabic v0.0.0-20230105201152-4c3eb72be29c
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/sessions v1.0.4
 	github.com/gin-gonic/gin v1.11.0

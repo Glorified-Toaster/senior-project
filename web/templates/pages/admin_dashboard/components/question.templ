@@ -228,7 +228,7 @@ templ EditDialog(question domain.Question) {
 			}
 			<form
 				id={ fmt.Sprintf("edit-question-form-%s", question.ID) }
-				hx-post={ fmt.Sprintf("/admin/dashboard/questions/edit/%s", question.ID) }
+				hx-post={ fmt.Sprintf("/admin/dashboard/exam/%s/question/edit/%s", question.ExamID, question.ID) }
 				hx-target="#toast-container"
 				hx-swap="beforeend"
 				enctype="multipart/form-data"
@@ -319,7 +319,7 @@ templ DeleteDialog(questionID uuid.UUID, examID uuid.UUID) {
 				id={ fmt.Sprintf("delete-question-form-%s", questionID) }
 				hx-delete={ fmt.Sprintf("/admin/dashboard/exam/%s/question/delete/%s", examID, questionID) }
 				hx-target="#question-list"
-				hx-swap="innerHTML"
+				hx-swap="outerHTML"
 			>
 			@dialog.Title() {
 				Delete Question
