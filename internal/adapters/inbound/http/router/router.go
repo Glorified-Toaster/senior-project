@@ -223,6 +223,7 @@ func (r *Router) SetupRoutes() {
 			examRoutes.POST("/edit", r.userHandler.EditExamInfo())
 			examRoutes.POST("/delete", r.userHandler.SoftDeleteExam())
 			examRoutes.GET("/export-csv", r.userHandler.ExportExamCSV())
+			examRoutes.GET("/export-pdf", r.userHandler.ExamAttemptsPDF())
 
 			// Question Management
 			examRoutes.POST("/question/create", r.userHandler.CreateQuestion())
@@ -242,13 +243,18 @@ func (r *Router) SetupRoutes() {
 		sharedExamRoutes.POST("/preview/question-text", r.userHandler.PreviewQuestionText())
 		sharedExamRoutes.POST("/preview/question-choice", r.userHandler.PreviewQuestionChoice())
 		sharedExamRoutes.POST("/preview/question-form", r.userHandler.GetQuestionForm())
-		sharedExamRoutes.POST("/:id/question/create", r.userHandler.CreateQuestion())
-		sharedExamRoutes.POST("/:id/question/upload-csv", r.userHandler.UploadQuestionCSV())
-		sharedExamRoutes.POST("/:id/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
-		sharedExamRoutes.POST("/:id/question/edit/:question-id", r.userHandler.UpdateQuestion())
-		sharedExamRoutes.DELETE("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
-		sharedExamRoutes.POST("/:id/question/delete/:question-id", r.userHandler.DeleteQuestion())
-		sharedExamRoutes.GET("/:id/export-pdf", r.userHandler.ExamAttemptsPDF())
+		
+		sharedExamIDRoutes := sharedExamRoutes.Group("/:id")
+		sharedExamIDRoutes.Use(r.authMiddleware.ExamAccessMiddleware())
+		{
+			sharedExamIDRoutes.POST("/question/create", r.userHandler.CreateQuestion())
+			sharedExamIDRoutes.POST("/question/upload-csv", r.userHandler.UploadQuestionCSV())
+			sharedExamIDRoutes.POST("/question/upload-csv-random", r.userHandler.UploadQuestionCSVRandom())
+			sharedExamIDRoutes.POST("/question/edit/:question-id", r.userHandler.UpdateQuestion())
+			sharedExamIDRoutes.DELETE("/question/delete/:question-id", r.userHandler.DeleteQuestion())
+			sharedExamIDRoutes.POST("/question/delete/:question-id", r.userHandler.DeleteQuestion())
+			sharedExamIDRoutes.GET("/export-pdf", r.userHandler.ExamAttemptsPDF())
+		}
 	}
 
 	sharedQuestionRoutes := r.router.Group("/admin/dashboard/questions")

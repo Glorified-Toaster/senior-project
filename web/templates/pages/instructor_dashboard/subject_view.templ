@@ -46,7 +46,7 @@ templ SubjectViewPage(param SubjectViewParam) {
 						@icon.Bookmark(icon.Props{Class: "h-8 w-8 text-primary"})
 						{ param.Subject.Title }
 					</h1>
-					<p class="text-slate-500 mt-1">Manage exams for this subject</p>
+					<p class="text-slate-500 mt-1">Manage exams for this collection</p>
 				</div>
 				<div class="flex items-center gap-3">
 					<div class="text-right hidden md:block">
@@ -63,7 +63,7 @@ templ SubjectViewPage(param SubjectViewParam) {
 				@components.TotalCard(components.TotalCardProps{
 					Title:       "Total Exams",
 					Value:       fmt.Sprintf("%d", len(param.Exams)),
-					Description: "Exams in this subject",
+					Description: "Exams in this collection",
 					Icon:        icon.Book(icon.Props{Class: "h-8 w-8"}),
 					ColorClass:  "bg-primary/10 text-primary",
 				})

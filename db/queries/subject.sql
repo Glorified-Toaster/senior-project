@@ -87,6 +87,10 @@ ORDER BY u.full_name ASC;
 -- name: AssignInstructorToSubject :one
 INSERT INTO subject_instructors (subject_id, instructor_id)
 VALUES ($1, $2)
+ON CONFLICT (subject_id, instructor_id)
+DO UPDATE SET
+  deleted_at = NULL,
+  updated_at = NOW()
 RETURNING *;
 
 -- name: UnassignInstructorFromSubject :one
@@ -101,6 +105,10 @@ UPDATE subjects SET deleted_at = NOW() WHERE id = $1;
 -- name: AssignStudentToSubject :one
 INSERT INTO subject_students (subject_id, student_id)
 VALUES ($1, $2)
+ON CONFLICT (subject_id, student_id)
+DO UPDATE SET
+  deleted_at = NULL,
+  updated_at = NOW()
 RETURNING *;
 
 -- name: UnassignStudentFromSubject :one

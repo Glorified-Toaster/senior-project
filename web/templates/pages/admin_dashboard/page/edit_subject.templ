@@ -91,7 +91,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 		},
 		{
 			Href: "/admin/dashboard/subjects",
-			Path: "Subjects",
+			Path: "Collections",
 		},
 		{
 			Href: "/admin/dashboard/subject/" + param.Subject.ID.String(),
@@ -107,7 +107,7 @@ templ EditSubjectPage(param EditSubjectPageParam) {
 							{ param.Subject.Title }
 						</h1>
 					</div>
-					<p class="text-slate-500 mt-1">Edit subject information</p>
+					<p class="text-slate-500 mt-1">Edit collection information</p>
 				</div>
 				if param.Subject.Status == domain.SubjectStatusPublished {
 					<div id="admin-subject-timer" class="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#F9F8F7] border border-slate-200 shadow-xl shadow-primary/5 transition-all hover:border-primary/30 animate-in fade-in zoom-in duration-500">
@@ -333,7 +333,7 @@ templ InformationTab(param EditSubjectPageParam) {
 				Information 
 			}
 			@card.Description() {
-				Make changes to your subject here. Click save when you are done.
+				Make changes to your collection here. Click save when you are done.
 			}
 		}
 		<form
@@ -350,11 +350,11 @@ templ InformationTab(param EditSubjectPageParam) {
 					@icon.Pen(icon.Props{
 						Class: "h-4 w-4",
 					})
-					Subject Name
+					Collection Name
 				}
 				@input.Input(input.Props{
 					Type:        input.TypeText,
-					Placeholder: "Subject Name",
+					Placeholder: "Collection Name",
 					ID:          "subject_name",
 					Name:        "subject_name",
 					Value:       param.Subject.Title,
@@ -499,7 +499,7 @@ templ InformationTab(param EditSubjectPageParam) {
 					@icon.Hash(icon.Props{
 						Class: "h-4 w-4",
 					})
-					Subject UUID 
+					Collection UUID 
 				}
 				@input.Input(input.Props{
 					Type:     input.TypeText,
@@ -517,10 +517,10 @@ templ InformationTab(param EditSubjectPageParam) {
 					@icon.MessageSquareText(icon.Props{
 						Class: "h-4 w-4",
 					})
-					Subject Description
+					Collection Description
 				}
 				@textarea.Textarea(textarea.Props{
-					Placeholder: "Subject Description",
+					Placeholder: "Collection Description",
 					ID:          "subject_description",
 					Name:        "subject_description",
 					Rows:        3,
@@ -542,7 +542,7 @@ templ InformationTab(param EditSubjectPageParam) {
 							"hx-swap":   "none",
 						},
 					}) {
-						Delete Subject
+						Delete Collection
 					}
 					@button.Button(button.Props{
 						Type:  button.TypeButton,
@@ -553,7 +553,7 @@ templ InformationTab(param EditSubjectPageParam) {
 							"hx-swap":   "none",
 						},
 					}) {
-						Publish Subject
+						Publish Collection
 					}
 					@button.Button(button.Props{
 						Type: button.TypeSubmit,
@@ -572,7 +572,7 @@ templ InstructorsTab(param EditSubjectPageParam) {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
 			@components.TotalCard(components.TotalCardProps{
 				Title:       "Instructors",
-				Description: "Instructors for this subject",
+				Description: "Instructors for this collection",
 				Icon: icon.UserPen(icon.Props{
 					Class: "h-8 w-8",
 				}),
@@ -734,7 +734,7 @@ templ ExamForm(param EditSubjectPageParam) {
 		</div>
 		<div class="space-y-2 mb-4">
 			@form.Label(form.LabelProps{For: "subject_id", Class: "block text-sm font-medium mb-2"}) {
-				Subject
+				Collection
 			}
 			@input.Input(input.Props{
 				ID:       "subject_id",
@@ -793,7 +793,7 @@ templ SubjectStudentsTab(param EditSubjectPageParam) {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
 			@components.TotalCard(components.TotalCardProps{
 				Title:       "Students",
-				Description: "Students for this subject",
+				Description: "Students for this collection",
 				Icon: icon.User(icon.Props{
 					Class: "h-8 w-8",
 				}),
@@ -885,7 +885,7 @@ templ SubjectAnalyticsTab(param EditSubjectPageParam) {
 		@card.Card() {
 			@card.Header() {
 				@card.Title() { Pass/Fail Distribution }
-				@card.Description() { Overview of subject success rate across all exams. }
+				@card.Description() { Overview of collection success rate across all exams. }
 			}
 			@card.Content() {
 				<div class="h-[300px]">
@@ -947,7 +947,7 @@ templ SubjectAnalyticsTab(param EditSubjectPageParam) {
 				</div>
 				<div>
 					<h3 class="text-xl font-bold text-slate-800 tracking-tight">Exam-Level Analysis</h3>
-					<p class="text-xs text-slate-500 font-medium">Performance breakdown for each exam in this subject.</p>
+					<p class="text-xs text-slate-500 font-medium">Performance breakdown for each exam in this collection.</p>
 				</div>
 			</div>
 		}
@@ -996,18 +996,6 @@ func getPassRateColor(rate float64) string {
 
 templ AttemptsTab(param EditSubjectPageParam) {
 	<div class="flex flex-col gap-4">
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
-			@components.TotalCard(components.TotalCardProps{
-				Title:       "Students Attempted",
-				Description: "Total students who took exams",
-				Icon: icon.Users(icon.Props{
-					Class: "h-8 w-8",
-				}),
-				Value:      fmt.Sprintf("%d", len(param.OverallAttempts)),
-				ColorClass: "bg-blue-50 text-blue-600",
-			})
-		</div>
-
 		@card.Card() {
 			@card.Header(card.HeaderProps{Class: "p-0"}) {
 				<div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-4 rounded-t-xl">
@@ -1040,9 +1028,7 @@ templ AttemptsTab(param EditSubjectPageParam) {
 						<thead class="text-xs text-slate-700 uppercase bg-slate-50">
 							<tr>
 								<th class="px-6 py-3">Student</th>
-								<th class="px-6 py-3 text-center">Exams Attempted</th>
 								<th class="px-6 py-3 text-center">Total Score</th>
-
 								<th class="px-6 py-3 text-center">Result</th>
 								<th class="px-6 py-3 text-center">Submitted At</th>
 							</tr>
@@ -1050,8 +1036,8 @@ templ AttemptsTab(param EditSubjectPageParam) {
 						<tbody class="divide-y divide-slate-200">
 							if len(param.OverallAttempts) == 0 {
 								<tr>
-									<td colspan="6" class="px-6 py-8 text-center text-slate-500 italic">
-										No student activity found for this subject yet.
+									<td colspan="4" class="px-6 py-8 text-center text-slate-500 italic">
+										No student activity found for this collection yet.
 									</td>
 								</tr>
 							} else {
@@ -1062,9 +1048,6 @@ templ AttemptsTab(param EditSubjectPageParam) {
 												<span class="font-medium text-slate-900">{ attempt.StudentName }</span>
 												<span class="text-xs text-slate-500">{ attempt.StudentUsername }</span>
 											</div>
-										</td>
-										<td class="px-6 py-4 text-center font-medium">
-											{ fmt.Sprintf("%d", attempt.ExamsAttempted) }
 										</td>
 										<td class="px-6 py-4 text-center font-mono">
 											{ fmt.Sprintf("%.2f", attempt.TotalScore) }
@@ -1102,22 +1085,6 @@ templ AttemptsTab(param EditSubjectPageParam) {
 			}
 		}
 	</div>
-}
-
-func formatDuration(d time.Duration) string {
-	h := d / time.Hour
-	d -= h * time.Hour
-	m := d / time.Minute
-	d -= m * time.Minute
-	s := d / time.Second
-
-	if h > 0 {
-		return fmt.Sprintf("%dh %dm", h, m)
-	}
-	if m > 0 {
-		return fmt.Sprintf("%dm %ds", m, s)
-	}
-	return fmt.Sprintf("%ds", s)
 }
 
 func getAttemptStatusVariant(status domain.AttemptStatus) badge.Variant {

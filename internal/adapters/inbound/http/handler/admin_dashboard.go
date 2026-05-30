@@ -216,7 +216,7 @@ func parseUsername(ctx *gin.Context) (string, string, uuid.UUID) {
 
 func (h *UserHandler) AllExamsPageRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		limitStr := ctx.DefaultQuery("limit", "12")
+		limitStr := ctx.DefaultQuery("limit", "10")
 		offsetStr := ctx.DefaultQuery("offset", "0")
 
 		limit, _ := strconv.Atoi(limitStr)
@@ -330,9 +330,9 @@ func (h *UserHandler) SearchExams() gin.HandlerFunc {
 			TotalCount: totalCount,
 			Limit:      int32(limit),
 			Offset:     int32(offset),
-			BaseURL:    "/admin/exams/search?search=" + url.QueryEscape(search),
+			BaseURL:    "/admin/dashboard/exams/search?search=" + url.QueryEscape(search),
 			Search:     true,
-			SearchAPI:  "/admin/exams/search",
+			SearchAPI:  "/admin/dashboard/exams/search",
 		}))
 	}
 }
@@ -709,7 +709,15 @@ func (h *UserHandler) CreateExam() gin.HandlerFunc {
 			exams = []domain.Exam{}
 		}
 
-		render.Render(ctx, components.ExamTableGrid(exams))
+		// Determine baseURL based on user role
+		baseURL := "/admin/dashboard/exam/"
+		if role, exists := ctx.Get("role"); exists {
+			if domain.UserRole(role.(string)) == domain.RoleInstructor {
+				baseURL = "/instructor/exam/"
+			}
+		}
+
+		render.Render(ctx, components.ExamTableGrid(exams, baseURL))
 		helpers.Toast(ctx, "Create Exam Success", "Exam created successfully", toast.VariantSuccess)
 	}
 }
@@ -1042,6 +1050,10 @@ func (h *UserHandler) EditExamInfo() gin.HandlerFunc {
 			passScore = totalMarks / 2.0
 		}
 
+		if statusStr == "" {
+			statusStr = string(exam.Status)
+		}
+
 		_, err = h.App.UpdateExam(ctx, ports.UpdateExamParams{
 			ID:          examID,
 			Title:       name,
@@ -1240,11 +1252,26 @@ func (h *UserHandler) CreateQuestion() gin.HandlerFunc {
 			question.Choices = []domain.Choice{}
 		}
 
+		// Fetch all questions to render the updated list
+		allQuestions, err := h.App.ListQuestionsByExam(ctx.Request.Context(), parsedUUID)
+		if err != nil {
+			allQuestions = []domain.Question{}
+		}
+
+		for i := range allQuestions {
+			choices, err := h.App.ListChoicesByQuestion(ctx.Request.Context(), allQuestions[i].ID)
+			if err == nil {
+				allQuestions[i].Choices = choices
+			} else {
+				allQuestions[i].Choices = []domain.Choice{}
+			}
+		}
+
+		exam, _ := h.App.GetExamByID(ctx, parsedUUID)
 		helpers.Toast(ctx, "Create Question Success", "Question created successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
-			Questions: []domain.Question{
-				question,
-			},
+			Questions:  allQuestions,
+			ExamStatus: string(exam.Status),
 		}))
 	}
 }
@@ -1349,9 +1376,11 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 			}
 		}
 
+		exam, _ := h.App.GetExamByID(ctx, parsedUUID)
 		helpers.Toast(ctx, "Upload Question CSV Success", "Question uploaded successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
 			Questions: questions,
+			ExamStatus: string(exam.Status),
 		}))
 	}
 }
@@ -1490,10 +1519,12 @@ func (h *UserHandler) UploadQuestionCSVRandom() gin.HandlerFunc {
 			}
 		}
 
+		exam, _ := h.App.GetExamByID(ctx, parsedUUID)
 		msg := fmt.Sprintf("%d random question(s) added successfully", addedCount)
 		helpers.Toast(ctx, "Random CSV Upload Success", msg, toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
 			Questions: questions,
+			ExamStatus: string(exam.Status),
 		}))
 	}
 }
@@ -1613,8 +1644,6 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			}
 		}
 
-		questionMarksFloat := 1.0
-
 		if helpers.IsTrimmedEmpty(questionTitle) || (questionType != string(domain.QuestionTypeImage) && helpers.IsTrimmedEmpty(questionText)) ||
 			helpers.IsTrimmedEmpty(questionType) {
 			ctx.Header("HX-Reswap", "none")
@@ -1654,7 +1683,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 		questionChecksum, err := helpers.BuildQuestionChecksum(examID.String(), domain.Question{
 			QuestionText:  questionText,
 			QuestionType:  questionType,
-			Marks:         questionMarksFloat,
+			Marks:         existingQuestion.Marks,
 			Choices:       domainChoices,
 		})
 		if err != nil {
@@ -1677,7 +1706,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			QuestionTitle: questionTitle,
 			QuestionText:  questionText,
 			QuestionType:  domain.QuestionType(questionType),
-			Marks:         questionMarksFloat,
+			Marks:         existingQuestion.Marks,
 			ImageURL:      questionImageURL,
 			Checksum:      questionChecksum,
 		}
@@ -2973,22 +3002,6 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		ctx.Header("Content-Type", "application/pdf")
 		ctx.Data(200, "application/pdf", document.GetBytes())
 	}
-}
-
-func formatDuration(d time.Duration) string {
-	h := d / time.Hour
-	d -= h * time.Hour
-	m := d / time.Minute
-	d -= m * time.Minute
-	s := d / time.Second
-
-	if h > 0 {
-		return fmt.Sprintf("%dh %dm", h, m)
-	}
-	if m > 0 {
-		return fmt.Sprintf("%dm %ds", m, s)
-	}
-	return fmt.Sprintf("%ds", s)
 }
 
 func (h *UserHandler) AdminSubjectEndTimer() gin.HandlerFunc {

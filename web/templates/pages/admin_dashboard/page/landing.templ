@@ -118,7 +118,7 @@ templ LandingPage(systemName, adminEmail string) {
 												</div>
 											}
 											@accordion.Content() {
-												<p class="text-muted-foreground">After all exams in a subject are completed, you will be automatically redirected to the results page to view your overall performance, including charts and detailed breakdowns.</p>
+												<p class="text-muted-foreground">After all exams in a collection are completed, you will be automatically redirected to the results page to view your overall performance, including charts and detailed breakdowns.</p>
 											}
 										}
 									}
@@ -139,7 +139,7 @@ templ LandingPage(systemName, adminEmail string) {
 									@icon.BookOpen(icon.Props{Class: "size-5 mt-0.5 text-primary shrink-0"})
 									<div>
 										<p class="text-sm font-medium">For Instructors</p>
-										<p class="text-xs text-muted-foreground">Manage subjects, create exams, and review student performance analytics.</p>
+										<p class="text-xs text-muted-foreground">Manage collections, create exams, and review student performance analytics.</p>
 									</div>
 								</div>
 							}
@@ -152,7 +152,7 @@ templ LandingPage(systemName, adminEmail string) {
 										</div>
 									}
 									@dialog.Description() {
-										Manage your assigned subjects and exams efficiently.
+										Manage your assigned collections and exams efficiently.
 									}
 								}
 								<div class="max-h-[60vh] overflow-y-auto pr-1">
@@ -161,11 +161,11 @@ templ LandingPage(systemName, adminEmail string) {
 											@accordion.Trigger() {
 												<div class="flex items-center gap-2">
 													@icon.BookOpen(icon.Props{Class: "size-4 text-primary shrink-0"})
-													Subject Management
+													Collection Management
 												</div>
 											}
 											@accordion.Content() {
-												<p class="text-muted-foreground">View and manage subjects assigned to you by the administrator. Monitor enrolled students and track subject-level analytics.</p>
+												<p class="text-muted-foreground">View and manage collections assigned to you by the administrator. Monitor enrolled students and track collection-level analytics.</p>
 											}
 										}
 										@accordion.Item() {
@@ -230,7 +230,7 @@ templ LandingPage(systemName, adminEmail string) {
 									@icon.Shield(icon.Props{Class: "size-5 mt-0.5 text-primary shrink-0"})
 									<div>
 										<p class="text-sm font-medium">For Administrators</p>
-										<p class="text-xs text-muted-foreground">Oversee the entire system, manage users, subjects, and institutional settings.</p>
+										<p class="text-xs text-muted-foreground">Oversee the entire system, manage users, collections, and institutional settings.</p>
 									</div>
 								</div>
 							}
@@ -263,11 +263,11 @@ templ LandingPage(systemName, adminEmail string) {
 											@accordion.Trigger() {
 												<div class="flex items-center gap-2">
 													@icon.BookOpen(icon.Props{Class: "size-4 text-primary shrink-0"})
-													Subject Management
+													Collection Management
 												</div>
 											}
 											@accordion.Content() {
-												<p class="text-muted-foreground">Create subjects, assign instructors and students, set pass scores, and configure exam timers and duration settings.</p>
+												<p class="text-muted-foreground">Create collections, assign instructors and students, set pass scores, and configure exam timers and duration settings.</p>
 											}
 										}
 										@accordion.Item() {
@@ -289,7 +289,7 @@ templ LandingPage(systemName, adminEmail string) {
 												</div>
 											}
 											@accordion.Content() {
-												<p class="text-muted-foreground">Access comprehensive analytics for subjects and exams including pass rates, score distributions, and student performance metrics.</p>
+												<p class="text-muted-foreground">Access comprehensive analytics for collections and exams including pass rates, score distributions, and student performance metrics.</p>
 											}
 										}
 										@accordion.Item() {

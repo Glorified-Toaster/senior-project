@@ -390,9 +390,6 @@ func (r *ExamRepository) ListOverallAttemptsBySubject(ctx context.Context, subje
 		}
 
 		if att.SubmittedAt != nil {
-			duration := att.SubmittedAt.Sub(att.StartedAt)
-			info.TotalDuration += duration
-
 			if info.LastSubmittedAt == nil || att.SubmittedAt.After(*info.LastSubmittedAt) {
 				info.LastSubmittedAt = att.SubmittedAt
 			}
@@ -400,11 +397,10 @@ func (r *ExamRepository) ListOverallAttemptsBySubject(ctx context.Context, subje
 		studentInfo[att.StudentID] = info
 	}
 
-	// Sum best scores
+	// Sum best scores per exam
 	for key, score := range bestScores {
 		info := studentInfo[key.studentID]
 		info.TotalScore += score
-		info.ExamsAttempted++
 		studentInfo[key.studentID] = info
 	}
 

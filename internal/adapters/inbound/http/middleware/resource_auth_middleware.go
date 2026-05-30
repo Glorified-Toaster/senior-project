@@ -3,7 +3,10 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
+	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/domain"
+	"uot-exam/web/templates/components/toast"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,6 +21,25 @@ func (m *AuthMiddleware) handleError(c *gin.Context, title, msg string, status i
 	}
 
 	if status == http.StatusForbidden {
+		role, _ := c.Get("role")
+		isInstructorPath := strings.HasPrefix(c.Request.URL.Path, "/instructor") || role == string(domain.RoleInstructor)
+
+		if isInstructorPath {
+			if c.GetHeader("HX-Request") == "true" {
+				c.Header("HX-Reswap", "none")
+				helpers.Toast(c, title, msg, toast.VariantError)
+				c.Status(http.StatusOK)
+				c.Abort()
+				return
+			}
+
+			// For full page load, redirect to dashboard with error query parameter
+			redirectURL := "/instructor/dashboard"
+			c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s?error=%s", redirectURL, msg))
+			c.Abort()
+			return
+		}
+
 		c.HTML(http.StatusForbidden, "403.html", gin.H{
 			"Title":   title,
 			"Message": msg,
@@ -81,6 +103,14 @@ func (m *AuthMiddleware) SubjectAccessMiddleware() gin.HandlerFunc {
 				m.handleError(c, "Access Denied", "You are not assigned to this subject", http.StatusForbidden)
 				return
 			}
+
+			if c.Request.Method != http.MethodGet && !strings.HasSuffix(c.Request.URL.Path, "/search") {
+				subject, err := m.app.GetSubjectByID(c.Request.Context(), subjectID)
+				if err == nil && subject.Status == domain.SubjectStatusPublished {
+					m.handleError(c, "Forbidden", "Cannot modify a published subject", http.StatusForbidden)
+					return
+				}
+			}
 		}
 
 		c.Next()
@@ -141,6 +171,14 @@ func (m *AuthMiddleware) ExamAccessMiddleware() gin.HandlerFunc {
 				m.logger.LogErrorWithLevel("warn", "AUTH_ERROR", "UNAUTHORIZED_EXAM_ACCESS", "Instructor attempted to access exam in non-assigned subject", nil)
 				m.handleError(c, "Access Denied", "You are no longer assigned to the subject for this exam", http.StatusForbidden)
 				return
+			}
+
+			if c.Request.Method != http.MethodGet && !strings.HasSuffix(c.Request.URL.Path, "/search") {
+				subject, err := m.app.GetSubjectByID(c.Request.Context(), exam.SubjectID)
+				if err == nil && subject.Status == domain.SubjectStatusPublished {
+					m.handleError(c, "Forbidden", "Cannot modify an exam in a published subject", http.StatusForbidden)
+					return
+				}
 			}
 		}
 

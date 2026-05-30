@@ -92,6 +92,10 @@ func mapSqlcQuestionToDomain(question sqlc.Question) domain.Question {
 	if question.QuestionImage != nil {
 		imageURL = *question.QuestionImage
 	}
+	var checksum string
+	if question.Checksum != nil {
+		checksum = *question.Checksum
+	}
 	return domain.Question{
 		ID:            question.ID,
 		ExamID:        question.ExamID.UUID,
@@ -100,6 +104,7 @@ func mapSqlcQuestionToDomain(question sqlc.Question) domain.Question {
 		QuestionType:  string(question.QuestionType),
 		QuestionImage: imageURL,
 		Marks:         question.Marks,
+		Checksum:      checksum,
 		CreatedAt:     question.CreatedAt.Time,
 		UpdatedAt:     question.UpdatedAt.Time,
 		DeletedAt:     &question.DeletedAt.Time,

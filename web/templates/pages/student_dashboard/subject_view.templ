@@ -160,7 +160,7 @@ templ SubjectViewPage(param SubjectViewParam) {
 					submitted = true;
 					if (timerDisplay) timerDisplay.textContent = '00:00:00';
 					socket.close();
-					window.location.reload();
+					window.location.href = '/student/subject/' + subjectId + '/result';
 					return;
 				}
 

@@ -1,6 +1,7 @@
 certs/*
 tmp/
 /logs/
+docs/
 /logs
 logs/**/*.log
 main

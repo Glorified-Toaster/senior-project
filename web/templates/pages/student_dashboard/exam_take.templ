@@ -8,7 +8,6 @@ import "uot-exam/web/templates/components/button"
 import "uot-exam/web/templates/components/toast"
 import "uot-exam/web/templates/components/badge"
 import "uot-exam/web/templates/components/label"
-import "uot-exam/web/templates/components/aspectratio"
 import "uot-exam/web/templates/components/dialog"
 import "uot-exam/internal/domain"
 import "github.com/google/uuid"
@@ -270,7 +269,7 @@ templ ExamTakePage(param ExamTakeParam) {
 				showToast('Exam Auto-Submitted', 'Time is up. Your exam has been automatically submitted.', 'warning');
 				
 				setTimeout(function() {
-					window.location.href = '/student/subject/' + subjectId;
+					window.location.href = '/student/subject/' + subjectId + '/result';
 				}, 2000);
 				return;
 			}
@@ -450,18 +449,15 @@ templ ExamImageQuestionItem(question domain.Question, choices []domain.Choice, n
 			</div>
 		}
 		@card.Content() {
-			<div class="w-full rounded-md overflow-x-auto">
+			<div class="rounded-md overflow-x-auto">
 				<span class="latex-content">{ question.QuestionText }</span>
-				@aspectratio.AspectRatio(aspectratio.Props{
-					Ratio: aspectratio.RatioWide,
-					Class: "rounded-md overflow-hidden",
-				}) {
+				<div class="flex justify-center items-center mt-4">
 					<img
 						src={ question.QuestionImage }
 						alt="Question Image"
-						class="h-full w-full object-cover"
+						class="max-w-full max-h-96 w-auto h-auto object-contain rounded-md"
 					/>
-				}
+				</div>
 			</div>
 		}
 		@card.Footer() {

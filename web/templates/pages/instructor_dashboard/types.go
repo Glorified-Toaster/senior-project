@@ -5,8 +5,9 @@ import (
 )
 
 type DashboardPageParam struct {
-	Instructor domain.User
-	Subjects   []SubjectInfo
+	Instructor   domain.User
+	Subjects     []SubjectInfo
+	ErrorMessage string
 }
 
 type SubjectInfo struct {

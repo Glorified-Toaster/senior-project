@@ -83,11 +83,33 @@ templ EditExamPage(param EditExamPageParam) {
             // Highlight all code blocks on page load
             hljs.highlightAll();
             
-            // Re-highlight after HTMX updates
+            // Re-highlight and re-render math after HTMX updates
             document.body.addEventListener('htmx:afterSwap', function(event) {
-                event.detail.target.querySelectorAll('pre code').forEach((block) => {
+                // For outerHTML swaps, event.detail.target may be detached.
+                // Use event.detail.elt (the new element) or fall back to target.
+                var el = event.detail.elt || event.detail.target;
+                // If the element is detached, try to find the question list in the DOM
+                if (!document.contains(el)) {
+                    el = document.getElementById('question-list') || event.detail.target;
+                }
+
+                // Re-highlight code blocks
+                el.querySelectorAll('pre code').forEach(function(block) {
                     hljs.highlightElement(block);
                 });
+
+                // Re-render math
+                if (typeof renderMathInElement === 'function') {
+                    renderMathInElement(el, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                }
             });
         </script>
 
@@ -98,7 +120,7 @@ templ EditExamPage(param EditExamPageParam) {
         },
         {
             Href: "/admin/dashboard/subjects",
-            Path: "Subjects",
+            Path: "Collections",
         },
         {
             Href: "/admin/dashboard/subject/" + param.Subject.ID.String(),
@@ -260,7 +282,7 @@ templ ExamInformationTab(param EditExamPageParam) {
 				@icon.Book(icon.Props{
 					Class: "h-4 w-4",
 				})
-				Exam Subject UUID 
+				Exam Collection UUID 
 			}
 			@input.Input(input.Props{
 				Type: input.TypeText,

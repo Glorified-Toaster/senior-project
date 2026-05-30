@@ -38,16 +38,16 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 		@timepicker.Script()
 		@components.Sidebar("/admin/dashboard/subjects", []navbar.BreadPath{
 			{Href: "/admin/dashboard", Path: "Dashboard"},
-			{Href: "/admin/dashboard/subjects", Path: "Subjects"},
+			{Href: "/admin/dashboard/subjects", Path: "Collections"},
 		}, param.Username, param.FullName, param.UserID, "/admin/dashboard") {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
 							@icon.Bookmark(icon.Props{Class: "h-8 w-8"})
-							All Subjects
+							All Collections
 						</h1>
-						<p class="text-slate-500 mt-1">Overview of all subjects on the platform.</p>
+						<p class="text-slate-500 mt-1">Overview of all collections on the platform.</p>
 					</div>
 				</div>
 				<div class="flex items-center gap-2 w-full">
@@ -55,7 +55,7 @@ templ AllSubjectsPage(param AllSubjectsPageParam) {
 					@input.Input(input.Props{
 						Type:        input.TypeSearch,
 						Name:        "search",
-						Placeholder: "Search subjects...",
+						Placeholder: "Search collections...",
 						Attributes: templ.Attributes{
 							"hx-post":    "/admin/dashboard/subjects/search",
 							"hx-trigger": "keyup changed delay:300ms, search",

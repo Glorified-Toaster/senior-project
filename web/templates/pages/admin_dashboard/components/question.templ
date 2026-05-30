@@ -547,7 +547,7 @@ templ AddQuestionForm(param EditExamPageParam) {
 	<form id="add_question_form" 
 		hx-post={ "/admin/dashboard/exam/"+ param.Exam.ID.String() +"/question/create" }
 		hx-target="#question-list" 
-		hx-swap="beforeend"
+		hx-swap="outerHTML"
 		enctype="multipart/form-data"
 		hx-encoding="multipart/form-data"
 		class="space-y-4">
@@ -764,7 +764,7 @@ templ choiceItemCheckbox(index int, choiceText string, isCorrect bool, formID st
 				Attributes: templ.Attributes{
 					"hx-post": "/admin/dashboard/exam/preview/question-choice",
 					"hx-trigger": "keyup changed delay:300ms",
-					"hx-target": "#question-choice-preview-wrapper-" + strconv.Itoa(index),
+					"hx-target": "#" + formID + "-choice-preview-wrapper-" + strconv.Itoa(index),
 					"hx-swap": "innerHTML",
 				},
 			})			
@@ -790,7 +790,7 @@ templ choiceItemCheckbox(index int, choiceText string, isCorrect bool, formID st
 			</label>
 		</div>
 	</div>
-<div class="flex justify-center" id={ "question-choice-preview-wrapper-" + strconv.Itoa(index) }>
+<div class="flex justify-center" id={ formID + "-choice-preview-wrapper-" + strconv.Itoa(index) }>
         @QuestionChoicesPreview(utils.IfElse(choiceText != "", choiceText, fmt.Sprintf(`$\text{Choice %d}$`, index)))
     </div>
 	<script>

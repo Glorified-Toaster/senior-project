@@ -3,7 +3,6 @@ package helpers
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -22,7 +21,6 @@ func BuildQuestionChecksum(examID string, q domain.Question) (string, error) {
 	b.WriteString(examID)
 	b.WriteString(q.QuestionText)
 	b.WriteString(q.QuestionType)
-	b.WriteString(fmt.Sprintf("%.2f", q.Marks))
 	for _, c := range q.Choices {
 		b.WriteString(c.ChoiceText)
 	}

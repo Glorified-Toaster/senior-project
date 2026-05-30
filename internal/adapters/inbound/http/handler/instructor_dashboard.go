@@ -1,22 +1,21 @@
 package handler
 
 import (
+	"strconv"
+	"strings"
+	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/domain"
 	"uot-exam/internal/ports"
+	"uot-exam/web/templates/components/toast"
 	"uot-exam/web/templates/pages"
+	adminComponents "uot-exam/web/templates/pages/admin_dashboard/components"
 	instructorPages "uot-exam/web/templates/pages/instructor_dashboard"
 	"uot-exam/web/templates/render"
-	"uot-exam/internal/adapters/inbound/http/helpers"
-	"uot-exam/web/templates/components/toast"
-	adminComponents "uot-exam/web/templates/pages/admin_dashboard/components"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"strconv"
-	"strings"
 )
 
-// InstructorDashboardRender renders the instructor dashboard showing assigned subjects.
 func (h *UserHandler) InstructorDashboardRender() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		username, fullname, userID := parseUsername(ctx)
@@ -44,14 +43,17 @@ func (h *UserHandler) InstructorDashboardRender() gin.HandlerFunc {
 				TotalExams: totalExams,
 			})
 		}
+		errQuery := ctx.Query("error")
 
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, pages.BasePage("Instructor Dashboard", instructorPages.DashboardPage(instructorPages.DashboardPageParam{
-			Instructor: instructorUser,
-			Subjects:   subjectInfos,
+			Instructor:   instructorUser,
+			Subjects:     subjectInfos,
+			ErrorMessage: errQuery,
 		})))
 	}
 }
+
 
 // InstructorSubjectView renders the subject detail page for instructors.
 func (h *UserHandler) InstructorSubjectView() gin.HandlerFunc {
@@ -164,12 +166,17 @@ func (h *UserHandler) InstructorEditExamPageRender() gin.HandlerFunc {
 			questions[i].Choices = choices
 		}
 
+		attempts, _ := h.App.ListAttemptsByExam(ctx.Request.Context(), examID)
+		analytics, _ := h.App.GetExamAnalytics(ctx.Request.Context(), examID)
+
 		ctx.Header("Content-Type", "text/html")
 		render.Render(ctx, pages.BasePage("Edit Exam - "+exam.Title, instructorPages.EditExamPage(instructorPages.EditExamPageParam{
 			Instructor: instructorUser,
 			Subject:    subject,
 			Exam:       exam,
 			Questions:  questions,
+			Attempts:   attempts,
+			Analytics:  analytics,
 		})))
 	}
 }
@@ -217,13 +224,7 @@ func (h *UserHandler) SearchSubjectStudentsInstructor() gin.HandlerFunc {
 			return
 		}
 
-		// Verify instructor assignment
-		_, _, userID := parseUsername(ctx)
-		assigned, _ := h.App.IsInstructorAssigned(ctx.Request.Context(), subjectID, userID)
-		if !assigned {
-			ctx.Status(403)
-			return
-		}
+
 
 		search := ctx.PostForm("search")
 		if search == "" { search = ctx.Query("search") }

@@ -35,7 +35,7 @@ templ DashboardPage(param DashboardPageParam) {
 							@icon.LayoutPanelTop(icon.Props{Class: "h-8 w-8 text-primary"})
 							Instructor Dashboard
 						</h1>
-						<p class="text-slate-500 mt-1">Manage Your Assigned Subjects</p>
+						<p class="text-slate-500 mt-1">Manage Your Assigned Collections</p>
 					</div>
 					<div class="flex items-center gap-3">
 						<div class="text-right hidden md:block">
@@ -47,11 +47,11 @@ templ DashboardPage(param DashboardPageParam) {
 						</div>
 					</div>
 				</div>
-					<div class="w-full md:w-72 flex items-center gap-2 mb-6">
+					<div class="w-full flex items-center gap-2 mb-6">
 						@icon.Search(icon.Props{Class: "h-4 w-4 text-slate-500"})
 						@input.Input(input.Props{
 							Type:        input.TypeText,
-							Placeholder: "Search subjects...",
+							Placeholder: "Search collections...",
 							ID:          "subject-search",
 							Name:        "search",
 							Class:       "w-full",
@@ -69,7 +69,19 @@ templ DashboardPage(param DashboardPageParam) {
 			</div>
 		</main>}
 	</div>
-	<div id="toast-container"></div>
+	<div id="toast-container">
+		if param.ErrorMessage != "" {
+			@toast.Toast(toast.Props{
+				Title:         "Access Denied",
+				Description:   param.ErrorMessage,
+				Variant:       toast.VariantError,
+				Duration:      4000,
+				ShowIndicator: true,
+				Dismissible:   true,
+				Icon:          true,
+			})
+		}
+	</div>
 }
 
 templ SubjectGrid(subjects []SubjectInfo) {
@@ -77,8 +89,8 @@ templ SubjectGrid(subjects []SubjectInfo) {
 		@card.Card(card.Props{}) {
 			@card.Content(card.ContentProps{Class: "p-12 text-center"}) {
 				@icon.BookOpen(icon.Props{Class: "h-12 w-12 text-slate-300 mx-auto mb-4 mt-4"})
-				<h3 class="text-lg font-semibold text-slate-600 mb-2">No Subjects Found</h3>
-				<p class="text-slate-400 mb-4">No subjects match your search or you haven't been assigned to any yet.</p>
+				<h3 class="text-lg font-semibold text-slate-600 mb-2">No Collections Found</h3>
+				<p class="text-slate-400 mb-4">No collections match your search or you haven't been assigned to any yet.</p>
 			}
 		}
 	} else {

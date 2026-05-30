@@ -634,7 +634,7 @@ templ AddInstructorDialog(param UserTableProps){
 					Add instructors
 				}
 				@dialog.Description(){
-					Select one or more instructors to assign to this subject.
+					Select one or more instructors to assign to this collection.
 				}
 			}
 
@@ -793,7 +793,7 @@ templ AddStudentDialog(param UserTableProps) {
 									@icon.Download(icon.Props{Class: "h-8 w-8"})
 								</div>
 								<h3 class="text-lg font-bold text-slate-800">Export Student List</h3>
-								<p class="text-sm text-slate-500 mb-6 text-center max-w-xs">Download the complete list of assigned students for this subject in CSV format.</p>
+								<p class="text-sm text-slate-500 mb-6 text-center max-w-xs">Download the complete list of assigned students for this collection in CSV format.</p>
 								@button.Button(button.Props{
 									Variant: button.VariantDefault,
 									Href:    param.ExportURL,
@@ -839,7 +839,7 @@ templ AddStudentCSVDialog(param UserTableProps) {
 					Assign Students via CSV
 				}
 				@dialog.Description() {
-					Upload a CSV file containing student usernames to assign them to this subject.
+					Upload a CSV file containing student usernames to assign them to this collection.
 				}
 			}
 			<form

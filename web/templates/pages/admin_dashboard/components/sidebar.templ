@@ -68,10 +68,10 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 							}) {
 								@collapsible.Trigger() {
 									@sidebar.MenuButton(sidebar.MenuButtonProps{
-										Tooltip: "Exams",
+										Tooltip: "Collections",
 									}) {
-										@icon.Book(icon.Props{Class: "size-4"})
-										<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Exams</span>
+										@icon.Bookmark(icon.Props{Class: "size-4"})
+										<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Collections</span>
 										@icon.ChevronRight(icon.Props{
 											Class: "ml-auto size-4 transition-transform group-data-[tui-collapsible-state=open]/collapsible:rotate-90 group-data-[tui-sidebar-state=collapsed]:hidden",
 										})
@@ -79,6 +79,14 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 								}
 								@collapsible.Content() {
 									@sidebar.MenuSub() {
+										@sidebar.MenuSubItem() {
+											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
+												Href:  "/admin/dashboard/subjects",
+												Class: activeClass(currentPath, "/admin/dashboard/subjects"),
+											}) {
+												<span>All Collections</span>
+											}
+										}
 										@sidebar.MenuSubItem() {
 											@sidebar.MenuSubButton(sidebar.MenuSubButtonProps{
 												Href:  "/admin/dashboard/exams",
@@ -89,16 +97,6 @@ templ Sidebar(currentPath string, breadPath []navbar.BreadPath, username string,
 										}
 									}
 								}
-							}
-						}
-						@sidebar.MenuItem() {
-							@sidebar.MenuButton(sidebar.MenuButtonProps{
-								Href:    "/admin/dashboard/subjects",
-								Tooltip: "Subjects",
-								Class:   activeClass(currentPath, "/admin/dashboard/subjects"),
-							}) {
-								@icon.Bookmark(icon.Props{Class: "size-4"})
-								<span class="group-data-[tui-sidebar-state=collapsed]:hidden">Subjects</span>
 							}
 						}
 					}

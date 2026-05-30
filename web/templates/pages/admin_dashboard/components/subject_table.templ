@@ -24,7 +24,7 @@ type SubjectTableContainerProps struct {
 
 templ SubjectTableGrid(subjects []domain.Subject) {
 	if len(subjects) == 0 {
-		@EmptyState("No subjects found", "We couldn't find any subjects matching your search. Try adjusting your keywords or filters.", true, false)
+		@EmptyState("No collections found", "We couldn't find any collections matching your search. Try adjusting your keywords or filters.", true, false)
 	} else {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 			for _, subject := range subjects {
@@ -238,7 +238,7 @@ templ DialogAddSubject() {
 			@button.Button(button.Props{
 				Variant: button.VariantDefault,
 			}) {
-				Add Subject
+				Add Collection
 			}
 		}
 		@dialog.Content(dialog.ContentProps{
@@ -246,10 +246,10 @@ templ DialogAddSubject() {
 		}) {
 			@dialog.Header() {
 				@dialog.Title() {
-					Add Subject
+					Add Collection
 				}
 				@dialog.Description() {
-					Add a new subject to the platform.
+					Add a new collection to the platform.
 				}
 			}
 			<form
@@ -266,7 +266,7 @@ templ DialogAddSubject() {
 						@input.Input(input.Props{
 							ID:          "title",
 							Name:        "title",
-							Placeholder: "Enter subject title",
+							Placeholder: "Enter collection title",
 							Required:    true,
 						})
 					</div>
@@ -333,7 +333,7 @@ templ DialogAddSubject() {
 						@textarea.Textarea(textarea.Props{
 							ID:          "description",
 							Name:        "description",
-							Placeholder: "Enter subject description",
+							Placeholder: "Enter collection description",
 						})
 					</div>
 
@@ -353,7 +353,7 @@ templ DialogAddSubject() {
 							Variant: button.VariantDefault,
 							Type:    button.TypeSubmit,
 						}) {
-						Add Subject
+						Add Collection
 					}
 				}
 			</form>

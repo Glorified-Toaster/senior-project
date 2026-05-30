@@ -62,9 +62,7 @@ type SubjectAttempt struct {
 	StudentName     string
 	StudentUsername string
 	TotalScore      float64
-	ExamsAttempted  int
 	LastSubmittedAt *time.Time
-	TotalDuration   time.Duration
 }
 
 type StudentAnswer struct {
