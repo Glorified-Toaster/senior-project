@@ -1379,7 +1379,7 @@ func (h *UserHandler) UploadQuestionCSV() gin.HandlerFunc {
 		exam, _ := h.App.GetExamByID(ctx, parsedUUID)
 		helpers.Toast(ctx, "Upload Question CSV Success", "Question uploaded successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
-			Questions: questions,
+			Questions:  questions,
 			ExamStatus: string(exam.Status),
 		}))
 	}
@@ -1523,7 +1523,7 @@ func (h *UserHandler) UploadQuestionCSVRandom() gin.HandlerFunc {
 		msg := fmt.Sprintf("%d random question(s) added successfully", addedCount)
 		helpers.Toast(ctx, "Random CSV Upload Success", msg, toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
-			Questions: questions,
+			Questions:  questions,
 			ExamStatus: string(exam.Status),
 		}))
 	}
@@ -1577,7 +1577,7 @@ func (h *UserHandler) DeleteQuestion() gin.HandlerFunc {
 		ctx.Header("HX-Trigger", "close-dialog")
 		helpers.Toast(ctx, "Delete Question Success", "Question deleted successfully", toast.VariantSuccess)
 		render.Render(ctx, components.QuestionList(components.QuestionListProps{
-			Questions: questions,
+			Questions:  questions,
 			ExamStatus: string(exam.Status),
 		}))
 	}
@@ -1618,7 +1618,7 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 			helpers.Toast(ctx, "Update Question Failed", "Invalid exam ID", toast.VariantError)
 			return
 		}
-		
+
 		id, err := uuid.Parse(ctx.Param("question-id"))
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -1681,10 +1681,10 @@ func (h *UserHandler) UpdateQuestion() gin.HandlerFunc {
 		}
 
 		questionChecksum, err := helpers.BuildQuestionChecksum(examID.String(), domain.Question{
-			QuestionText:  questionText,
-			QuestionType:  questionType,
-			Marks:         existingQuestion.Marks,
-			Choices:       domainChoices,
+			QuestionText: questionText,
+			QuestionType: questionType,
+			Marks:        existingQuestion.Marks,
+			Choices:      domainChoices,
 		})
 		if err != nil {
 			ctx.Header("HX-Reswap", "none")
@@ -1860,6 +1860,7 @@ func subjectInstructorsTableProps(subjectID uuid.UUID, instructors, allInstructo
 		Instructors:                allInstructors,
 		AddInstructorAPI:           base + "/instructors/assign",
 		InstructorAssignSwapTarget: "#instructors-user-table-root",
+		UnassignAPI:                base + "/instructors/unassign/:user_id",
 	}
 }
 
@@ -2516,25 +2517,11 @@ func (h *UserHandler) UnassignStudentFromSubject() gin.HandlerFunc {
 		totalCount, _ := h.App.CountStudentsBySubjectID(ctx, sid)
 		allStudents, _ := h.App.SearchStudents(ctx, ports.SearchStudentsParams{Search: "", Limit: 100, Offset: 0})
 
+		available := filterAvailableUsers(allStudents, students)
+
 		ctx.Header("Content-Type", "text/html")
-		components.UserTableContainer(components.UserTableProps{
-			Users:                   students,
-			Title:                   "Students",
-			BaseURL:                 "/admin/dashboard/subject/" + subjectID + "/students/search",
-			ID:                      "students-table",
-			Search:                  true,
-			SearchAPI:               "/admin/dashboard/subject/" + subjectID + "/students/search",
-			TotalCount:              totalCount,
-			Limit:                   limit,
-			Offset:                  offset,
-			AddStudent:              true,
-			Students:                allStudents,
-			AddStudentAPI:           "/admin/dashboard/subject/" + subjectID + "/students/assign",
-			AddStudentCSVAPI:        "/admin/dashboard/subject/" + subjectID + "/students/assign-csv",
-			StudentAssignSwapTarget: "#students-user-table-root",
-			ExportURL:               "/admin/dashboard/subject/" + subjectID + "/students/export",
-			UnassignAPI:             "/admin/dashboard/subject/" + subjectID + "/students/unassign/:user_id",
-		}).Render(ctx, ctx.Writer)
+		props := subjectStudentsTableProps(sid, students, available, totalCount, limit, offset, "")
+		render.Render(ctx, components.UserTableRoot("students-user-table-root", props))
 	}
 }
 
@@ -2570,7 +2557,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(5).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri", 
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri",
 						Size:  6,
 						Align: align.Right,
 						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
@@ -2589,7 +2576,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 					}),
 				),
 				col.New(8).Add(
-					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri", 
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri",
 						Size:  14,
 						Style: fontstyle.Bold,
 						Align: align.Right,
@@ -2607,7 +2594,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(15).Add(
 				col.New(12).Add(
-					text.New("STUDENT ATTEMPTS REPORT", props.Text{Family: "Amiri", 
+					text.New("STUDENT ATTEMPTS REPORT", props.Text{Family: "Amiri",
 						Size:  20,
 						Style: fontstyle.Bold,
 						Align: align.Center,
@@ -2617,7 +2604,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 			),
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New(shapeTxt(fmt.Sprintf("%s - %s", subject.Title, exam.Title)), props.Text{Family: "Amiri", 
+					text.New(shapeTxt(fmt.Sprintf("%s - %s", subject.Title, exam.Title)), props.Text{Family: "Amiri",
 						Size:  12,
 						Style: fontstyle.BoldItalic,
 						Align: align.Center,
@@ -2706,7 +2693,7 @@ func (h *UserHandler) ExamAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri", 
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri",
 						Size:  8,
 						Align: align.Center,
 						Style: fontstyle.Italic,
@@ -2842,7 +2829,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(5).Add(
 				col.New(12).Add(
-					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri", 
+					text.New(fmt.Sprintf("Report Issue Date: %s", time.Now().Format("Jan 02, 2006")), props.Text{Family: "Amiri",
 						Size:  6,
 						Align: align.Right,
 						Color: &props.Color{Red: 148, Green: 163, Blue: 184},
@@ -2861,7 +2848,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 					}),
 				),
 				col.New(8).Add(
-					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri", 
+					text.New("EXAMINATION MANAGEMENT SYSTEM", props.Text{Family: "Amiri",
 						Size:  14,
 						Style: fontstyle.Bold,
 						Align: align.Right,
@@ -2879,7 +2866,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(15).Add(
 				col.New(12).Add(
-					text.New("OVERALL PERFORMANCE REPORT", props.Text{Family: "Amiri", 
+					text.New("OVERALL PERFORMANCE REPORT", props.Text{Family: "Amiri",
 						Size:  20,
 						Style: fontstyle.Bold,
 						Align: align.Center,
@@ -2889,7 +2876,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 			),
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New(shapeTxt(subject.Title), props.Text{Family: "Amiri", 
+					text.New(shapeTxt(subject.Title), props.Text{Family: "Amiri",
 						Size:  12,
 						Style: fontstyle.BoldItalic,
 						Align: align.Center,
@@ -2986,7 +2973,7 @@ func (h *UserHandler) SubjectOverallAttemptsPDF() gin.HandlerFunc {
 		m.AddRows(
 			row.New(10).Add(
 				col.New(12).Add(
-					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri", 
+					text.New("This is a computer-generated report. All records are stored securely in the system.", props.Text{Family: "Amiri",
 						Size:  8,
 						Align: align.Center,
 						Style: fontstyle.Italic,

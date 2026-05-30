@@ -435,10 +435,10 @@ templ UserTableContainerWithDeleteToast(props UserTableProps) {
 }
 
 templ UserTableBody(props UserTableProps) {
-	@UserTableRows(props.Users, props.HideActions, props.RestoreButton, props.UnassignAPI, "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"), props.Limit, props.Offset)
+	@UserTableRows(props.Users, props.HideActions, props.RestoreButton, props.UnassignAPI, "#" + utils.IfElse(props.ID != "", props.ID, "users-table-container"), props.Limit, props.Offset, props.InstructorAssignSwapTarget, props.StudentAssignSwapTarget)
 }
 
-templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, unassignAPI string, swapTarget string, limit int32, offset int32) {
+templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, unassignAPI string, swapTarget string, limit int32, offset int32, instructorAssignSwapTarget string, studentAssignSwapTarget string) {
 	if len(users) == 0 {
 		<tr>
 			<td colspan="7" class="p-16 text-center">
@@ -536,7 +536,7 @@ templ UserTableRows(users []domain.User, hideActions bool, restoreButton bool, u
 									Attributes: templ.Attributes{
 										"title":     "Unassign",
 										"hx-post":   fmt.Sprintf("%s?limit=%d&offset=%d", strings.Replace(unassignAPI, ":user_id", user.ID.String(), 1), limit, offset),
-										"hx-target": swapTarget,
+										"hx-target": utils.IfElse(instructorAssignSwapTarget != "", instructorAssignSwapTarget, utils.IfElse(studentAssignSwapTarget != "", studentAssignSwapTarget, swapTarget)),
 										"hx-swap":   "outerHTML",
 										"hx-confirm": "Are you sure you want to unassign this user?",
 									},

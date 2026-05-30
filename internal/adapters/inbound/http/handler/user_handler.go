@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"os"
 	"uot-exam/internal/adapters/inbound/http/helpers"
 	"uot-exam/internal/adapters/outbound/config"
 	"uot-exam/internal/adapters/outbound/logger"
@@ -16,7 +17,6 @@ import (
 	"uot-exam/web/templates/components/toast"
 	"uot-exam/web/templates/pages/admin_dashboard/components"
 	"uot-exam/web/templates/render"
-	"os"
 
 	"github.com/abdullahdiaa/garabic"
 	marotoconfig "github.com/johnfercher/maroto/v2/pkg/config"
@@ -316,7 +316,7 @@ func (h *UserHandler) SearchUsers() gin.HandlerFunc {
 		})
 		if err != nil {
 			h.logger.LogErrorWithLevel("warn", "DATABASE_ERROR", "SEARCH_FAILED", "Failed to search users", err)
-			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false, "", "", 0, 0))
+			render.Render(ctx, components.UserTableRows([]domain.User{}, false, false, "", "", 0, 0, "", ""))
 			return
 		}
 
