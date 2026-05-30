@@ -357,7 +357,16 @@ func (h *UserHandler) SoftDeleteExam() gin.HandlerFunc {
 		}
 
 		if ctx.GetHeader("HX-Target") == "toast-container" {
-			ctx.Header("HX-Redirect", "/admin/dashboard/exams")
+			// If the current user is an instructor, redirect back to the
+			// instructor subject view for the deleted exam's subject.
+			if role, exists := ctx.Get("role"); exists {
+				if domain.UserRole(role.(string)) == domain.RoleInstructor {
+					ctx.Header("HX-Redirect", "/instructor/subject/"+exam.SubjectID.String())
+					return
+				}
+			}
+			// Default admin redirect
+			ctx.Header("HX-Redirect", "/admin/dashboard/subject/"+exam.SubjectID.String())
 			return
 		}
 
